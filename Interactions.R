@@ -49,7 +49,7 @@ interactions %>%
 # winning aggressions by type
 interactiontype<-isichang %>% 
   filter(Interaction!="NE")%>%
-  filter(IS.outcome!="L") %>% 
+  filter(IS.outcome!="W") %>%  #change this----
   group_by(Initiator.sp,Interaction) %>% 
   tally() %>% 
   mutate(freq=n/sum(n)*100) %>% 
@@ -62,3 +62,10 @@ interactiontype %>%
   geom_col()+
   theme_bw()+
   labs(title="Aggressor wins by type")
+
+# plot aggressions that failed
+interactiontype %>% 
+  ggplot(aes(n,Initiator.sp,fill=Interaction))+
+  geom_col()+
+  theme_bw()+
+  labs(title="Aggressor losses by type")
