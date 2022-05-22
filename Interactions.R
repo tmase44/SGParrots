@@ -1,3 +1,7 @@
+library(tidyverse)
+library(vegan)
+library(lubridate)
+
 isichang<-read.csv("Interaction/Inter_ChangiVill.csv")
 dim(isichang)
 head(isichang)
@@ -57,4 +61,4 @@ interactiontype %>%
   ggplot(aes(n,Initiator.sp,fill=Interaction))+
   geom_col()+
   theme_bw()+
-  labs(title="Aggressor species wins and losses")
+  labs(title="Aggressor wins by type")
