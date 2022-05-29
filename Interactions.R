@@ -2,17 +2,18 @@ library(tidyverse)
 library(vegan)
 library(lubridate)
 
-isichang<-read.csv("Interaction/Inter_ChangiVill.csv")
+isichang<-read.csv("Interaction/inter.csv")
 dim(isichang)
 head(isichang)
 class(isichang)
 summary(isichang)
 ls(isichang)
+unique(isichang$initsp)
 
 # Total intiations----
 IS<-isichang %>% 
-  filter(Interaction!="NE") %>% 
-  group_by(Initiator.sp) %>% 
+  filter(interaction!="NE") %>% 
+  group_by(initsp) %>% 
   tally() %>% 
   mutate(freq=n/sum(n)*100) %>%
   arrange(desc(freq))
@@ -22,8 +23,8 @@ view(IS)
 
 # Total receipts----
 RS<-isichang %>% 
-  filter(Interaction!="NE") %>% 
-  group_by(Recipient.sp) %>% 
+  filter(interaction!="NE") %>% 
+  group_by(recipsp) %>% 
   tally() %>% 
   mutate(freq=n/sum(n)*100) %>%
   arrange(desc(freq))
@@ -31,41 +32,85 @@ view(RS)
 # RBP on the receiving end of most aggression, 33.6%
 
 interactions<-isichang %>% 
-  filter(Interaction!="NE") %>% 
-  group_by(Initiator.sp,IS.outcome) %>% 
+  filter(interaction!="NE") %>% 
+  group_by(initsp,isout) %>% 
   tally() %>% 
   mutate(freq=n/sum(n)*100) %>% 
-  arrange(desc(IS.outcome)) %>% 
+  arrange(desc(isout)) %>% 
   arrange(desc(freq))
 view(interactions)
 
 # plot aggressor wins and losses
-interactions %>% 
-  ggplot(aes(n,Initiator.sp,fill=IS.outcome))+
+interactionspar<-interactions %>% 
+  filter(initsp=="Monk Parakeet"|
+           initsp=="Yellow crested cockatoo"|
+           initsp=="Tanimbar corella"|
+           initsp=="Rose ringed parakeet"|
+           initsp=="Red-breasted parakeet") 
+
+interactionspar %>% 
+  ggplot(aes(freq,initsp,fill=isout))+
   geom_col()+
   theme_bw()+
-  labs(title="Aggressor species wins and losses")
+  labs(title="Aggressor species wins and losses")+
 
-# winning aggressions by type
-interactiontype<-isichang %>% 
-  filter(Interaction!="NE")%>%
-  filter(IS.outcome!="W") %>%  #change this----
-  group_by(Initiator.sp,Interaction) %>% 
+
+
+# winning (or losing) aggressions by type----
+interactiontypeL<-isichang %>% # change L W
+  filter(interaction!="NE")%>%
+  filter(isout=="L") %>% #change
+  group_by(initsp,interaction) %>% 
   tally() %>% 
   mutate(freq=n/sum(n)*100) %>% 
-  arrange(desc(Initiator.sp))
-view(interactiontype)
+  arrange(desc(initsp))
+view(interactiontypeL)
 
+
+interactiontype$initsp<-as.factor(interactiontype$initsp)
 # plot winning aggressions
-interactiontype %>% 
-  ggplot(aes(n,Initiator.sp,fill=Interaction))+
+  # first arrange factors
+interactiontypeW$initsp<-factor(interactiontypeW$initsp,
+                                   levels = c("Yellow crested cockatoo","Rose ringed parakeet","Red-breasted parakeet",
+                                              "Tanimbar corella","Monk Parakeet"))
+levels(interactiontypeW$initsp)
+
+interactiontypeW %>% 
+  filter(initsp=="Monk Parakeet"|
+           initsp=="Yellow crested cockatoo"|
+           initsp=="Tanimbar corella"|
+           initsp=="Rose ringed parakeet"|
+           initsp=="Red-breasted parakeet") %>% 
+  ggplot(aes(n,initsp,fill=interaction))+
   geom_col()+
   theme_bw()+
   labs(title="Aggressor wins by type")
 
 # plot aggressions that failed
-interactiontype %>% 
-  ggplot(aes(n,Initiator.sp,fill=Interaction))+
+
+interactiontypeL %>% 
+  filter(initsp=="Yellow crested cockatoo"|
+           initsp=="Tanimbar corella"|
+           initsp=="Rose ringed parakeet"|
+           initsp=="Red-breasted parakeet"|
+           initsp=="Monk Parakeet") %>% 
+  ggplot(aes(n,initsp,fill=interaction))+
   geom_col()+
   theme_bw()+
   labs(title="Aggressor losses by type")
+
+interactiontype %>% 
+  filter(initsp=="Yellow crested cockatoo"|
+           initsp=="Tanimbar corella"|
+           initsp=="Rose ringed parakeet"|
+           initsp=="Red-breasted parakeet"|
+           initsp=="Monk Parakeet") %>% 
+  ggplot(aes(freq,initsp,fill=interaction))+
+  geom_col()+
+  theme_bw()+
+  labs(title="Proportion of aggressions")
+
+interactiontype$initsp<-factor(interactiontype$initsp,
+                                levels = c("Yellow crested cockatoo","Rose ringed parakeet","Red-breasted parakeet",
+                                           "Tanimbar corella","Monk Parakeet"))
+levels(interactiontype$initsp)
