@@ -154,4 +154,12 @@ interactiontype$initsp<-factor(interactiontype$initsp,
                                            "Tanimbar corella","Monk Parakeet","Long-tailed parakeet"))
 levels(interactiontype$initsp)
 
+# interaction volume by location
+
+y<-interactions %>% 
+  select(site,dayno,Object) %>% 
+  group_by(Study.Area,dayno) %>% 
+  mutate(n = n_distinct(Object))
+view(x)
+
 

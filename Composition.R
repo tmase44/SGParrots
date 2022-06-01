@@ -176,7 +176,7 @@ x %>%
   ggplot(aes(dayno,n,color=Study.Area))+
   geom_smooth(size=0.5)+
   geom_point()+
-  ylim(10,30)+
+  ylim(10,40)+
   labs(y = 'n species detected', x='survey day',
        title = 'Daily composition: detected unique species')
   
