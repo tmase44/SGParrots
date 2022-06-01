@@ -2,6 +2,7 @@ library(tidyverse)
 library(vegan)
 library(lubridate)
 library(gridExtra)
+library(circlize)
 
 # ALL INTER-DATA----
 library(readxl)
@@ -14,10 +15,11 @@ unique(Interact$initsp)
 # Total intiations----
 IS<-Interact %>% 
   filter(interaction!="NE") %>% 
-  group_by(initsp) %>% 
+  group_by(initsp,recipsp) %>% 
   tally() %>% 
   mutate(freq=n/sum(n)*100) %>%
-  arrange(desc(freq))
+  arrange(desc(initsp)) %>% 
+  arrange(desc(n))
 view(IS)
 # only 6 species initiated ----
   # TC initiated the most 33.6% of all
@@ -25,15 +27,16 @@ view(IS)
 # Total receipts----
 RS<-Interact %>% 
   filter(interaction!="NE") %>% 
-  group_by(recipsp) %>% 
+  group_by(recipsp,initsp) %>% 
   tally() %>% 
   mutate(freq=n/sum(n)*100) %>%
-  arrange(desc(freq))
+  arrange(desc(recipsp)) %>% 
+  arrange(desc(n))
 view(RS)
 # RBP on the receiving end of most aggression, 33.6%
 
 interactions<-Interact %>% 
-  filter(interaction!="NE") %>% 
+  filter(recipsp!="NA") %>% 
   group_by(initsp,isout) %>% 
   tally() %>% 
   mutate(freq=n/sum(n)*100) %>% 
@@ -47,31 +50,50 @@ interactionspar<-interactions %>%
            initsp=="Tanimbar corella"|
            initsp=="Rose ringed parakeet"|
            initsp=="Red-breasted parakeet"|
-           initsp=="Long-tailed parakeett") 
+           initsp=="Long-tailed parakeet") 
 # number
-plot_wl_n<-interactionspar %>% 
+interactionspar %>% 
   ggplot(aes(n,initsp,fill=isout))+
   geom_col()+
   geom_text(aes(label=round(n,digits = 1)),
             position = position_stack(vjust = .5))+
   theme_bw()+
-  labs(title="Aggressor species W/L number")+
-  theme(legend.position = 'bottom')
+  labs(title="Aggressor species W/L number")
 # proportion
-plot_wl_f<-interactionspar %>% 
+interactionspar %>% 
   ggplot(aes(freq,initsp,fill=isout))+
   geom_col()+
   geom_text(aes(label=round(freq,digits = 1)),
             position = position_stack(vjust = .5))+
   theme_bw()+
-  labs(title="Aggressor species W/L proportion")+
-  theme(legend.position = 'bottom',
-        axis.title.y = element_blank(),
-        axis.text.y = element_blank())
-grid.arrange(plot_wl_n,plot_wl_f,nrow=1,ncol=2)
+  labs(title="Aggressor species W/L proportion")
 
 # win loss species facet----
-facet grid panels species and species, wins and losses
+#facet grid panels species and species, wins and losses
+interactions2<-Interact %>% 
+  filter(recipsp!="NA") %>% 
+  filter(initsp=="Monk Parakeet"|
+           initsp=="Tanimbar corella"|
+           initsp=="Rose ringed parakeet"|
+           initsp=="Red-breasted parakeet"|
+           initsp=="Long-tailed parakeet") %>%  
+  group_by(initsp,recipsp,interaction,isout) %>% 
+  tally() %>% 
+  filter(n>2) %>% 
+  select(-isout)
+view(interactions2)
+
+# CHORD----
+#https://r-graph-gallery.com/chord-diagram.html
+
+# Transform input data in a adjacency matrix
+adjacencyData <- with(interactions2, table(initsp, recipsp))
+# Make the circular plot
+circos.par(start.degree = 0)
+chordDiagram(adjacencyData, grid.col = grid.col,big.gap = 20,
+             transparency = 0.5)
+abline(h = 0, lty = 2, col = "#00000080")
+circos.clear()
 
 # winning (or losing) aggressions by type----
 interactiontypeW<-Interact %>% # change L W
@@ -89,7 +111,7 @@ interactiontype$initsp<-as.factor(interactiontype$initsp)
   # first arrange factors
 interactiontypeW$initsp<-factor(interactiontypeW$initsp,
                                    levels = c("Yellow crested cockatoo","Rose ringed parakeet","Red-breasted parakeet",
-                                              "Tanimbar corella","Monk Parakeet","Long-tailed parakeett"))
+                                              "Tanimbar corella","Monk Parakeet","Long-tailed parakeet"))
 levels(interactiontypeW$initsp)
 
 interactiontypeW %>% 
@@ -97,7 +119,7 @@ interactiontypeW %>%
            initsp=="Tanimbar corella"|
            initsp=="Rose ringed parakeet"|
            initsp=="Red-breasted parakeet"|
-           initsp=="Long-tailed parakeett") %>% 
+           initsp=="Long-tailed parakeet") %>% 
   ggplot(aes(n,initsp,fill=interaction))+
   geom_col()+
   theme_bw()+
@@ -110,7 +132,7 @@ interactiontypeL %>%
            initsp=="Rose ringed parakeet"|
            initsp=="Red-breasted parakeet"|
            initsp=="Monk Parakeet"|
-           initsp=="Long-tailed parakeett") %>% 
+           initsp=="Long-tailed parakeet") %>% 
   ggplot(aes(n,initsp,fill=interaction))+
   geom_col()+
   theme_bw()+
@@ -121,7 +143,7 @@ interactiontype %>%
            initsp=="Rose ringed parakeet"|
            initsp=="Red-breasted parakeet"|
            initsp=="Monk Parakeet"|
-           initsp=="Long-tailed parakeett") %>% 
+           initsp=="Long-tailed parakeet") %>% 
   ggplot(aes(freq,initsp,fill=interaction))+
   geom_col()+
   theme_bw()+
@@ -129,7 +151,7 @@ interactiontype %>%
 
 interactiontype$initsp<-factor(interactiontype$initsp,
                                 levels = c("Yellow crested cockatoo","Rose ringed parakeet","Red-breasted parakeet",
-                                           "Tanimbar corella","Monk Parakeet"))
+                                           "Tanimbar corella","Monk Parakeet","Long-tailed parakeet"))
 levels(interactiontype$initsp)
 
 
