@@ -160,8 +160,23 @@ changiv2 %>%
   scale_colour_manual(values = unique(changiv2$Object), breaks=c("Red-breasted parakeet","Javan myna",
                     "Tanimbar corella","House crow"))
 
+# ALL COMP DATA----
+library(readxl)
+Composition <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
+                                       sheet = "Composition")
+View(Composition)
 
-
+x<-Composition %>% 
+  select(Study.Area,dayno,Object) %>% 
+  group_by(Study.Area,dayno) %>% 
+  mutate(n = n_distinct(Object))
+view(x)
   
-  
+x %>% 
+  ggplot(aes(dayno,n,color=Study.Area))+
+  geom_smooth(size=0.5)+
+  geom_point()+
+  ylim(10,30)+
+  labs(y = 'n species detected', x='survey day',
+       title = 'Daily composition: detected unique species')
   
