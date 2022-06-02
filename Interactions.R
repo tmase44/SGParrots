@@ -1,10 +1,9 @@
 # LOAD PACKS----
 library(pacman)
-p_load(tidyverse,vegan,lubridate,gridExtra,circlize,stringr)
+p_load(tidyverse,vegan,lubridate,gridExtra,circlize,stringr,readxl,wesanderson)
 
 
 # IMPORT DATA----
-library(readxl)
 Interact <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                        sheet = "Interactions")
 View(Interact)
@@ -26,9 +25,15 @@ Interact<-Interact %>%
     interaction=="Swoop"~"3",
     interaction=="Threat"~"4",
     interaction=="Chase"~"5",
-    interaction=="Contact"~"6"))
+    interaction=="Contact"~"6",
+    interaction=="Fight"~"6"))
 Interact$rating<-factor(Interact$rating,
-                                levels = c("1","2","3","4","5"))
+                                levels = c("1","2","3","4","5","6"))
+#... remove intra-specifics----
+#Interact2<-Interact %>% 
+ # filter(initsp!="Long-tailed parakeet" | recipsp!="Long-tailed parakeet")#
+
+
 
 # SUBSETS----
 IS<-Interact %>% 
@@ -63,56 +68,78 @@ view(recipients)
 #...combine----
 isrs<-rbind(initiators,recipients)
 view(isrs)
+#... parrot filter
 isrs2<-isrs %>% 
-  group_by(species,interaction,outcome,role) %>%
+  filter(species=="Monk parakeet"|species=="Tanimbar corella"|species=="Rose ringed parakeet"|species=="Red-breasted parakeet"|species=="Long-tailed parakeet"| species=="Javan myna") %>%  
+  group_by(species,role,interaction,outcome) %>%
   summarise(total=sum(n))
 view(isrs2)
 isrs2$interaction<-factor(isrs2$interaction,
-                        levels = c("NE","Displace","Swoop","Threat","Chase","Contact"))
+                        levels = c("NE","Displace","Swoop","Threat","Chase","Contact","Fight"))
+isrs2$outcome<-factor(isrs2$outcome,
+                          levels = c("W","NE","L"))
 unique(isrs2$interaction)
-  
+levels(isrs2$species)
+levels(isrs2$outcome)
+
+
+
 #CHARTS----
 # clean wrapped labels!!!!
-isrs2$species2 = str_wrap(isrs2$species, width = 5)
+isrs2$species2 = str_wrap(isrs2$species, width = 10)
 isrs2
+#palettes https://rstudio-pubs-static.s3.amazonaws.com/5312_98fc1aba2d5740dd849a5ab797cc2c8d.html 
 
 #...Total interactions----
 isrs2 %>% 
-  filter(species=="Monk Parakeet"|species=="Tanimbar corella"|species=="Rose ringed parakeet"|species=="Red-breasted parakeet"|species=="Long-tailed parakeet"| species=="Javan myna") %>%  
-  ggplot(aes(species,total))+
+  group_by(species) %>% 
+  summarise(n=sum(total)) %>% 
+  ggplot(aes(species,n))+
   geom_col()+
+  geom_text(aes(label = n), vjust = -0.5)+
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
   labs(x='Species',y='n',title='Total interactions')
 
+# n Interaction species----
+isrs2 %>% 
+  ggplot(aes(interaction,total,fill=species))+
+  geom_col()+
+  facet_wrap(~species,2,3)+
+  theme(axis.text.x = element_text
+        (angle = 90, vjust = 0.5, hjust=1),
+        legend.position = 'none')+
+  labs(x='Interaction',y='n',title='n Interaction type by species')
+
+#...Roles----
+isrs2 %>% 
+  group_by(species,role) %>% 
+  summarise(n=sum(total)) %>% 
+  ggplot(aes(species,n,fill=role))+
+  geom_col(position = 'stack')+ #W/N/L side by side
+  geom_text(aes(label = n),position=position_stack(vjust=.5))+ 
+  scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
+  labs(x='Species',y='n',title='Role in interactions (initiator [IS] or recipient [RS]')+
+  scale_fill_brewer(palette="Set3")
+
 #...W/L proportion----
 isrs2 %>% 
-  filter(species=="Monk Parakeet"|species=="Tanimbar corella"|species=="Rose ringed parakeet"|species=="Red-breasted parakeet"|species=="Long-tailed parakeet"|species=="Javan myna") %>%  
   ggplot(aes(species,total,fill=outcome))+
   geom_col(position='fill')+
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
-  labs(x='Species',y='%',title='Wins, Losses, Neutral outcomes')
+  labs(x='Species',y='%',title='Wins, Losses, Neutral outcomes')+
+  scale_fill_brewer(palette="Spectral",direction=-1)
 
-# ...Interaction proportion----
+#...W/L proportion----
 isrs2 %>% 
-  filter(species=="Monk Parakeet"|species=="Tanimbar corella"|species=="Rose ringed parakeet"|species=="Red-breasted parakeet"|species=="Long-tailed parakeet"|species=="Javan myna") %>%  
-  ggplot(aes(species,total,fill=interaction))+
+  ggplot(aes(species,total,fill=outcome))+
   geom_col(position='fill')+
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
-  labs(x='Species',y='%',title='Proportion of parrot interactions')
-
-# .......by W/L----
-isrs2 %>% 
-  filter(species=="Monk Parakeet"|species=="Tanimbar corella"|species=="Rose ringed parakeet"|species=="Red-breasted parakeet"|species=="Long-tailed parakeet"|species=="Javan myna") %>%  
-  filter(outcome!='NE') %>% 
-  ggplot(aes(species,total,fill=interaction))+
-  geom_col(position='fill')+
-  scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
-  labs(x='Species',y='%',title='Proportion of winning & losing interactions')+
-  facet_wrap(~outcome,,2)
+  labs(x='Species',y='%',title='Outcomes when IS or RS')+
+  scale_fill_brewer(palette="Spectral",direction=-1)+
+  facet_wrap(~role)
 
 # ...Outcome proportion by species----
 isrs2 %>% 
-  filter(species=="Monk Parakeet"|species=="Tanimbar corella"|species=="Rose ringed parakeet"|species=="Red-breasted parakeet"|species=="Long-tailed parakeet"| species=="Javan myna") %>%  
   filter(outcome!='NE') %>% 
   ggplot(aes(interaction,total,fill=outcome))+
   geom_col(position = 'fill')+
@@ -120,11 +147,41 @@ isrs2 %>%
   theme(axis.text.x = element_text
         (angle = 90, vjust = 0.5, hjust=1,size=7),
         legend.position = 'none')+
-  labs(x='Interaction',y='%',title='Win/Loss proportion by species & action')+
+  labs(x='Interaction',y='%',title='Win/Loss proportion by species & action')
+
+
+# ...Interaction proportion----
+isrs2 %>% 
+  ggplot(aes(species,total,fill=interaction))+
+  geom_col(position='fill')+
+  scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
+  labs(x='Species',y='%',title='Proportion of parrot interactions')+
+  theme_bw()+
+  scale_fill_brewer(palette = "RdPu")
+
+#...... By role----                    
+isrs2 %>% 
+  ggplot(aes(species,total,fill=interaction))+
+  geom_col(position='fill')+
+  scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
+  labs(x='Species',y='%',title='Proportion of parrot interactions wether IS or RS')+
+  scale_fill_brewer(palette = "RdPu")+
+  facet_wrap(~role)
+
+#......by W/L----
+isrs2 %>% 
+  filter(outcome!="NE") %>% 
+  ggplot(aes(species,total,fill=interaction))+
+  geom_col(position='fill')+
+  scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
+  labs(x='Species',y='%',title='Proportion of interactions Won or Lost')+
+  scale_fill_brewer(palette = "YlGn")+
+  facet_wrap(~outcome)
+
+
 
 # Interaction proportions BY SPECIES
 isrs2 %>% 
-  filter(species=="Monk Parakeet"|species=="Tanimbar corella"|species=="Rose ringed parakeet"|species=="Red-breasted parakeet"|species=="Long-tailed parakeet"| species=="Javan myna") %>%  
   filter(outcome!='NE') %>% 
   ggplot(aes(species,total,fill=outcome))+
   geom_col(position = 'fill')+
@@ -136,154 +193,26 @@ isrs2 %>%
 
 
 
-# n Interaction type----
-isrs2 %>% 
-  filter(species=="Monk Parakeet"|species=="Tanimbar corella"|species=="Rose ringed parakeet"|species=="Red-breasted parakeet"|species=="Long-tailed parakeet"| species=="Javan myna") %>%  
-  ggplot(aes(interaction,total,fill=species))+
-  geom_col()+
-  facet_wrap(~species,2,3)+
-  theme(axis.text.x = element_text
-        (angle = 90, vjust = 0.5, hjust=1),
-        legend.position = 'none')+
-  labs(x='Interaction',y='n',title='n Interaction type by species')
+# CHORD DATA PREP----
 
-
-
-
-
-#W/L facet----
-isrs2 %>% 
-  filter(species=="Monk Parakeet"|species=="Tanimbar corella"|species=="Rose ringed parakeet"|species=="Red-breasted parakeet"|species=="Long-tailed parakeet"| species=="Javan myna") %>%  
-  filter(outcome!="NE") %>% 
-  ggplot(aes(interaction,total,fill=species))+
-  geom_col()+
-  facet_wrap(outcome~species,4,6)+
-  theme(axis.text.x = element_text
-        (angle = 90, vjust = 0.5, hjust=1),
-        legend.position = 'none')+
-  labs(x='Interaction',y='n',title='n Wins and Losses by interaction')
-
-
-
-
-#--------------------
-
-# plot aggressor wins and losses
-interactionspar<-interactions %>% 
-  filter(initsp=="Monk Parakeet"|
-           initsp=="Tanimbar corella"|
-           initsp=="Rose ringed parakeet"|
-           initsp=="Red-breasted parakeet"|
-           initsp=="Long-tailed parakeet") 
-# number
-interactionspar %>% 
-  ggplot(aes(n,initsp,fill=isout))+
-  geom_col()+
-  geom_text(aes(label=round(n,digits = 1)),
-            position = position_stack(vjust = .5))+
-  theme_bw()+
-  labs(title="Aggressor species W/L number")
-# proportion
-interactionspar %>% 
-  ggplot(aes(freq,initsp,fill=isout))+
-  geom_col()+
-  geom_text(aes(label=round(freq,digits = 1)),
-            position = position_stack(vjust = .5))+
-  theme_bw()+
-  labs(title="Aggressor species W/L proportion")
-
-# win loss species facet----
-#facet grid panels species and species, wins and losses
-interactions2<-Interact %>% 
+intchord<-Interact %>% 
   filter(recipsp!="NA") %>% 
-  filter(initsp=="Monk Parakeet"|
+  filter(initsp=="Monk parakeet"|
            initsp=="Tanimbar corella"|
            initsp=="Rose ringed parakeet"|
            initsp=="Red-breasted parakeet"|
            initsp=="Long-tailed parakeet") %>%  
   group_by(initsp,recipsp,interaction,isout) %>% 
   tally() %>% 
-  filter(n>2) %>% 
   select(-isout)
-view(interactions2)
+view(intchord)
 
 # CHORD----
 #https://r-graph-gallery.com/chord-diagram.html
 
 # Transform input data in a adjacency matrix
-adjacencyData <- with(interactions2, table(initsp, recipsp))
+adjacencyData <- with(intchord, table(initsp, recipsp))
 # Make the circular plot
-circos.par(start.degree = 0)
-chordDiagram(adjacencyData, grid.col = grid.col,big.gap = 20,
-             transparency = 0.5)
-abline(h = 0, lty = 2, col = "#00000080")
 circos.clear()
-
-# winning (or losing) aggressions by type----
-interactiontypeW<-Interact %>% # change L W
-  filter(interaction!="NE")%>%
-  filter(isout=="W") %>% #change
-  group_by(initsp,interaction) %>% 
-  tally() %>% 
-  mutate(freq=n/sum(n)*100) %>% 
-  arrange(desc(initsp))
-view(interactiontypeL)
-
-
-interactiontype$initsp<-as.factor(interactiontype$initsp)
-# plot winning aggressions
-  # first arrange factors
-interactiontypeW$initsp<-factor(interactiontypeW$initsp,
-                                   levels = c("Yellow crested cockatoo","Rose ringed parakeet","Red-breasted parakeet",
-                                              "Tanimbar corella","Monk Parakeet","Long-tailed parakeet"))
-levels(interactiontypeW$initsp)
-
-interactiontypeW %>% 
-  filter(initsp=="Monk Parakeet"|
-           initsp=="Tanimbar corella"|
-           initsp=="Rose ringed parakeet"|
-           initsp=="Red-breasted parakeet"|
-           initsp=="Long-tailed parakeet") %>% 
-  ggplot(aes(n,initsp,fill=interaction))+
-  geom_col()+
-  theme_bw()+
-  labs(title="Aggressor wins by type")
-
-# plot aggressions that failed
-
-interactiontypeL %>% 
-  filter(initsp=="Tanimbar corella"|
-           initsp=="Rose ringed parakeet"|
-           initsp=="Red-breasted parakeet"|
-           initsp=="Monk Parakeet"|
-           initsp=="Long-tailed parakeet") %>% 
-  ggplot(aes(n,initsp,fill=interaction))+
-  geom_col()+
-  theme_bw()+
-  labs(title="Aggressor losses by type")
-
-interactiontype %>% 
-  filter(initsp=="Tanimbar corella"|
-           initsp=="Rose ringed parakeet"|
-           initsp=="Red-breasted parakeet"|
-           initsp=="Monk Parakeet"|
-           initsp=="Long-tailed parakeet") %>% 
-  ggplot(aes(freq,initsp,fill=interaction))+
-  geom_col()+
-  theme_bw()+
-  labs(title="Proportion of aggressions")
-
-interactiontype$initsp<-factor(interactiontype$initsp,
-                                levels = c("Yellow crested cockatoo","Rose ringed parakeet","Red-breasted parakeet",
-                                           "Tanimbar corella","Monk Parakeet","Long-tailed parakeet"))
-levels(interactiontype$initsp)
-
-# interaction volume by location
-
-y<-interactions %>% 
-  select(site,dayno,Object) %>% 
-  group_by(Study.Area,dayno) %>% 
-  mutate(n = n_distinct(Object))
-view(x)
-
+chordDiagram(adjacencyData,transparency = 0.5)
 
