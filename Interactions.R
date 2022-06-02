@@ -238,32 +238,37 @@ chordDiagram(inchord2,grid.col=grid.col)
 # transparency can be called above, default transparency = 0.5
 circos.clear()
 
-par(mfrow = c(3, 3))
+#... multi chord!!!!!----
+par(mfrow = c(2, 3))
 grid.col=c("MP"="#76A08A","TC"="#9A872D","RRP"="#F7B0AA","RBP"="#B62A3D","LTP"="#EDCB64",
                      "AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey",        
                      "HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey",
                      "LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey",
                      "DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
-
-# multi chord----
 chordDiagram(inchord2,grid.col=grid.col)
+title(main = "Parrot initiated interactions")
 # highlight MP
 grid.col.mp=c("MP"="#76A08A","TC"="grey","RRP"="grey","RBP"="grey","LTP"="grey",
            "AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey","HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey","LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey","DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
 chordDiagram(inchord2,grid.col=grid.col.mp)
+title(main = "Monk parakeet initiated interactions")
 # highlight RBP
 grid.col.rbp=c("MP"="grey","TC"="grey","RRP"="grey","RBP"="#B62A3D","LTP"="grey",
               "AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey","HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey","LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey","DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
 chordDiagram(inchord2,grid.col=grid.col.rbp)
+title(main = "Red-breasted parakeet initiated interactions")
 # highlight TC
 grid.col.tc=c("MP"="grey","TC"="#9A872D","RRP"="grey","RBP"="grey","LTP"="grey",
               "AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey","HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey","LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey","DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
 chordDiagram(inchord2,grid.col=grid.col.tc)
+title(main = "Tanimbar corella initiated interactions")
 # highlight RRP
 grid.col.rrp=c("MP"="grey","TC"="grey","RRP"="#F7B0AA","RBP"="grey","LTP"="grey",
               "AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey","HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey","LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey","DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
 chordDiagram(inchord2,grid.col=grid.col.rrp)
+title(main = "Rose-ringed parakeet initiated interactions")
 # highlight LTP
 grid.col.ltp=c("MP"="grey","TC"="grey","RRP"="grey","RBP"="grey","LTP"="#EDCB64",
               "AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey","HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey","LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey","DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
 chordDiagram(inchord2,grid.col=grid.col.ltp)
+title(main = "Long-tailed parakeet initiated interactions")
