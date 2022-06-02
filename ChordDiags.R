@@ -70,7 +70,7 @@ grid.col=c("MP"="#2E604A","TC"="#27223C","RRP"="#E6A2C5","RBP"="#D1362F","LTP"="
            "HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey",
            "LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey",
            "DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
-chordDiagram(inchord2,grid.col=grid.col,annotationTrack = "grid",
+chordDiagram(inchord2,grid.col=grid.col,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
              preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
 # above removes the labels, below adds them in 90deg angle
 circos.track(track.index = 1, panel.fun = function(x, y) {
@@ -81,7 +81,7 @@ title(main = "Parrot initiated interactions")
 # highlight MP
 grid.col.mp=c("MP"="#2E604A","TC"="grey","RRP"="grey","RBP"="grey","LTP"="grey",
               "AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey","HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey","LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey","DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
-chordDiagram(inchord2,grid.col=grid.col.mp,annotationTrack = "grid",
+chordDiagram(inchord2,grid.col=grid.col.mp,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
              preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
 # above removes the labels, below adds them in 90deg angle
 circos.track(track.index = 1, panel.fun = function(x, y) {
@@ -92,7 +92,7 @@ title(main = "Monk parakeet initiated interactions")
 # highlight RBP
 grid.col.rbp=c("MP"="grey","TC"="grey","RRP"="grey","RBP"="#D1362F","LTP"="grey",
                "AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey","HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey","LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey","DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
-chordDiagram(inchord2,grid.col=grid.col.rbp,annotationTrack = "grid",
+chordDiagram(inchord2,grid.col=grid.col.rbp,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
              preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
 # above removes the labels, below adds them in 90deg angle
 circos.track(track.index = 1, panel.fun = function(x, y) {
@@ -103,7 +103,7 @@ title(main = "Red-breasted parakeet initiated interactions")
 # highlight TC
 grid.col.tc=c("MP"="grey","TC"="#27223C","RRP"="grey","RBP"="grey","LTP"="grey",
               "AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey","HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey","LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey","DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
-chordDiagram(inchord2,grid.col=grid.col.tc,annotationTrack = "grid",
+chordDiagram(inchord2,grid.col=grid.col.tc,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
              preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
 # above removes the labels, below adds them in 90deg angle
 circos.track(track.index = 1, panel.fun = function(x, y) {
@@ -114,7 +114,7 @@ title(main = "Tanimbar corella initiated interactions")
 # highlight RRP
 grid.col.rrp=c("MP"="grey","TC"="grey","RRP"="#E6A2C5","RBP"="grey","LTP"="grey",
                "AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey","HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey","LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey","DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
-chordDiagram(inchord2,grid.col=grid.col.rrp,annotationTrack = "grid",
+chordDiagram(inchord2,grid.col=grid.col.rrp,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
              preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
 # above removes the labels, below adds them in 90deg angle
 circos.track(track.index = 1, panel.fun = function(x, y) {
@@ -125,7 +125,7 @@ title(main = "Rose-ringed parakeet initiated interactions")
 # highlight LTP
 grid.col.ltp=c("MP"="grey","TC"="grey","RRP"="grey","RBP"="grey","LTP"="#EDCB64",
                "AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey","HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey","LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey","DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
-chordDiagram(inchord2,grid.col=grid.col.ltp,annotationTrack = "grid",
+chordDiagram(inchord2,grid.col=grid.col.ltp,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
              preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
 # above removes the labels, below adds them in 90deg angle
 circos.track(track.index = 1, panel.fun = function(x, y) {
