@@ -79,17 +79,6 @@ circos.track(track.index = 1, panel.fun = function(x, y) {
               facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5))
 }, bg.border = NA)
 title(main = "Parrot initiated interactions")
-# highlight MP----
-grid.col.mp=c("MP"="#2E604A","TC"="#d5dfdb","RRP"="#d5dfdb","RBP"="#d5dfdb","LTP"="#d5dfdb",
-              "AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey","HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey","LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey","DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
-chordDiagram(inchord2,grid.col=grid.col.mp,transparency = 0.4,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
-             preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
-# above removes the labels, below adds them in 90deg angle
-circos.track(track.index = 1, panel.fun = function(x, y) {
-  circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index, 
-              facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5))
-}, bg.border = NA)
-title(main = "Monk parakeet initiated interactions")
 # highlight RBP----
 grid.col.rbp=c("MP"="#f6d7d5","TC"="#f6d7d5","RRP"="#f6d7d5","RBP"="#D1362F","LTP"="#f6d7d5",
                "AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey","HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey","LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey","DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
@@ -101,6 +90,19 @@ circos.track(track.index = 1, panel.fun = function(x, y) {
               facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5))
 }, bg.border = NA)
 title(main = "Red-breasted parakeet initiated interactions")
+
+# highlight MP----
+grid.col.mp=c("MP"="#2E604A","TC"="#d5dfdb","RRP"="#d5dfdb","RBP"="#d5dfdb","LTP"="#d5dfdb",
+              "AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey","HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey","LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey","DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
+chordDiagram(inchord2,grid.col=grid.col.mp,transparency = 0.4,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
+             preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
+# above removes the labels, below adds them in 90deg angle
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index, 
+              facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5))
+}, bg.border = NA)
+title(main = "Monk parakeet initiated interactions")
+
 # highlight TC----
 grid.col.tc=c("MP"="#d4d3d8","TC"="#27223C","RRP"="#d4d3d8","RBP"="#d4d3d8","LTP"="#d4d3d8",
               "AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey","HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey","LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey","DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
@@ -175,19 +177,6 @@ mp.ch<-mp.ch %>%
     recipsp=="Yellow vented bulbul"~"BB",recipsp=="Zebra dove"~"DV",recipsp=="Yellow crested cockatoo"~"YCC"))    
 mp.ch<-mp.ch %>% ungroup %>% select(interaction,RS,n)
 
-#...LTP----
-ltp.ch<-Interact %>% 
-  filter(recipsp!="NA") %>% filter(initsp=="Long-tailed parakeet") %>%  
-  group_by(interaction,recipsp,isout) %>% tally() %>% select(-isout)
-view(ltp.ch)
-ltp.ch<-ltp.ch %>% 
-  mutate(RS=case_when(
-    recipsp=="Monk parakeet"~"MP",recipsp=="Tanimbar corella"~"TC",recipsp=="Rose ringed parakeet"~"RRP",recipsp=="Red-breasted parakeet"~"RBP",recipsp=="Long-tailed parakeet"~"LTP",recipsp=="Asian glossy starling"~"AGS",recipsp=="Asian koel"~"AK",recipsp=="Black naped oriole"~"BNO",recipsp=="Blue tailed bee eater"~"BE",
-    recipsp=="Brown throated sunbird"~"SB",recipsp=="Collared kingfisher"~"KF",recipsp=="Common flameback"~"WP",recipsp=="Common hill myna"~"CHM",recipsp=="House crow"~"HC",recipsp=="House sparrow"~"HS",recipsp=="Javan myna"~"JM",recipsp=="Large billed crow"~"LBC",recipsp=="Lesser green leafbird"~"LGL",recipsp=="Lineated barbet"~"LB",
-    recipsp=="Little tern"~"LT",recipsp=="Long-tailed macaque"~"MQ",recipsp=="NA"~"NA",recipsp== "Oriental dollarbird"~"ODB",recipsp== "Oriental magpie robin"~"OMPR",recipsp=="Oriental pied hornbill"~"OPH",recipsp=="Pink necked green pigeon"~"DV",recipsp=="Rock dove"~"DV",recipsp=="Spotted dove"~"DV",recipsp=="Swift sp."~"SW",recipsp=="White-bellied kingfisher"~"KF",
-    recipsp=="Yellow vented bulbul"~"BB",recipsp=="Zebra dove"~"DV",recipsp=="Yellow crested cockatoo"~"YCC"))    
-ltp.ch<-ltp.ch %>% ungroup %>% select(interaction,RS,n)
-
 #...TC----
 tc.ch<-Interact %>% 
   filter(recipsp!="NA") %>% filter(initsp=="Tanimbar corella") %>%  
@@ -213,6 +202,19 @@ rrp.ch<-rrp.ch %>%
     recipsp=="Little tern"~"LT",recipsp=="Long-tailed macaque"~"MQ",recipsp=="NA"~"NA",recipsp== "Oriental dollarbird"~"ODB",recipsp== "Oriental magpie robin"~"OMPR",recipsp=="Oriental pied hornbill"~"OPH",recipsp=="Pink necked green pigeon"~"DV",recipsp=="Rock dove"~"DV",recipsp=="Spotted dove"~"DV",recipsp=="Swift sp."~"SW",recipsp=="White-bellied kingfisher"~"KF",
     recipsp=="Yellow vented bulbul"~"BB",recipsp=="Zebra dove"~"DV",recipsp=="Yellow crested cockatoo"~"YCC"))    
 rrp.ch<-rrp.ch %>% ungroup %>% select(interaction,RS,n)
+
+#...LTP----
+ltp.ch<-Interact %>% 
+  filter(recipsp!="NA") %>% filter(initsp=="Long-tailed parakeet") %>%  
+  group_by(interaction,recipsp,isout) %>% tally() %>% select(-isout)
+view(ltp.ch)
+ltp.ch<-ltp.ch %>% 
+  mutate(RS=case_when(
+    recipsp=="Monk parakeet"~"MP",recipsp=="Tanimbar corella"~"TC",recipsp=="Rose ringed parakeet"~"RRP",recipsp=="Red-breasted parakeet"~"RBP",recipsp=="Long-tailed parakeet"~"LTP",recipsp=="Asian glossy starling"~"AGS",recipsp=="Asian koel"~"AK",recipsp=="Black naped oriole"~"BNO",recipsp=="Blue tailed bee eater"~"BE",
+    recipsp=="Brown throated sunbird"~"SB",recipsp=="Collared kingfisher"~"KF",recipsp=="Common flameback"~"WP",recipsp=="Common hill myna"~"CHM",recipsp=="House crow"~"HC",recipsp=="House sparrow"~"HS",recipsp=="Javan myna"~"JM",recipsp=="Large billed crow"~"LBC",recipsp=="Lesser green leafbird"~"LGL",recipsp=="Lineated barbet"~"LB",
+    recipsp=="Little tern"~"LT",recipsp=="Long-tailed macaque"~"MQ",recipsp=="NA"~"NA",recipsp== "Oriental dollarbird"~"ODB",recipsp== "Oriental magpie robin"~"OMPR",recipsp=="Oriental pied hornbill"~"OPH",recipsp=="Pink necked green pigeon"~"DV",recipsp=="Rock dove"~"DV",recipsp=="Spotted dove"~"DV",recipsp=="Swift sp."~"SW",recipsp=="White-bellied kingfisher"~"KF",
+    recipsp=="Yellow vented bulbul"~"BB",recipsp=="Zebra dove"~"DV",recipsp=="Yellow crested cockatoo"~"YCC"))    
+ltp.ch<-ltp.ch %>% ungroup %>% select(interaction,RS,n)
 
 #PLOTS----
 circos.clear()
@@ -246,15 +248,6 @@ circos.track(track.index = 1, panel.fun = function(x, y) {
 }, bg.border = NA)
 title(main = "Monk parakeet initiated interactions")
 
-#plot LTP----
-chordDiagram(ltp.ch,grid.col=grid.col.all,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
-             preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
-circos.track(track.index = 1, panel.fun = function(x, y) {
-  circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index, 
-              facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5))
-}, bg.border = NA)
-title(main = "Long-tailed parakeet initiated interactions")
-
 #plot TC----
 chordDiagram(tc.ch,grid.col=grid.col.all,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
              preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
@@ -272,4 +265,13 @@ circos.track(track.index = 1, panel.fun = function(x, y) {
               facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5))
 }, bg.border = NA)
 title(main = "Rose ringed parakeet initiated interactions")
+
+#plot LTP----
+chordDiagram(ltp.ch,grid.col=grid.col.all,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
+             preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index, 
+              facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5))
+}, bg.border = NA)
+title(main = "Long-tailed parakeet initiated interactions")
 
