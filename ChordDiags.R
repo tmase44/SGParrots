@@ -218,7 +218,7 @@ rrp.ch<-rrp.ch %>% ungroup %>% select(interaction,RS,n)
 circos.clear()
 par(mfrow=c(2,3))
 #plot all----
-grid.col.all=c("NE"="#D3DDDC","Displace"="#DBB165","Swoop"="#DEB18B","Chase"="#2E604A","Threat"="#27223C","Contact"="#D1362F","Fight"="black",
+grid.col.all=c("NE"="#D3DDDC","Displace"="#DBB165","Swoop"="#1DACE8","Chase"="#2E604A","Threat"="#27223C","Contact"="#D1362F","Fight"="#F24D29",
                "MP"="grey","TC"="grey","RRP"="grey","RBP"="grey","LTP"="grey","AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey","HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey","LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey","DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
 chordDiagram(all.ch,grid.col=grid.col.all,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
              preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
@@ -229,9 +229,7 @@ circos.track(track.index = 1, panel.fun = function(x, y) {
 title(main = "All parrot initiated interactions")
 
 #plot RBP----
-grid.col.rbp=c("NE"="#D3DDDC","Displace"="#DBB165","Swoop"="#DEB18B","Chase"="#2E604A","Threat"="#27223C","Contact"="#D1362F","Fight"="black",
-               "MP"="grey","TC"="grey","RRP"="grey","RBP"="grey","LTP"="grey","AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey","HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey","LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey","DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
-chordDiagram(rbp.ch,grid.col=grid.col.rbp,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
+chordDiagram(rbp.ch,grid.col=grid.col.all,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
              preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
 circos.track(track.index = 1, panel.fun = function(x, y) {
   circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index, 
@@ -240,9 +238,7 @@ circos.track(track.index = 1, panel.fun = function(x, y) {
 title(main = "Red-breasted parakeet initiated interactions")
 
 #plot MP----
-grid.col.mp=c("NE"="#D3DDDC","Displace"="#DBB165","Swoop"="#DEB18B","Chase"="#2E604A","Threat"="#27223C","Contact"="#D1362F","Fight"="black",
-               "MP"="grey","TC"="grey","RRP"="grey","RBP"="grey","LTP"="grey","AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey","HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey","LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey","DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
-chordDiagram(mp.ch,grid.col=grid.col.mp,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
+chordDiagram(mp.ch,grid.col=grid.col.all,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
              preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
 circos.track(track.index = 1, panel.fun = function(x, y) {
   circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index, 
@@ -251,9 +247,7 @@ circos.track(track.index = 1, panel.fun = function(x, y) {
 title(main = "Monk parakeet initiated interactions")
 
 #plot LTP----
-grid.col.ltp=c("NE"="#D3DDDC","Displace"="#DBB165","Swoop"="#DEB18B","Chase"="#2E604A","Threat"="#27223C","Contact"="#D1362F","Fight"="black",
-              "MP"="grey","TC"="grey","RRP"="grey","RBP"="grey","LTP"="grey","AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey","HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey","LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey","DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
-chordDiagram(ltp.ch,grid.col=grid.col.ltp,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
+chordDiagram(ltp.ch,grid.col=grid.col.all,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
              preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
 circos.track(track.index = 1, panel.fun = function(x, y) {
   circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index, 
@@ -262,9 +256,7 @@ circos.track(track.index = 1, panel.fun = function(x, y) {
 title(main = "Long-tailed parakeet initiated interactions")
 
 #plot TC----
-grid.col.tc=c("NE"="#D3DDDC","Displace"="#DBB165","Swoop"="#DEB18B","Chase"="#2E604A","Threat"="#27223C","Contact"="#D1362F","Fight"="black",
-               "MP"="grey","TC"="grey","RRP"="grey","RBP"="grey","LTP"="grey","AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey","HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey","LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey","DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
-chordDiagram(tc.ch,grid.col=grid.col.tc,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
+chordDiagram(tc.ch,grid.col=grid.col.all,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
              preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
 circos.track(track.index = 1, panel.fun = function(x, y) {
   circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index, 
@@ -273,12 +265,11 @@ circos.track(track.index = 1, panel.fun = function(x, y) {
 title(main = "Tanimbar corella initiated interactions")
 
 #plot RRP----
-grid.col.rrp=c("NE"="#D3DDDC","Displace"="#DBB165","Swoop"="#DEB18B","Chase"="#2E604A","Threat"="#27223C","Contact"="#D1362F","Fight"="black",
-              "MP"="grey","TC"="grey","RRP"="grey","RBP"="grey","LTP"="grey","AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey","HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey","LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey","DV"="grey","SW"="grey","BB"="grey","YCC"="grey")
-chordDiagram(rrp.ch,grid.col=grid.col.rrp,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
+chordDiagram(rrp.ch,grid.col=grid.col.all,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
              preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
 circos.track(track.index = 1, panel.fun = function(x, y) {
   circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index, 
               facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5))
 }, bg.border = NA)
 title(main = "Rose ringed parakeet initiated interactions")
+
