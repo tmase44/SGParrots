@@ -20,7 +20,7 @@ Interact$rsout<-as.factor(Interact$rsout)
 #Interaction ratings
 Interact<-Interact %>% 
   mutate(rating=case_when(
-    interaction=="NE"~"1",
+    interaction=="Neutral"~"1",
     interaction=="Displace"~"2",
     interaction=="Swoop"~"3",
     interaction=="Threat"~"4",
@@ -33,17 +33,14 @@ Interact$rating<-factor(Interact$rating,
 #Interact2<-Interact %>% 
  # filter(initsp!="Long-tailed parakeet" | recipsp!="Long-tailed parakeet")#
 
-
-
 # SUBSETS----
-IS<-Interact %>% 
-  filter(interaction!="NE") %>% 
+Interact %>% 
+  filter(interaction!="Neutral") %>% 
   group_by(initsp,recipsp) %>% 
   tally() %>% 
   mutate(freq=n/sum(n)*100) %>%
   arrange(desc(initsp)) %>% 
   arrange(desc(n))
-view(IS)
 
 # ...all initators----
 initiators<-Interact %>% 
@@ -75,7 +72,7 @@ isrs2<-isrs %>%
   summarise(total=sum(n))
 view(isrs2)
 isrs2$interaction<-factor(isrs2$interaction,
-                        levels = c("NE","Displace","Swoop","Threat","Chase","Contact","Fight"))
+                        levels = c("Neutral","Displace","Swoop","Threat","Chase","Contact","Fight"))
 isrs2$outcome<-factor(isrs2$outcome,
                           levels = c("W","NE","L"))
 unique(isrs2$interaction)
@@ -129,10 +126,11 @@ isrs2 %>%
   labs(x='Species',y='%',title='Wins, Losses, Neutral outcomes')+
   scale_fill_brewer(palette="Spectral",direction=-1)
 
-#...W/L proportion----
+#...W/L vol by role----
 isrs2 %>% 
+  filter(interaction!='Neutral') %>% 
   ggplot(aes(species,total,fill=outcome))+
-  geom_col(position='fill')+
+  geom_col()+
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
   labs(x='Species',y='%',title='Outcomes when IS or RS')+
   scale_fill_brewer(palette="Spectral",direction=-1)+
