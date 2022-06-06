@@ -1,92 +1,90 @@
-library(tidyverse)
-library(vegan)
-library(lubridate)
+# LOAD PACKS----
+library(pacman)
+p_load(tidyverse,vegan,lubridate,gridExtra,circlize,stringr,readxl,wesanderson)
 
-changiv<-read.csv("Composition/Comp_ChangiVill.csv")
-dim(changiv)
-head(changiv)
-class(changiv)
-summary(changiv)
-ls(changiv)
+
+# IMPORT DATA----
+Composition <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
+                       sheet = "Composition")
+ls(Composition)
 
 # factorize
-changiv$Object<-factor(changiv$Object)
-changiv$Region.Label<-factor(changiv$Region.Label)
-changiv$Study.Area<-factor(changiv$Study.Area)
-changiv$Sample.Label<-factor(changiv$Sample.Label)
-changiv$AMPM<-factor(changiv$AMPM)
-
-# dates 
-changiv$Date<-dmy(changiv$Date)
+Composition$Object<-factor(Composition$Object)
+Composition$Region.Label<-factor(Composition$Region.Label)
+Composition$Study.Area<-factor(Composition$Study.Area)
+changiv$Sample.Label<-factor(Composition$Sample.Label)
+Composition$AMPM<-factor(Composition$AMPM)
+Composition$Surveyno<-factor(Composition$Surveyno)
 
 # hist
-changiv %>% 
-  filter(Distance<=50) %>% 
+Composition %>% 
+  filter(Distance<=150) %>% 
   ggplot(aes(Distance))+
   geom_histogram(bins = 10,
                  colour="black",fill="white")+
   scale_x_continuous(breaks=seq(0,50,by=5))+
-  labs(title="Transect observations: Changi Village")
+  labs(title="Transect observations")+
+  facet_wrap(~Study.Area)
 
 # line hist
-changiv %>% 
+Composition %>% 
   ggplot(aes(Distance)) + 
   geom_density(adjust=2)
 
 #for parrots
-rbpobs<-changiv %>% 
-  filter(Object=="Red-breasted parakeet" | Object=="Tanimbar corella")
-
-rbpobs %>% 
+Composition %>% 
+  filter(Object=="Red-breasted parakeet" | Object=="Tanimbar corella"|
+           Object=="Rose ringed parakeet"|Object=="Long tailed parakeet"|
+           Object=="Monk parakeet") %>% 
   ggplot(aes(Distance,color=Object)) + 
   geom_density(adjust=2)
 
 
 # Summary of the survey----
-unique(changiv$Object) # by name
-n_distinct(changiv$Object) # by qty = 32
+unique(Composition$Object) # by name
+n_distinct(Composition$Object) # by qty
 
 # total species count, proportion total and daily obs
-changiv %>%
-  group_by(Object)%>%
+Compsum<-Composition %>%
+  group_by(Study.Area,Object)%>%
   summarize(n=n())%>%
   mutate(freq=n/sum(n)*100) %>% 
   mutate(average_obs=(n)/8) %>% 
-  arrange(desc(freq))
+  arrange(Study.Area,desc(freq))
+view(Compsum)
 # with DATE variable
-changiv2<-changiv %>%
-  group_by(Date,Object)%>%
+Compsumdat<-Composition %>%
+  group_by(Study.Area,date,Object)%>%
   summarize(n=n())%>%
   mutate(freq=n/sum(n)*100) %>% 
-  arrange(desc(freq))
-#daily ALPHA measurement
-changialpha<-changiv2 %>% 
-  select(-freq) %>% 
-  spread(key=Object,value=n) %>% 
-  replace(is.na(.), 0) %>% 
-  remove_rownames %>% 
-  column_to_rownames(var="Date")
-view(changialpha)
+  arrange(Study.Area,desc(freq))
+#daily ALPHA measurement needs splitting by plot
+alpha_chang<-Compsumdat %>% 
+  filter(Study.Area=="Changi Village") %>% 
+  select(-freq) %>% spread(key=Object,value=n) %>% 
+  replace(is.na(.), 0) %>% remove_rownames %>% 
+  column_to_rownames(var="date")
+view(alpha_chang)
 
 #Richness----
 fun.1<-function(x){sum(x>0)}
-ch_richness<-apply(changialpha, 1, FUN=fun.1)
+ch_richness<-apply(alpha_chang, 1, FUN=fun.1)
 richness<-data.frame(ch_richness)
 colnames(richness)<-"Richness"
 view(richness)
 
 #Shannon index----
-for (changialpha.row in 1:4)
-{shannon<- matrix(diversity(changialpha[,], index = "shannon"))}
+for (alpha_chang.row in 1:4)
+{shannon<- matrix(diversity(alpha_chang[,], index = "shannon"))}
 shannon<-round(shannon,3)
 #Adjusting output names of rows and columns
-row.names(shannon)<-row.names(changialpha)
+row.names(shannon)<-row.names(alpha_chang)
 colnames(shannon)<-"Shannon"
 view(shannon)
 
 #Simpson index----
-for (changialpha.row in 1:4)
-{simpson<- matrix(diversity(changialpha[,], index = "simpson"))}
+for (alpha_chang.row in 1:4)
+{simpson<- matrix(diversity(alpha_chang[,], index = "simpson"))}
 simpson<-round(simpson,3)
 #Adjusting the names of rows and columns
 row.names(simpson)<-row.names(changialpha)
