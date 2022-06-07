@@ -12,8 +12,8 @@ ls(Composition)
 Composition$Object<-factor(Composition$Object)
 Composition$Region.Label<-factor(Composition$Region.Label)
 Composition$Study.Area<-factor(Composition$Study.Area)
-changiv$Sample.Label<-factor(Composition$Sample.Label)
-Composition$AMPM<-factor(Composition$AMPM)
+Composition$Sample.Label<-factor(Composition$Sample.Label)
+Composition$ampm<-factor(Composition$ampm)
 
 # Daily trend---
 Daily.richness<-Composition %>% 
@@ -40,8 +40,6 @@ Daily.interact %>%
        title = 'Daily interactions observed')
 
 
-
-
 # hist
 Composition %>% 
   filter(Distance<=150) %>% 
@@ -49,7 +47,7 @@ Composition %>%
   geom_histogram(bins = 10,
                  colour="black",fill="white")+
   scale_x_continuous(breaks=seq(0,50,by=5))+
-  labs(title="Transect observations")+
+  labs(title="Transect observations sum of all")+
   facet_wrap(~Study.Area)
 
 # line hist
@@ -63,12 +61,29 @@ Composition %>%
            Object=="Rose ringed parakeet"|Object=="Long tailed parakeet"|
            Object=="Monk parakeet") %>% 
   ggplot(aes(Distance,color=Object)) + 
-  geom_density(adjust=2)
+  geom_density(adjust=2)+labs(title = "Transect observations: Parrots")
 
 
 # Summary of the survey----
 unique(Composition$Object) # by name
 n_distinct(Composition$Object) # by qty
+
+#MAX daily counts----
+Comp.max<-Composition %>% 
+  group_by(Study.Area,Object,Surveyno) %>% 
+  summarise(n=n()) %>% 
+  select(-Surveyno) %>% summarise(max_obs = max(n)) %>% 
+  arrange(Study.Area,desc(max_obs))
+view(Comp.max)
+
+Comp.max %>% ggplot(aes(Study.Area,max_obs))+
+  geom_jitter(aes(color=Object),width=0.2,size=4,alpha=0.6)+
+  scale_color_manual(values=c('Red-breasted parakeet'='red','Monk parakeet'='#3ACF3A','Rose ringed parakeet'='purple',
+                              'Tanimbar corella'='orange','Long tailed parakeet'='#1DACE8','Javan myna'='black'))+
+  #ylim(0,40)+ # outlier 75 mynas 
+  labs(title = 'Max daily counts per site, species',color="Species")#change legend title!!
+
+
 
 # total species count, proportion total and daily obs
 Compsum<-Composition %>%

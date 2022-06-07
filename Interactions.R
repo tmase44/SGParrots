@@ -87,7 +87,7 @@ isrs2$species2 = str_wrap(isrs2$species, width = 10)
 isrs2
 #palettes https://rstudio-pubs-static.s3.amazonaws.com/5312_98fc1aba2d5740dd849a5ab797cc2c8d.html 
 
-#...Total interactions----
+#...1 Total interactions----
 isrs2 %>% 
   group_by(species) %>% 
   summarise(n=sum(total)) %>% 
@@ -107,7 +107,7 @@ isrs2 %>%
         legend.position = 'none')+
   labs(x='Interaction',y='n',title='n Interaction type by species')
 
-#...Roles----
+#...1.2 Roles----
 isrs2 %>% 
   group_by(species,role) %>% 
   summarise(n=sum(total)) %>% 
@@ -116,15 +116,15 @@ isrs2 %>%
   geom_text(aes(label = n),position=position_stack(vjust=.5))+ 
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
   labs(x='Species',y='n',title='Role in interactions (initiator [IS] or recipient [RS]')+
-  scale_fill_brewer(palette="Set3")
+  scale_fill_manual(values=c('IS'='#456355','RS'='#FCD16B'))
 
-#...W/L proportion----
+#...2 W/L/Neutral proportion----
 isrs2 %>% 
   ggplot(aes(species,total,fill=outcome))+
   geom_col(position='fill')+
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
-  labs(x='Species',y='%',title='Wins, Losses, Neutral outcomes')+
-  scale_fill_brewer(palette="Spectral",direction=-1)
+  labs(x='Species',y='%',title='Proportion of Wins, Losses, Neutral interactions')+
+  scale_fill_manual(values=c('W'='#00BFC4','NE'='#C4CFD0','L'='#F8766D'))
 
 #...W/L vol by role----
 isrs2 %>% 
@@ -133,20 +133,40 @@ isrs2 %>%
   geom_col()+
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
   labs(x='Species',y='%',title='Outcomes when IS or RS')+
-  scale_fill_brewer(palette="Spectral",direction=-1)+
+  scale_fill_manual(values=c('W'='#00BFC4','L'='#F8766D'))+
   facet_wrap(~role)
 
-# ...Outcome proportion by species----
-isrs2 %>% 
+# ...3 Win-Loss proportion of all interactions----
+p3<-isrs2 %>% 
   filter(outcome!='NE') %>% 
-  ggplot(aes(interaction,total,fill=outcome))+
+  ggplot(aes(species,total,fill=outcome))+
   geom_col(position = 'fill')+
-  facet_wrap(~species,2,3)+
-  theme(axis.text.x = element_text
-        (angle = 90, vjust = 0.5, hjust=1,size=7),
-        legend.position = 'none')+
-  labs(x='Interaction',y='%',title='Win/Loss proportion by species & action')
+  #facet_wrap(~species,2,3)+
+  labs(x='Interaction',y='%',title='Win/Loss proportion by species')+
+  scale_fill_manual(values=c('W'='#00BFC4','L'='#F8766D'))+theme_bw()+
+  scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))
 
+# ...4 Win-Loss proportion of IS interactions----
+p4<-isrs2 %>% 
+  filter(outcome!='NE'&role=='IS') %>% 
+  ggplot(aes(species,total,fill=outcome))+
+  geom_col(position = 'fill')+
+  #facet_wrap(~species,2,3)+
+  labs(x='Interaction',y='%',title='Win/Loss proportion of initated interactions')+
+  scale_fill_manual(values=c('W'='#00BFC4','L'='#F8766D'))+theme_bw()+
+  scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))
+
+# ...4 Win-Loss proportion of RS interactions----
+p5<-isrs2 %>% 
+  filter(outcome!='NE'&role=='RS') %>% 
+  ggplot(aes(species,total,fill=outcome))+
+  geom_col(position = 'fill')+
+  #facet_wrap(~species,2,3)+
+  labs(x='Interaction',y='%',title='Win/Loss proportion of recieved interactions')+
+  scale_fill_manual(values=c('W'='#00BFC4','L'='#F8766D'))+theme_bw()+
+  scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))
+
+grid.arrange(p3,p4,p5,ncol=3)
 
 # ...Interaction proportion----
 isrs2 %>% 
@@ -189,3 +209,10 @@ isrs2 %>%
           axis.text.x = element_text(size = 6.5))+
   labs(x='Interaction',y='n',title='Win/Loss proportion by action & species')
 
+# PROXIMITY TO NEST
+
+Interact %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet"| initsp=="Javan myna") %>%  
+  ggplot(aes(nxt_cav,color=interaction))+
+  geom_jitter(stat='count',size=4,alpha=0.7)+xlim(0,100)+
+  facet_wrap(~initsp)
