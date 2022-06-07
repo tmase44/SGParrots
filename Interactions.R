@@ -65,6 +65,16 @@ view(recipients)
 #...combine----
 isrs<-rbind(initiators,recipients)
 view(isrs)
+#...no filter
+isrsall<-isrs %>% 
+  group_by(species,role,interaction,outcome) %>%
+  summarise(total=sum(n))
+view(isrsall)
+isrsall$interaction<-factor(isrsall$interaction,
+                          levels = c("Neutral","Displace","Swoop","Threat","Chase","Contact","Fight"))
+isrsall$outcome<-factor(israll2$outcome,
+                      levels = c("W","NE","L"))
+
 #... parrot filter
 isrs2<-isrs %>% 
   filter(species=="Monk parakeet"|species=="Tanimbar corella"|species=="Rose ringed parakeet"|species=="Red-breasted parakeet"|species=="Long-tailed parakeet"| species=="Javan myna") %>%  
@@ -96,6 +106,12 @@ isrs2 %>%
   geom_text(aes(label = n), vjust = -0.5)+
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
   labs(x='Species',y='n',title='Total interactions')
+
+isrsall %>% group_by(species) %>% summarise(n=sum(total)) %>% 
+  ggplot(aes(species,n))+
+  geom_col(position='dodge')+coord_flip()+
+  labs(x='Species',y='total interactions',title='Total interactions')
+
 
 # n Interaction species----
 isrs2 %>% 
@@ -216,3 +232,4 @@ Interact %>%
   ggplot(aes(nxt_cav,color=interaction))+
   geom_jitter(stat='count',size=4,alpha=0.7)+xlim(0,100)+
   facet_wrap(~initsp)
+
