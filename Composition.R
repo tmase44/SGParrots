@@ -122,7 +122,7 @@ View(Indices)
 
 
 # plot indices----
-Indices %>% 
+plot.indices<-Indices %>% 
   ggplot(aes(x=Simpson,y=Shannon,
                            label=row.names(Indices))) +
   geom_point(aes(color=Richness), size=4) +
@@ -130,12 +130,16 @@ Indices %>%
   geom_text(hjust=0.5,vjust=-1)+
   labs(title = 'Alpha biodiversity of each survey site')
 
+# species proportion per site
 Comp.max2<-Comp.max %>%
   group_by(Study.Area) %>% 
   mutate(Proportion=max_obs/sum(max_obs)*100)
 
-Comp.max2 %>% 
+# plot proportion at sites----
+plot.prop<-Comp.max2 %>% 
   filter(Species=="Monk parakeet"|Species=="Red-breasted parakeet"|Species=="Tanimbar corella"|
-           Species=="Long tailed parakeet"|Species=="Rose ringed parakeet") %>% 
-  ggplot(aes(Study.Area,Proportion,color=Species))+
-  geom_point()  
+           Species=="Long tailed parakeet"|Species=="Rose ringed parakeet"|Species=="Javan myna") %>% 
+  ggplot(aes(Study.Area,Proportion,color=Species,size=max_obs))+
+  geom_point()+labs(title = 'Proportion of parrots in community')  
+
+grid.arrange(plot.indices,plot.prop,ncol=2)

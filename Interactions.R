@@ -173,7 +173,7 @@ p4<-isrs2 %>%
   scale_fill_manual(values=c('W'='#00BFC4','L'='#F8766D'))+theme_bw()+
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))
 
-# ...4 Win-Loss proportion of RS interactions----
+# ...5 Win-Loss proportion of RS interactions----
 p5<-isrs2 %>% 
   filter(outcome!='NE'&role=='RS') %>% 
   ggplot(aes(species,total,fill=outcome))+
