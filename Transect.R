@@ -1,12 +1,15 @@
-library(tiyverse)
-library(Distance)
+library(pacman)
+p_load(tidyverse,vegan,lubridate,gridExtra,circlize,stringr,readxl,wesanderson,Distance)
 
+# IMPORT DATA----
+Transect <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
+                          sheet = "Composition")
 # based on df prepared in Composition
 # distance col must have lower case d----
-changiv<-rename(changiv,distance = Distance)
+Transect<-rename(Transect,distance = Distance)
 
 # distance measurements by species
-changiv %>% 
+Transect %>% 
   ggplot(aes(distance))+
   geom_histogram(bins = 11,
                  binwidth = 5,#sets bins to same as 'by' count below
@@ -15,10 +18,10 @@ changiv %>%
   scale_x_continuous(breaks=seq(0,60,by=5))+
   labs(x="Distance (m)", y="Frequency",
        title = "Line transects")+
-  facet_wrap(~Object,ncol =6)
+  facet_wrap(~Species,ncol =6)
 
-ts_rbp<-changiv %>% 
-  filter(Object == "Red-breasted parakeet") %>% 
+ts_rbp<-Transect %>% 
+  filter(Species == "Red-breasted parakeet") %>% 
   select(Region.Label,Study.Area,Area,Sample.Label,Effort,Object,distance)
 view(ts_rbp)
 

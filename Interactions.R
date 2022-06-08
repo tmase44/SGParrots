@@ -12,6 +12,7 @@ unique(Interact$initsp)
 unique(Interact$interaction)
 
 #...Factorize----
+Interact$Study.Area<-as.factor(Interact$Study.Area)
 Interact$initsp<-as.factor(Interact$initsp)
 Interact$recipsp<-as.factor(Interact$recipsp)
 Interact$interaction<-as.factor(Interact$interaction)
