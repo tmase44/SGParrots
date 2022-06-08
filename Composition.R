@@ -39,22 +39,7 @@ Daily.interact %>%
        title = 'Daily interactions observed')
 
 
-# hist
-Composition %>% 
-  filter(Distance<=150) %>% 
-  ggplot(aes(Distance))+
-  geom_histogram(bins = 10,
-                 colour="black",fill="white")+
-  scale_x_continuous(breaks=seq(0,50,by=5))+
-  labs(title="Transect observations sum of all")+
-  facet_wrap(~Study.Area)
-
-# line hist
-Composition %>% 
-  ggplot(aes(Distance)) + 
-  geom_density(adjust=2)
-
-#for parrots
+#histogram line parrots
 Composition %>% 
   filter(Species=="Red-breasted parakeet" | Species=="Tanimbar corella"|
            Species=="Rose ringed parakeet"|Species=="Long tailed parakeet"|
@@ -76,12 +61,11 @@ Comp.max<-Composition %>%
 view(Comp.max)
 
 Comp.max %>% ggplot(aes(Study.Area,max_obs))+
-  geom_jitter(aes(color=Species),width=0.2,size=3,alpha=0.6)+
+  geom_jitter(aes(color=Species),width=0.2,size=5,alpha=0.6)+coord_trans(y='log2')+
   scale_color_manual(values=c('Red-breasted parakeet'='red','Monk parakeet'='#3ACF3A','Rose ringed parakeet'='purple',
-                              'Tanimbar corella'='orange','Long tailed parakeet'='#1DACE8','Javan myna'='black'))+
+                              'Tanimbar corella'='orange','Long tailed parakeet'='#1DACE8','Javan myna'='black',"Others"="dark grey"))+
   #ylim(0,40)+ # outlier 75 mynas 
-  labs(title = 'Max daily counts per site, species',color="Species")#change legend title!!
-
+  labs(title = 'Max daily counts per site, species',color="Species")+#change legend title!!
 
 # spread/gather for alpha measurement----
 Comp.alpha<-Comp.max %>% spread(key=Species,value = max_obs) %>% 
