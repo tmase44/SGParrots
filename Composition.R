@@ -1,6 +1,6 @@
 # LOAD PACKS----
 library(pacman)
-p_load(tidyverse,vegan,lubridate,gridExtra,circlize,stringr,readxl,wesanderson)
+p_load(formattable,tidyverse,vegan,lubridate,gridExtra,circlize,stringr,readxl,wesanderson)
 
 
 # IMPORT DATA----
@@ -104,7 +104,6 @@ Indices<-data.frame(Indices)
 View(Indices)
 #indices$Richness<-factor(indices$Richness)
 
-
 # plot indices----
 plot.indices<-Indices %>% 
   ggplot(aes(x=Simpson,y=Shannon,
@@ -113,11 +112,14 @@ plot.indices<-Indices %>%
   xlim(0.85,1.0)+ylim(2.5,4.0)+
   geom_text(hjust=0.5,vjust=-1)+
   labs(title = 'Alpha biodiversity of each survey site')
+plot.indices
+# table
+formattable(Indices)
 
 # species proportion per site
 Comp.max2<-Comp.max %>%
   group_by(Study.Area) %>% 
-  mutate(Proportion=max_obs/sum(max_obs)*100)
+  mutate(Proportion=round(max_obs/sum(max_obs)*100,2))
 
 # plot proportion at sites----
 plot.prop<-Comp.max2 %>% 
@@ -125,5 +127,12 @@ plot.prop<-Comp.max2 %>%
            Species=="Long tailed parakeet"|Species=="Rose ringed parakeet"|Species=="Javan myna") %>% 
   ggplot(aes(Study.Area,Proportion,color=Species,size=max_obs))+
   geom_point()+labs(title = 'Proportion of parrots in community')  
+plot.prop
+#table
+plot.prop.table<-Comp.max2 %>% 
+  filter(Species=="Monk parakeet"|Species=="Red-breasted parakeet"|Species=="Tanimbar corella"|
+           Species=="Long tailed parakeet"|Species=="Rose ringed parakeet"|Species=="Javan myna")
+  
+formattable(plot.prop.table)
 
 grid.arrange(plot.indices,plot.prop,ncol=2)

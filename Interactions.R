@@ -27,12 +27,9 @@ Interact<-Interact %>%
     interaction=="Threat"~"4",
     interaction=="Chase"~"5",
     interaction=="Contact"~"6",
-    interaction=="Fight"~"6"))
-Interact$rating<-factor(Interact$rating,
-                                levels = c("1","2","3","4","5","6"))
-#... remove intra-specifics----
-#Interact2<-Interact %>% 
- # filter(initsp!="Long-tailed parakeet" | recipsp!="Long-tailed parakeet")#
+    interaction=="Fight"~"7"))
+Interact$rating<-as.numeric(Interact$rating)
+
 
 # SUBSETS----
 Interact %>% 
@@ -189,3 +186,65 @@ Interact %>%
   geom_jitter(stat='count',size=4,alpha=0.7)+xlim(0,100)+
   facet_wrap(~initsp)
 
+# TABLES----
+
+# AGGRESSION RATING----
+view(Interact)
+rating<-Interact %>% select(initsp,interaction,rating) %>%    
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
+           initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
+  group_by(initsp) %>% summarise('Aggression score'=round(mean(rating),2)) %>% 
+  arrange(match(initsp,c("Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet","Monk parakeet","Long-tailed parakeet"))) %>%
+  rename(Species=initsp) #%>% column_to_rownames(var="Species")
+view(rating)
+
+actions<-Interact %>% select(initsp,interaction,rating) %>%  
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
+           initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
+  group_by(initsp,interaction) %>% 
+  tally() %>% mutate(freq=round(n/sum(n)*100,2)) %>% select(-n) %>% 
+  spread(key=interaction,value = freq) %>% replace(is.na(.), 0) %>% 
+  arrange(match(initsp,c("Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet",
+                             "Monk parakeet","Long-tailed parakeet"))) %>% rename(Species=initsp)
+actions<-cbind(actions,rating[,2]) %>% relocate(1,9,6,4,8,7,2,3,5)
+view(actions)
+
+formattable(actions,
+            align=c('r','c','c','c','c','c','c','c','c'),
+            list(`Species` = formatter("span", style = ~ style(font.weight = "bold")),
+                 'Neutral'=color_tile(customL,customH),
+                 'Displace'=color_tile(customL,customH),
+                 'Threat'=color_tile(customL,customH),
+                 'Swoop'=color_tile(customL,customH),
+                 'Chase'=color_tile(customL,customH),
+                 'Contact'=color_tile(customL,customH),
+                 'Fight'=color_tile(customL,customH),
+                 'Aggression score'=color_tile(customRL,customRH)))
+
+
+# Overall aggression score split between sites
+
+rating2<-Interact %>% 
+  select(Study.Area,initsp,interaction,rating) %>%    
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
+           initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
+  group_by(Study.Area,initsp) %>% summarise('Aggression score'=round(mean(rating),2)) %>% 
+  spread(key=Study.Area,value = 'Aggression score') %>% 
+  arrange(match(initsp,c("Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet",
+                         "Monk parakeet","Long-tailed parakeet"))) %>% 
+  rename(Species=initsp)
+rating2<-cbind(rating2,rating[,2,drop=FALSE]) %>% relocate(1,5,2,3,4)
+view(rating2)
+
+formattable(rating2,
+            align=c('r','c','c','c','c'),
+            list(`Species` = formatter("span", style = ~ style(font.weight = "bold")),
+                 area(row=1,col=-1)~color_tile(customRL,customRH),
+                 area(row=2,col=-1)~color_tile(customRL,customRH),
+                 area(row=3,col=-1)~color_tile(customRL,customRH),
+                 area(row=4,col=-1)~color_tile(customRL,customRH),
+                 area(row=5,col=-1)~color_tile(customRL,customRH)))
+
+view(rating)
+
+par(mfrow=c(1,2))
