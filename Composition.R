@@ -65,7 +65,7 @@ Comp.max %>% ggplot(aes(Study.Area,max_obs))+
   scale_color_manual(values=c('Red-breasted parakeet'='red','Monk parakeet'='#3ACF3A','Rose ringed parakeet'='purple',
                               'Tanimbar corella'='orange','Long tailed parakeet'='#1DACE8','Javan myna'='black',"Others"="dark grey"))+
   #ylim(0,40)+ # outlier 75 mynas 
-  labs(title = 'Max daily counts per site, species',color="Species")+#change legend title!!
+  labs(title = 'Max daily counts per site, species',color="Species")#change legend title!!
 
 # spread/gather for alpha measurement----
 Comp.alpha<-Comp.max %>% spread(key=Species,value = max_obs) %>% 

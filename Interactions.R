@@ -21,15 +21,24 @@ Interact$rsout<-as.factor(Interact$rsout)
 #Interaction ratings
 Interact<-Interact %>% 
   mutate(rating=case_when(
-    interaction=="Neutral"~"1",
-    interaction=="Displace"~"2",
+    interaction=="Neutral"~"0",
+    interaction=="Displace"~"1",
     interaction=="Swoop"~"3",
-    interaction=="Threat"~"4",
-    interaction=="Chase"~"5",
-    interaction=="Contact"~"6",
-    interaction=="Fight"~"7"))
+    interaction=="Threat"~"2",
+    interaction=="Chase"~"3",
+    interaction=="Contact"~"4",
+    interaction=="Fight"~"4"))
 Interact$rating<-as.numeric(Interact$rating)
 
+#PARROTS ONLY----
+Interact2<-Interact %>% filter(interaction!='Neutral') %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
+                                 initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
+  mutate(SP=case_when(initsp=="Monk parakeet"~"MP",
+                     initsp=="Tanimbar corella"~"TC",
+                     initsp=="Rose ringed parakeet"~"RRP",
+                     initsp=="Red-breasted parakeet"~"RBP",
+                     initsp=="Long-tailed parakeet"~"LTP"))
 
 # SUBSETS----
 Interact %>% 
@@ -40,6 +49,7 @@ Interact %>%
   arrange(desc(initsp)) %>% 
   arrange(desc(n))
 
+
 # ...all initators----
 initiators<-Interact %>% 
   filter(recipsp!="NA") %>% 
@@ -48,8 +58,6 @@ initiators<-Interact %>%
 initiators<-rename(initiators,species=initsp)  
 initiators<-rename(initiators,outcome=isout)
 initiators$role<-'IS' # identify IS/RS
-view(initiators)
-
 # ...all recipients----
 recipients<-Interact %>% 
   filter(recipsp!="NA") %>% 
@@ -58,18 +66,16 @@ recipients<-Interact %>%
 recipients<-rename(recipients,species=recipsp)  
 recipients<-rename(recipients,outcome=rsout)
 recipients$role<-'RS' # identify IS/RS
-view(recipients)
-
 #...combine----
 isrs<-rbind(initiators,recipients)
-view(isrs)
+
 #...no filter
 isrsall<-isrs %>% 
   group_by(species,role,interaction,outcome) %>%
   summarise(total=sum(n))
-view(isrsall)
+
 isrsall$interaction<-factor(isrsall$interaction,
-                          levels = c("Neutral","Displace","Swoop","Threat","Chase","Contact","Fight"))
+                          levels = c("Neutral","Displace","Threat","Swoop","Chase","Contact","Fight"))
 isrsall$outcome<-factor(isrsall$outcome,
                       levels = c("W","NE","L"))
 
@@ -78,12 +84,12 @@ isrs2<-isrs %>%
   filter(species=="Monk parakeet"|species=="Tanimbar corella"|species=="Rose ringed parakeet"|species=="Red-breasted parakeet"|species=="Long-tailed parakeet") %>%  
   group_by(species,role,interaction,outcome) %>%
   summarise(total=sum(n))
-view(isrs2)
+
 isrs2$interaction<-factor(isrs2$interaction,
-                        levels = c("Neutral","Displace","Swoop","Threat","Chase","Contact","Fight"))
+                        levels = c("Neutral","Displace","Threat","Swoop","Chase","Contact","Fight"))
 isrs2$outcome<-factor(isrs2$outcome,
                           levels = c("W","NE","L"))
-unique(isrs2$interaction)
+levels(isrs2$interaction)
 levels(isrs2$species)
 levels(isrs2$outcome)
 
@@ -176,21 +182,53 @@ isrs2 %>%
   scale_fill_manual(values=c('W'='#00BFC4','NE'='#C4CFD0','L'='#F8766D'))+
   facet_wrap(~role)
 
-#grid.arrange(p3,p4,p5,ncol=3)
+# histribution of interaction types----
+# ABSOLUTE freq----
+isrs2 %>% 
+  filter(interaction!='Neutral'& role=='IS') %>% 
+  ggplot(aes(interaction,total,fill=species))+geom_col(width=1)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  theme(legend.position = 'none')+labs(y='absolute frequency',x='interaction',title='Interaction distribution: positively skewed')+
+  facet_wrap(~species,scales='free')
+
+# RELATIVE freq----
+isrs2 %>% 
+  filter(interaction!='Neutral'& role=='IS') %>% group_by(species) %>% mutate(freq=total/sum(total)*100) %>% 
+  ggplot(aes(interaction,freq,fill=species))+geom_col(width=1)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ylim(0,50)+
+  theme(legend.position = 'none')+labs(y='relative frequency',x='interaction',title='Interaction distribution: positively skewed')+
+  facet_wrap(~species)
+
+# a bar chart has to be used because the variable of interest (interaction)
+  # is not continuous numeric. It is continuous because interactions
+    # are on a scale of least-most aggressive.
+# 0 base value where 0 = not observed
+# 6 bins = 6 distinct escalation levels
+# distribution = skew right
+#https://chartio.com/learn/charts/histogram-complete-guide/ 
+
+  #grid.arrange(p3,p4,p5,ncol=3)
 
 # PROXIMITY TO NEST
 
+Interact$interaction<-factor(Interact$interaction,
+                            levels = c("Neutral","Displace","Threat","Swoop","Chase","Contact","Fight"))
+
+
 Interact %>% 
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet"| initsp=="Javan myna") %>%  
-  ggplot(aes(nxt_cav,color=interaction))+
-  geom_jitter(stat='count',size=4,alpha=0.7)+xlim(0,100)+
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
+  ggplot(aes(nxt_cav,rating,color=interaction))+
+  geom_jitter(size=2,alpha=0.5,width=1.5)+xlim(0,80)+
+  scale_y_continuous(breaks = c(1,2,3,4))+
+  labs(title = 'Interaction proximity with nearest nest',
+    y='Aggression level',x='Distance from nest')+
   facet_wrap(~initsp)
 
 # TABLES----
 
 # AGGRESSION RATING----
 view(Interact)
-rating<-Interact %>% select(initsp,interaction,rating) %>%    
+rating<-Interact %>% select(initsp,interaction,rating) %>% filter(interaction!='Neutral') %>%    
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
            initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
   group_by(initsp) %>% summarise('Aggression score'=round(mean(rating),2)) %>% 
@@ -198,7 +236,7 @@ rating<-Interact %>% select(initsp,interaction,rating) %>%
   rename(Species=initsp) #%>% column_to_rownames(var="Species")
 view(rating)
 
-actions<-Interact %>% select(initsp,interaction,rating) %>%  
+actions<-Interact %>% select(initsp,interaction,rating) %>% filter(interaction!='Neutral') %>%   
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
            initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
   group_by(initsp,interaction) %>% 
@@ -206,7 +244,7 @@ actions<-Interact %>% select(initsp,interaction,rating) %>%
   spread(key=interaction,value = freq) %>% replace(is.na(.), 0) %>% 
   arrange(match(initsp,c("Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet",
                              "Monk parakeet","Long-tailed parakeet"))) %>% rename(Species=initsp)
-actions<-cbind(actions,rating[,2]) %>% relocate(1,9,6,4,8,7,2,3,5)
+actions<-cbind(actions,rating[,2]) %>% relocate(1,8,2,3,4,5,6,7)
 view(actions)
 
 formattable(actions,
@@ -218,14 +256,13 @@ formattable(actions,
                  'Swoop'=color_tile(customL,customH),
                  'Chase'=color_tile(customL,customH),
                  'Contact'=color_tile(customL,customH),
-                 'Fight'=color_tile(customL,customH),
-                 'Aggression score'=color_tile(customRL,customRH)))
+                 'Fight'=color_tile(customL,customH)))
 
 
-# Overall aggression score split between sites
+# site split----
 
 rating2<-Interact %>% 
-  select(Study.Area,initsp,interaction,rating) %>%    
+  select(Study.Area,initsp,interaction,rating) %>%filter(interaction!='Neutral') %>%    
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
            initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
   group_by(Study.Area,initsp) %>% summarise('Aggression score'=round(mean(rating),2)) %>% 
@@ -238,13 +275,24 @@ view(rating2)
 
 formattable(rating2,
             align=c('r','c','c','c','c'),
-            list(`Species` = formatter("span", style = ~ style(font.weight = "bold")),
-                 area(row=1,col=-1)~color_tile(customRL,customRH),
-                 area(row=2,col=-1)~color_tile(customRL,customRH),
-                 area(row=3,col=-1)~color_tile(customRL,customRH),
-                 area(row=4,col=-1)~color_tile(customRL,customRH),
-                 area(row=5,col=-1)~color_tile(customRL,customRH)))
+            list(`Species` = formatter("span", style = ~ style(font.weight = "bold"))))
 
-view(rating)
 
-par(mfrow=c(1,2))
+# linear model ----
+# following https://stats.stackexchange.com/questions/189396/final-test-for-statistical-significance-of-bird-aggression-scores
+
+# compre means----
+#check data is normally distributed with a Shapiro-Wilk test
+#density
+shapiro.test(rating$`Aggression score`)
+
+rating %>% 
+  ggplot(aes(sample=`Aggression score`))+
+  stat_qq()
+
+rating %>% 
+  ggplot(aes(`Aggression score`))+
+  geom_density()
+
+
+  
