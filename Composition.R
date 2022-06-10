@@ -22,7 +22,7 @@ Daily.richness<-Composition %>%
 
 Daily.richness %>% 
   ggplot(aes(Surveyno,n,color=Study.Area))+
-  geom_line(stat = )+
+  geom_smooth()+
   geom_point()+
   scale_x_continuous(breaks = c(1,2,3,4,5,6,7,8,9,10))+
   labs(y = 'n species detected', x='survey number',
@@ -33,7 +33,7 @@ Daily.interact<-Interact %>%
   mutate(n = n_distinct(id)) %>% ungroup() %>% select(Study.Area,Surveyno,n)
 Daily.interact %>% 
   ggplot(aes(Surveyno,n,color=Study.Area))+
-  geom_line()+
+  geom_smooth()+
   geom_point()+scale_x_continuous(breaks = c(1,2,3,4,5,6,7,8,9,10))+
   labs(y = 'n interactions observed', x='survey number',
        title = 'Daily interactions observed')
@@ -71,14 +71,14 @@ Comp.max %>% ggplot(aes(Study.Area,max_obs))+
 Comp.alpha<-Comp.max %>% spread(key=Species,value = max_obs) %>% 
   replace(is.na(.), 0) %>% remove_rownames %>% 
   column_to_rownames(var="Study.Area")
-view(Comp.alpha)
+#view(Comp.alpha)
 
 #Richness----
 fun.1<-function(x){sum(x>0)}
 richness<-apply(Comp.alpha, 1, FUN=fun.1)
 richness<-data.frame(richness)
 colnames(richness)<-"Richness"
-view(richness)
+#view(richness)
 
 #Shannon index----
 for (Comp.alpha.row in 1:3)
@@ -87,7 +87,7 @@ shannon<-round(shannon,3)
 #Adjusting output names of rows and columns
 row.names(shannon)<-row.names(Comp.alpha)
 colnames(shannon)<-"Shannon"
-view(shannon)
+#view(shannon)
 
 #Simpson index----
 for (Comp.alpha.row in 1:3)
@@ -96,12 +96,12 @@ simpson<-round(simpson,3)
 #Adjusting the names of rows and columns
 row.names(simpson)<-row.names(Comp.alpha)
 colnames(simpson)<-"Simpson"
-view(simpson)
+#view(simpson)
 
 #Putting together all indices
 Indices<-cbind(richness, shannon, simpson)
 Indices<-data.frame(Indices)
-View(Indices)
+#View(Indices)
 #indices$Richness<-factor(indices$Richness)
 
 # plot indices----

@@ -1,7 +1,6 @@
 # LOAD PACKS----
 library(pacman)
-p_load(tidyverse,vegan,lubridate,gridExtra,circlize,stringr,readxl,wesanderson)
-
+p_load(knitr,kableExtra,tidyverse,vegan,lubridate,gridExtra,circlize,stringr,readxl,wesanderson)
 
 # IMPORT DATA----
 Interact <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
@@ -30,6 +29,10 @@ Interact<-Interact %>%
     interaction=="Fight"~"4"))
 Interact$rating<-as.numeric(Interact$rating)
 
+Interact$interaction<-factor(Interact$interaction,
+                          levels = c("Neutral","Displace","Threat","Swoop","Chase","Contact","Fight"))
+
+
 #PARROTS ONLY----
 Interact2<-Interact %>% filter(interaction!='Neutral') %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
@@ -39,15 +42,6 @@ Interact2<-Interact %>% filter(interaction!='Neutral') %>%
                      initsp=="Rose ringed parakeet"~"RRP",
                      initsp=="Red-breasted parakeet"~"RBP",
                      initsp=="Long-tailed parakeet"~"LTP"))
-
-# SUBSETS----
-Interact %>% 
-  filter(interaction!="Neutral") %>% 
-  group_by(initsp,recipsp) %>% 
-  tally() %>% 
-  mutate(freq=n/sum(n)*100) %>%
-  arrange(desc(initsp)) %>% 
-  arrange(desc(n))
 
 
 # ...all initators----
@@ -94,15 +88,14 @@ levels(isrs2$species)
 levels(isrs2$outcome)
 
 
-
 #CHARTS----
 # clean wrapped labels!!!!
 isrs2$species2 = str_wrap(isrs2$species, width = 10)
 isrs2
 #palettes https://rstudio-pubs-static.s3.amazonaws.com/5312_98fc1aba2d5740dd849a5ab797cc2c8d.html 
 
-#...1 Total interactions----
-
+# 1. SUMMARY----
+##Total interactions----
 isrsall %>% group_by(species) %>% summarise(n=sum(total)) %>% 
   ggplot(aes(reorder(species,n),n,fill=species))+ # this order high to low
   geom_col(position='dodge',alpha=0.8)+coord_flip()+
@@ -110,8 +103,8 @@ isrsall %>% group_by(species) %>% summarise(n=sum(total)) %>%
   scale_y_continuous(expand = c(0,2))+ 
   scale_fill_manual(values=c('Red-breasted parakeet'='red','Monk parakeet'='#3ACF3A','Rose ringed parakeet'='purple',
                               'Tanimbar corella'='orange','Long-tailed parakeet'='#1DACE8',"Others"="dark grey"))
-  
-#...2 Parrot total interactions
+ 
+##Parrot all interactions----
 isrs2 %>% 
   group_by(species) %>% 
   summarise(n=sum(total)) %>% 
@@ -121,8 +114,8 @@ isrs2 %>%
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
   labs(x='Species',y='n',title='Total interactions')
 
-#...2 Roles----
-#...# n imitated and received interactions
+#2. ROLES----
+## n IS RS----
 isrs2 %>% 
   group_by(species,role) %>% 
   summarise(n=sum(total)) %>% 
@@ -133,7 +126,7 @@ isrs2 %>%
   labs(x='Species',y='n',title='n interactions intiated and recieved')+
   scale_fill_manual(values=c('IS'='#456355','RS'='#FCD16B'))
 
-#... Proportion of imitated and received interactions
+# % IS RS----
 isrs2 %>% 
   group_by(species,role) %>% 
   summarise(n=sum(total)) %>%
@@ -145,7 +138,8 @@ isrs2 %>%
   labs(x='Species',y='%',title='Proportion interactions intiated and recieved')+
   scale_fill_manual(values=c('IS'='#456355','RS'='#FCD16B'))
 
-#...n W/L all interactions----
+# 3. W/L/NE summary
+## n W/L/NE all ints----
 isrs2 %>% 
   group_by(species,outcome) %>% 
   summarise(n=sum(total)) %>% 
@@ -155,8 +149,17 @@ isrs2 %>%
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
   labs(x='Species',y='n',title='n wins, losses and neutral outcomes')+
   scale_fill_manual(values=c('W'='#00BFC4','NE'='#C4CFD0','L'='#F8766D'))
+#### ..all species----
+isrs %>%  
+  group_by(species,outcome) %>% 
+  summarise(n=sum(n)) %>% 
+  ggplot(aes(reorder(species,n),n,fill=outcome))+
+  geom_col(position = 'stack')+coord_flip()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  labs(x='Species',y='n',title='n wins, losses and neutral outcomes')+
+  scale_fill_manual(values=c('W'='#00BFC4','NE'='#C4CFD0','L'='#F8766D'))
 
-#... Proportion W/L/NE
+## % W/L/NE all ints----
 isrs2 %>% 
   group_by(species,outcome) %>% 
   summarise(n=sum(total)) %>%
@@ -168,7 +171,7 @@ isrs2 %>%
   labs(x='Species',y='%',title='Proportion wins, losses and neutral outcomes')+
   scale_fill_manual(values=c('W'='#00BFC4','NE'='#C4CFD0','L'='#F8766D'))
 
-#.... facet IS RS
+## W/L by IS RS----
 isrs2 %>% 
   filter(outcome!="NE") %>% 
   group_by(species,role,outcome) %>% 
@@ -182,8 +185,9 @@ isrs2 %>%
   scale_fill_manual(values=c('W'='#00BFC4','NE'='#C4CFD0','L'='#F8766D'))+
   facet_wrap(~role)
 
-# histribution of interaction types----
-# ABSOLUTE freq----
+#3. INTERACTIONS----
+## IS split interaction types----
+### absolute freq (n)----
 isrs2 %>% 
   filter(interaction!='Neutral'& role=='IS') %>% 
   ggplot(aes(interaction,total,fill=species))+geom_col(width=1)+
@@ -191,7 +195,7 @@ isrs2 %>%
   theme(legend.position = 'none')+labs(y='absolute frequency',x='interaction',title='Interaction distribution: positively skewed')+
   facet_wrap(~species,scales='free')
 
-# RELATIVE freq----
+### relative freq (%)----
 isrs2 %>% 
   filter(interaction!='Neutral'& role=='IS') %>% group_by(species) %>% mutate(freq=total/sum(total)*100) %>% 
   ggplot(aes(interaction,freq,fill=species))+geom_col(width=1)+
@@ -224,9 +228,19 @@ Interact %>%
     y='Aggression level',x='Distance from nest')+
   facet_wrap(~initsp)
 
+
+# SUBSETS----
+Interact %>% 
+  filter(interaction!="Neutral") %>% 
+  group_by(initsp,recipsp) %>% 
+  tally() %>% 
+  mutate(freq=n/sum(n)*100) %>%
+  arrange(desc(initsp)) %>% 
+  arrange(initsp)
+
 # TABLES----
 
-# true pop mean
+## true pop mean----
 tmean<-Interact %>% filter(interaction!='Neutral') %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
            initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
@@ -238,20 +252,20 @@ tactions<-Interact %>% filter(interaction!='Neutral') %>%
            initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
   select(interaction,rating) %>% group_by(interaction) %>% 
   tally() %>% mutate(freq=round(n/sum(n)*100,2)) %>% select(-n) %>% 
-  spread(key=interaction,value = freq) %>% replace(is.na(.), 0) %>% 
+  spread(key=interaction,value = freq) %>% replace(is.na(.), 0.001) %>% 
   add_column(Species='Population means', .before = 1)
 tactions<-cbind(tactions,tmean[,1]) %>% relocate(1,8,2,3,4,5,6,7)
-view(tactions)
+#view(tactions)
 
-# AGGRESSION SCORE----
+## AGGRESSION SCORE----
 rating<-Interact %>% select(initsp,interaction,rating) %>% filter(interaction!='Neutral') %>%    
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
            initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
   group_by(initsp) %>% summarise('Aggression score'=round(mean(rating),2)) %>% 
   arrange(match(initsp,c("Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet","Monk parakeet","Long-tailed parakeet"))) %>%
   rename(Species=initsp) #%>% column_to_rownames(var="Species")
-view(rating)
-
+#view(rating)
+### Actions----
 actions<-Interact %>% select(initsp,interaction,rating) %>% filter(interaction!='Neutral') %>%   
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
            initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
@@ -262,13 +276,13 @@ actions<-Interact %>% select(initsp,interaction,rating) %>% filter(interaction!=
                              "Monk parakeet","Long-tailed parakeet"))) %>% rename(Species=initsp)
 actions<-cbind(actions,rating[,2]) %>% relocate(1,8,2,3,4,5,6,7)
 actions<-rbind(actions,tactions[1,])
-view(actions)
+#view(actions)
 actions$Species<-actions$Species %>%
   factor(levels=c("Population means","Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet",
                              "Monk parakeet","Long-tailed parakeet")) 
 actions<-actions %>% arrange(Species)
 
-# ...formattable
+# ...formattable----
 formattable(actions,
             align=c('r','c','c','c','c','c','c','c','c'),
             list(`Species` = formatter("span", style = ~ style(font.weight = "bold")),
@@ -278,7 +292,12 @@ formattable(actions,
                  'Swoop'=color_tile(customL,customH),
                  'Chase'=color_tile(customL,customH),
                  'Contact'=color_tile(customL,customH),
-                 'Fight'=color_tile(customL,customH)))
+                 'Fight'=color_tile(customL,customH),
+                 'Aggression score'=color_tile(customL,customH))) 
+
+#kable
+kbl(actions) %>% kable_material("striped") %>%
+  row_spec(1,bold=T,background = '#f8eac1')
 
 # WIN AGG SCORE----
 ratingW<-Interact %>% select(initsp,interaction,isout,rating) %>% filter(interaction!='Neutral'& isout=="W") %>%    
