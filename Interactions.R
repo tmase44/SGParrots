@@ -23,8 +23,8 @@ Interact<-Interact %>%
   mutate(rating=case_when(
     interaction=="Neutral"~"0",
     interaction=="Displace"~"1",
-    interaction=="Swoop"~"3",
     interaction=="Threat"~"2",
+    interaction=="Swoop"~"3",
     interaction=="Chase"~"3",
     interaction=="Contact"~"4",
     interaction=="Fight"~"4"))
@@ -71,7 +71,7 @@ isrs<-rbind(initiators,recipients)
 
 #...no filter
 isrsall<-isrs %>% 
-  group_by(species,role,interaction,outcome) %>%
+  group_by(species,role,interaction,rating,outcome) %>%
   summarise(total=sum(n))
 
 isrsall$interaction<-factor(isrsall$interaction,
@@ -82,7 +82,7 @@ isrsall$outcome<-factor(isrsall$outcome,
 #... parrot filter
 isrs2<-isrs %>% 
   filter(species=="Monk parakeet"|species=="Tanimbar corella"|species=="Rose ringed parakeet"|species=="Red-breasted parakeet"|species=="Long-tailed parakeet") %>%  
-  group_by(species,role,interaction,outcome) %>%
+  group_by(species,role,interaction,rating,outcome) %>%
   summarise(total=sum(n))
 
 isrs2$interaction<-factor(isrs2$interaction,
@@ -226,8 +226,7 @@ Interact %>%
 
 # TABLES----
 
-# AGGRESSION RATING----
-view(Interact)
+# AGGRESSION SCORE----
 rating<-Interact %>% select(initsp,interaction,rating) %>% filter(interaction!='Neutral') %>%    
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
            initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
@@ -258,6 +257,36 @@ formattable(actions,
                  'Contact'=color_tile(customL,customH),
                  'Fight'=color_tile(customL,customH)))
 
+# WIN AGG SCORE----
+ratingW<-Interact %>% select(initsp,interaction,isout,rating) %>% filter(interaction!='Neutral'& isout=="W") %>%    
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
+           initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
+  group_by(initsp) %>% summarise('WIN Aggression score'=round(mean(rating),2)) %>% 
+  arrange(match(initsp,c("Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet","Monk parakeet","Long-tailed parakeet"))) %>%
+  rename(Species=initsp) #%>% column_to_rownames(var="Species")
+view(ratingW)
+
+actionsW<-Interact %>% select(initsp,interaction,isout,rating) %>% filter(interaction!='Neutral'&isout=='W') %>%   
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
+           initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
+  group_by(initsp,interaction) %>% 
+  tally() %>% mutate(freq=round(n/sum(n)*100,2)) %>% select(-n) %>% 
+  spread(key=interaction,value = freq) %>% replace(is.na(.), 0) %>% 
+  arrange(match(initsp,c("Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet",
+                         "Monk parakeet","Long-tailed parakeet"))) %>% rename(Species=initsp)
+actionsW<-cbind(actionsW,ratingW[,2]) %>% relocate(1,8,2,3,4,5,6,7)
+view(actionsW)
+
+formattable(actionsW,
+            align=c('r','c','c','c','c','c','c','c','c'),
+            list(`Species` = formatter("span", style = ~ style(font.weight = "bold")),
+                 'Neutral'=color_tile(customL,customH),
+                 'Displace'=color_tile(customL,customH),
+                 'Threat'=color_tile(customL,customH),
+                 'Swoop'=color_tile(customL,customH),
+                 'Chase'=color_tile(customL,customH),
+                 'Contact'=color_tile(customL,customH),
+                 'Fight'=color_tile(customL,customH)))
 
 # site split----
 
@@ -300,10 +329,16 @@ isrs<-rbind(initiators,recipients)
 modeldata<-isrs2 %>% 
   filter(outcome!='NE'&role=='IS') %>%
   group_by(species) %>% 
-  mutate(winrate=total/sum(total)*100) %>% 
+  mutate(winrate=total/sum(total)) %>% 
   group_by(species,interaction) %>% 
-  mutate(int.winrate=total/sum(total)*100)
+  mutate(int.winrate=total/sum(total)*100) %>% 
+  group_by(species,interaction,outcome) %>% 
+  mutate(agg=sum(winrate*rating))
 
 ggplot(modeldata,aes(interaction,total))+
   geom_point()+stat_smooth(method='lm')+facet_wrap(~species)
 
+mean(rating$`Aggression score`)
+# 1.976
+
+t.test(2.16,1.77,var.equal=TRUE)
