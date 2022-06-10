@@ -294,5 +294,16 @@ rating %>%
   ggplot(aes(`Aggression score`))+
   geom_density()
 
+isrs<-rbind(initiators,recipients)
 
-  
+#...winrate per IS for each action
+modeldata<-isrs2 %>% 
+  filter(outcome!='NE'&role=='IS') %>%
+  group_by(species) %>% 
+  mutate(winrate=total/sum(total)*100) %>% 
+  group_by(species,interaction) %>% 
+  mutate(int.winrate=total/sum(total)*100)
+
+ggplot(modeldata,aes(interaction,total))+
+  geom_point()+stat_smooth(method='lm')+facet_wrap(~species)
+

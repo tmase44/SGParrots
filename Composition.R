@@ -58,7 +58,7 @@ Comp.max<-Composition %>%
   summarise(n=n()) %>% 
   select(-Surveyno) %>% summarise(max_obs = max(n)) %>% 
   arrange(Study.Area,desc(max_obs))
-view(Comp.max)
+#view(Comp.max)
 
 Comp.max %>% ggplot(aes(Study.Area,max_obs))+
   geom_jitter(aes(color=Species),width=0.2,size=5,alpha=0.6)+coord_trans(y='log2')+
