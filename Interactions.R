@@ -226,6 +226,23 @@ Interact %>%
 
 # TABLES----
 
+# true pop mean
+tmean<-Interact %>% filter(interaction!='Neutral') %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
+           initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
+  select(interaction,rating) %>% 
+  summarise('Aggression score'=round(mean(rating),2))
+#1.97
+tactions<-Interact %>% filter(interaction!='Neutral') %>%   
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
+           initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
+  select(interaction,rating) %>% group_by(interaction) %>% 
+  tally() %>% mutate(freq=round(n/sum(n)*100,2)) %>% select(-n) %>% 
+  spread(key=interaction,value = freq) %>% replace(is.na(.), 0) %>% 
+  add_column(Species='Population means', .before = 1)
+tactions<-cbind(tactions,tmean[,1]) %>% relocate(1,8,2,3,4,5,6,7)
+view(tactions)
+
 # AGGRESSION SCORE----
 rating<-Interact %>% select(initsp,interaction,rating) %>% filter(interaction!='Neutral') %>%    
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
@@ -244,8 +261,14 @@ actions<-Interact %>% select(initsp,interaction,rating) %>% filter(interaction!=
   arrange(match(initsp,c("Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet",
                              "Monk parakeet","Long-tailed parakeet"))) %>% rename(Species=initsp)
 actions<-cbind(actions,rating[,2]) %>% relocate(1,8,2,3,4,5,6,7)
+actions<-rbind(actions,tactions[1,])
 view(actions)
+actions$Species<-actions$Species %>%
+  factor(levels=c("Population means","Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet",
+                             "Monk parakeet","Long-tailed parakeet")) 
+actions<-actions %>% arrange(Species)
 
+# ...formattable
 formattable(actions,
             align=c('r','c','c','c','c','c','c','c','c'),
             list(`Species` = formatter("span", style = ~ style(font.weight = "bold")),

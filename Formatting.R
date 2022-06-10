@@ -5,8 +5,8 @@ https://color.broadbrander.com/29AB87
 
 # FORMATTABLE----
 #...Aggression ratings
-customH = "#00CC99"
-customL = "#ccf5eb"
+customH = "#5d78a2"
+customL = "#d6dde8"
 customRH = "#fd8d3c"
 customRL = "#fdd0a2"
 
