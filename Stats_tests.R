@@ -1,6 +1,7 @@
 library(pacman)
-p_load(MASS,DescTools,formattable,knitr,kableExtra,tidyverse,vegan,
+p_load(rcompanion,brant,ordinal,MASS,DescTools,formattable,knitr,kableExtra,tidyverse,vegan,
        lubridate,gridExtra,circlize,stringr,readxl)
+install.packages('rcompanion')
 
 # STATISTICAL TESTS----
 
@@ -25,76 +26,68 @@ CochranArmitageTest(dose)
 
 # data prep----
 # ...all initators----
-init.lm<-Interact2 %>% filter(recipsp!="NA") %>% select(initsp,interaction,rating,isout)
+init.lm<-Interact2 %>% filter(recipsp!="NA")%>% select(initsp,interaction,rating,isout)
 init.lm<-rename(init.lm,species=initsp)  
 init.lm<-rename(init.lm,outcome=isout)
 init.lm$role<-'IS' # identify IS/RS
-# ...all recipients----
-recip.lm<-Interact2 %>% filter(recipsp!="NA") %>% select(recipsp,interaction,rating,rsout)
-recip.lm<-rename(recip.lm,species=recipsp)  
-recip.lm<-rename(recip.lm,outcome=rsout)
-recip.lm$role<-'RS' # identify IS/RS
-#...combine----
-isrs2.lm<-rbind(init.lm,recip.lm)
-isrs2.lm<-isrs2.lm %>% filter(species=="Monk parakeet"|species=="Tanimbar corella"|species=="Rose ringed parakeet"|
-                        species=="Red-breasted parakeet"|species=="Long-tailed parakeet")
 
-isrs2.lm$species<-isrs2.lm$species %>% factor(levels=c("Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet",
-                  "Monk parakeet","Long-tailed parakeet"))
+init.lm<-init.lm %>% filter(species=="Monk parakeet"|species=="Tanimbar corella"|species=="Rose ringed parakeet"|
+                        species=="Red-breasted parakeet"|species=="Long-tailed parakeet")
+#edit
+#init.lm<-init.lm %>% filter(species=="Rose ringed parakeet"|species=="Long-tailed parakeet")
+
+
+init.lm$species<-init.lm$species %>% factor(levels=c("Long-tailed parakeet","Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet",
+                  "Monk parakeet"))
   
 
-# THIS IS FOR ALL INTERACTION IS AND RS
-isrs2.stat<-isrs2.lm %>% filter(interaction!="Neutral") %>% 
-  filter(species=="Monk parakeet"|species=="Tanimbar corella"|species=="Rose ringed parakeet"|
-           species=="Red-breasted parakeet"|species=="Long-tailed parakeet") %>% 
+init.lm<-init.lm %>% 
     mutate(status=factor(case_when(
     species=="Red-breasted parakeet"~"0",
     species=="Tanimbar corella"~"0",
     species=="Rose ringed parakeet"~"0",
     species=="Monk parakeet"~"0",
     species=="Long-tailed parakeet"~"1"))) %>% 
-  mutate(WL=factor(case_when(
-    outcome=="W"~"1",
-    outcome=="L"~"0"))) %>% select(interaction,rating,status,WL)
+  mutate(WL=case_when(outcome=="W"~"1", outcome=="L"~"0"))%>% 
+           select(interaction,rating,species,status,WL)
 
-isrs2.stat$rating<-as.factor(isrs2.stat$rating)
-view(isrs2.stat)
-levels(isrs2.stat$rating)
-levels(isrs2.stat$interaction)
-levels(isrs2.stat$WL)
-levels(isrs2.stat$status)
+init.lm$rating<-as.factor(init.lm$rating)
+levels(init.lm$rating)
+levels(init.lm$interaction)
+levels(init.lm$WL)
+levels(init.lm$status)
+levels(init.lm$species)
 # status 0 = non native, 1 = native LTP
 # WL 0 = loss, 1 = W
 
-#summary stats----
-summary(isrs2.stat)
-#Making frequency table
-table(isrs2.stat$rating, isrs2.stat$status)
+#Null model----
+modelnull<-clm(as.factor(init.lm$interaction)~1,
+               data=init.lm,
+               link='loglog')
 
-#Dividing data into training and test set----
-#Random sampling 
-samplesize = 0.70*nrow(isrs2.stat)
-set.seed(100)
-index = sample(seq_len(nrow(isrs2.stat)), size = samplesize)
-#Creating training and test set 
-datatrain = isrs2.stat[index,]
-datatest = isrs2.stat[-index,]
+#Actual model----
+model1<-clm(as.factor(init.lm$interaction)~species,
+               data=init.lm,
+               link='loglog')
 
-#Build ordinal logistic regression model----
-# MASS from library
-model= polr(rating ~ status, data = datatrain, Hess = TRUE)
-summary(model)
+anova(modelnull,model1)
 
-#Compute confusion table and misclassification error----
-predictagg = predict(model,datatest)
-table(datatest$rating, predictagg)
-mean(as.character(datatest$rating) != as.character(predictagg))
+summary(model1)
+# LTP is first referece category - summary shows, strong variance between:
+## RRP-LTP ***
+## TC-LTP  **
+## RRP-LTP *
+## MP-LTP  ''
+### there is a signif diff between RRP and LTP when it comes to aggression
+confint(model1)
+exp(coef(model1))#odds rations
+exp(confint(model1))
 
-# poor----
-
-
-
-
-
+modelt<-polr(as.factor(interaction)~species,
+             data=init.lm,
+             Hess = TRUE)
+brant(modelt)
+#H0: Parallel Regression Assumption holds - can trust regression results
+summary(modelt)#no pvalues!
 
 
