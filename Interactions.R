@@ -1,6 +1,7 @@
 # LOAD PACKS----
 library(pacman)
-p_load(knitr,kableExtra,tidyverse,vegan,lubridate,gridExtra,circlize,stringr,readxl,wesanderson)
+p_load(formattable,knitr,kableExtra,tidyverse,vegan,
+       lubridate,gridExtra,circlize,stringr,readxl,wesanderson)
 
 # IMPORT DATA----
 Interact <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
@@ -34,7 +35,7 @@ Interact$interaction<-factor(Interact$interaction,
 
 
 #PARROTS ONLY----
-Interact2<-Interact %>% filter(interaction!='Neutral') %>% 
+Interact2<-Interact %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
                                  initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
   mutate(SP=case_when(initsp=="Monk parakeet"~"MP",
@@ -384,3 +385,8 @@ mean(rating$`Aggression score`)
 # 1.976
 
 t.test(2.16,1.77,var.equal=TRUE)
+
+isrs2.lm %>% 
+  ggplot(aes(species,rating))+
+  geom_boxplot()+
+  geom_jitter(aes(color=interaction),width=0.1,alpha=0.23)

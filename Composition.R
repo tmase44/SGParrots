@@ -1,6 +1,7 @@
 # LOAD PACKS----
 library(pacman)
-p_load(formattable,tidyverse,vegan,lubridate,gridExtra,circlize,stringr,readxl,wesanderson)
+p_load(formattable,knitr,kableExtra,tidyverse,vegan,
+       lubridate,gridExtra,circlize,stringr,readxl,wesanderson)
 
 
 # IMPORT DATA----
