@@ -190,7 +190,7 @@ isrs2 %>%
 ## IS split interaction types----
 ### absolute freq (n)----
 isrs2 %>% 
-  filter(interaction!='Neutral'& role=='IS') %>% 
+  filter(role=='IS') %>% 
   ggplot(aes(interaction,total,fill=species))+geom_col(width=1)+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   theme(legend.position = 'none')+labs(y='absolute frequency',x='interaction',title='Interaction distribution: positively skewed')+
@@ -198,7 +198,7 @@ isrs2 %>%
 
 ### relative freq (%)----
 isrs2 %>% 
-  filter(interaction!='Neutral'& role=='IS') %>% group_by(species) %>% mutate(freq=total/sum(total)*100) %>% 
+  filter(role=='IS') %>% group_by(species) %>% mutate(freq=total/sum(total)*100) %>% 
   ggplot(aes(interaction,freq,fill=species))+geom_col(width=1)+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ylim(0,50)+
   theme(legend.position = 'none')+labs(y='relative frequency',x='interaction',title='Interaction distribution: positively skewed')+
@@ -242,24 +242,24 @@ Interact %>%
 # TABLES----
 
 ## true pop mean----
-tmean<-Interact %>% filter(interaction!='Neutral') %>% 
+tmean<-Interact %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
            initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
   select(interaction,rating) %>% 
   summarise('Aggression score'=round(mean(rating),2))
-#1.97
-tactions<-Interact %>% filter(interaction!='Neutral') %>%   
+#1.63
+tactions<-Interact %>%   
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
            initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
   select(interaction,rating) %>% group_by(interaction) %>% 
   tally() %>% mutate(freq=round(n/sum(n)*100,2)) %>% select(-n) %>% 
   spread(key=interaction,value = freq) %>% replace(is.na(.), 0.001) %>% 
   add_column(Species='Population means', .before = 1)
-tactions<-cbind(tactions,tmean[,1]) %>% relocate(1,8,2,3,4,5,6,7)
+tactions<-cbind(tactions,tmean[,1]) %>% relocate(1,9,2,3,4,5,6,7,8)
 #view(tactions)
 
 ## AGGRESSION SCORE----
-rating<-Interact %>% select(initsp,interaction,rating) %>% filter(interaction!='Neutral') %>%    
+rating<-Interact %>% select(initsp,interaction,rating)%>%    
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
            initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
   group_by(initsp) %>% summarise('Aggression score'=round(mean(rating),2)) %>% 
@@ -267,7 +267,7 @@ rating<-Interact %>% select(initsp,interaction,rating) %>% filter(interaction!='
   rename(Species=initsp) #%>% column_to_rownames(var="Species")
 #view(rating)
 ### Actions----
-actions<-Interact %>% select(initsp,interaction,rating) %>% filter(interaction!='Neutral') %>%   
+actions<-Interact %>% select(initsp,interaction,rating)%>%   
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
            initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
   group_by(initsp,interaction) %>% 
@@ -275,13 +275,15 @@ actions<-Interact %>% select(initsp,interaction,rating) %>% filter(interaction!=
   spread(key=interaction,value = freq) %>% replace(is.na(.), 0) %>% 
   arrange(match(initsp,c("Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet",
                              "Monk parakeet","Long-tailed parakeet"))) %>% rename(Species=initsp)
-actions<-cbind(actions,rating[,2]) %>% relocate(1,8,2,3,4,5,6,7)
+actions<-cbind(actions,rating[,2]) %>% relocate(1,9,2,3,4,5,6,7,8)
 actions<-rbind(actions,tactions[1,])
 #view(actions)
 actions$Species<-actions$Species %>%
   factor(levels=c("Population means","Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet",
                              "Monk parakeet","Long-tailed parakeet")) 
 actions<-actions %>% arrange(Species)
+
+tgc <- summarySE(tg, measurevar="len", groupvars=c("supp","dose"))
 
 # ...formattable----
 formattable(actions,
@@ -382,10 +384,10 @@ t.test(2.16,1.77,var.equal=TRUE)
 # boxpoint all ints----
 isrs2.lm %>% 
   ggplot(aes(species,rating))+
-  geom_boxplot()+
+  geom_boxplot()+labs(x='Species',y='Interaction type',title='Interaction distribution by species')+
   geom_jitter(aes(color=interaction),width=0.1,alpha=0.23)
 ##violin----
 isrs2.lm %>% 
   ggplot(aes(species,rating))+
   geom_violin()+
-  geom_jitter(aes(color=interaction),width=0.2,alpha=0.3)
+  geom_jitter(aes(color=interaction),width=0.2,height=0.3,alpha=0.3)

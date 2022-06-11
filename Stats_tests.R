@@ -1,8 +1,7 @@
 library(pacman)
-p_load(rcompanion,brant,ordinal,MASS,DescTools,formattable,knitr,kableExtra,tidyverse,vegan,
+p_load(Rmisc,rcompanion,brant,ordinal,MASS,DescTools,formattable,knitr,kableExtra,tidyverse,vegan,
        lubridate,gridExtra,circlize,stringr,readxl)
-install.packages('rcompanion')
-
+install.packages('Rmisc')
 # STATISTICAL TESTS----
 
 ##data description: 
@@ -60,7 +59,11 @@ levels(init.lm$species)
 # status 0 = non native, 1 = native LTP
 # WL 0 = loss, 1 = W
 
-# CLM cumulative link model - for ordinal / categorical data
+# CLM cumulative link model - for ordinal / categorical data----
+## log-log link is used because interaction data is positively skewed
+### https://cran.r-project.org/web/packages/ordinal/vignettes/clm_article.pdf
+#### https://www.youtube.com/watch?v=rrRrI9gElYA !!!!! WATCH
+
 ## Null model----
 modelnull<-clm(as.factor(init.lm$interaction)~1,
                data=init.lm,
@@ -73,6 +76,13 @@ model1<-clm(as.factor(init.lm$interaction)~species,
 
 anova(modelnull,model1)
 # p >0.5 = signif *
+# likelihood ratio = 11.987, signifcant (>10)
+nagelkerke(fit = model1,
+           null = modelnull)
+# another check for model fit
+##McFadden                           0.00924532
+##Cox and Snell (ML)                 0.02974310
+#Nagelkerke (Cragg and Uhler)       0.03092320
 summary(model1)
 # LTP is first referece category - summary shows, strong variance between:
 ## RRP-LTP ***
@@ -80,15 +90,23 @@ summary(model1)
 ## RRP-LTP *
 ## MP-LTP  ''
 ### there is a signif diff between RRP and LTP when it comes to aggression
-confint(model1)
-exp(coef(model1))#odds rations
+confint(model1)#confidence interval
+exp(coef(model1))#odds ratios
 exp(confint(model1))
 
 modelt<-polr(as.factor(interaction)~species,
              data=init.lm,
              Hess = TRUE)
+summary(modelt)
 brant(modelt)
 #H0: Parallel Regression Assumption holds - can trust regression results
 summary(modelt)#no pvalues!
 
+# MEANS / SD / SE / CI  
+init.lm2<-init.lm
+levels(init.lm2$rating)
+init.lm2$rating<-init.lm2$rating %>% as.character(init.lm$rating)
+init.lm2$rating<-init.lm2$rating %>% as.numeric(init.lm$rating)
 
+parrotmeans <- summarySE(init.lm2, measurevar="rating", groupvars="species")
+parrotmeans
