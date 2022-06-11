@@ -350,14 +350,6 @@ formattable(rating2,
             list(`Species` = formatter("span", style = ~ style(font.weight = "bold"))))
 
 
-# linear model ----
-# following https://stats.stackexchange.com/questions/189396/final-test-for-statistical-significance-of-bird-aggression-scores
-
-# compre means----
-#check data is normally distributed with a Shapiro-Wilk test
-#density
-shapiro.test(rating$`Aggression score`)
-
 rating %>% 
   ggplot(aes(sample=`Aggression score`))+
   stat_qq()
@@ -386,7 +378,14 @@ mean(rating$`Aggression score`)
 
 t.test(2.16,1.77,var.equal=TRUE)
 
+
+# boxpoint all ints----
 isrs2.lm %>% 
   ggplot(aes(species,rating))+
   geom_boxplot()+
   geom_jitter(aes(color=interaction),width=0.1,alpha=0.23)
+##violin----
+isrs2.lm %>% 
+  ggplot(aes(species,rating))+
+  geom_violin()+
+  geom_jitter(aes(color=interaction),width=0.2,alpha=0.3)

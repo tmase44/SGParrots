@@ -60,18 +60,19 @@ levels(init.lm$species)
 # status 0 = non native, 1 = native LTP
 # WL 0 = loss, 1 = W
 
-#Null model----
+# CLM cumulative link model - for ordinal / categorical data
+## Null model----
 modelnull<-clm(as.factor(init.lm$interaction)~1,
                data=init.lm,
                link='loglog')
 
-#Actual model----
+## Actual model----
 model1<-clm(as.factor(init.lm$interaction)~species,
                data=init.lm,
                link='loglog')
 
 anova(modelnull,model1)
-
+# p >0.5 = signif *
 summary(model1)
 # LTP is first referece category - summary shows, strong variance between:
 ## RRP-LTP ***
