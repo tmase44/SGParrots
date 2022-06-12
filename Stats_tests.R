@@ -1,7 +1,7 @@
 library(pacman)
 p_load(Rmisc,rcompanion,brant,ordinal,MASS,DescTools,formattable,knitr,kableExtra,tidyverse,vegan,
        lubridate,gridExtra,circlize,stringr,readxl)
-install.packages('Rmisc')
+
 # STATISTICAL TESTS----
 
 ##data description: 
@@ -41,19 +41,18 @@ init.lm$species<-init.lm$species %>% factor(levels=c("Long-tailed parakeet","Ros
   
 
 init.lm<-init.lm %>% 
+  select(interaction,rating,species,outcome) %>% 
     mutate(status=factor(case_when(
     species=="Red-breasted parakeet"~"0",
     species=="Tanimbar corella"~"0",
     species=="Rose ringed parakeet"~"0",
     species=="Monk parakeet"~"0",
-    species=="Long-tailed parakeet"~"1"))) %>% 
-  mutate(WL=case_when(outcome=="W"~"1", outcome=="L"~"0"))%>% 
-           select(interaction,rating,species,status,WL)
+    species=="Long-tailed parakeet"~"1"))) 
 
 init.lm$rating<-as.factor(init.lm$rating)
 levels(init.lm$rating)
 levels(init.lm$interaction)
-levels(init.lm$WL)
+levels(init.lm$outcome)
 levels(init.lm$status)
 levels(init.lm$species)
 # status 0 = non native, 1 = native LTP
@@ -64,6 +63,7 @@ levels(init.lm$species)
 ### https://cran.r-project.org/web/packages/ordinal/vignettes/clm_article.pdf
 #### https://www.youtube.com/watch?v=rrRrI9gElYA !!!!! WATCH
 
+# Interaction type ~ species----
 ## Null model----
 modelnull<-clm(as.factor(init.lm$interaction)~1,
                data=init.lm,
@@ -110,3 +110,42 @@ init.lm2$rating<-init.lm2$rating %>% as.numeric(init.lm$rating)
 
 parrotmeans <- summarySE(init.lm2, measurevar="rating", groupvars="species")
 parrotmeans
+
+# W/L ~ species----
+## Null model----
+modelnull<-clm(as.factor(init.lm$outcome)~1,
+               data=init.lm,
+               link='logit')
+
+## Actual model----
+model1<-clm(as.factor(init.lm$outcome)~species,
+            data=init.lm,
+            link='logit')
+
+anova(modelnull,model1)
+# p >0.5 = signif *
+# likelihood ratio = 11.987, signifcant (>10)
+nagelkerke(fit = model1,
+           null = modelnull)
+# another check for model fit
+##McFadden                           0.00924532
+##Cox and Snell (ML)                 0.02974310
+#Nagelkerke (Cragg and Uhler)       0.03092320
+summary(model1)
+# LTP is first referece category - summary shows, strong variance between:
+## RRP-LTP ***
+## TC-LTP  **
+## RRP-LTP *
+## MP-LTP  ''
+### there is a signif diff between RRP and LTP when it comes to aggression
+confint(model1)#confidence interval
+exp(coef(model1))#odds ratios
+exp(confint(model1))
+
+modelt<-polr(as.factor(outcome)~species,
+             data=init.lm,
+             Hess = TRUE)
+summary(modelt)
+brant(modelt)
+#H0: Parallel Regression Assumption holds - can trust regression results
+summary(modelt)#no pvalues!
