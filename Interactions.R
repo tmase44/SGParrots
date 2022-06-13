@@ -283,8 +283,6 @@ actions$Species<-actions$Species %>%
                              "Monk parakeet","Long-tailed parakeet")) 
 actions<-actions %>% arrange(Species)
 
-tgc <- summarySE(tg, measurevar="len", groupvars=c("supp","dose"))
-
 # ...formattable----
 formattable(actions,
             align=c('r','c','c','c','c','c','c','c','c'),

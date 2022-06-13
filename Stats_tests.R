@@ -102,7 +102,7 @@ brant(modelt)
 #H0: Parallel Regression Assumption holds - can trust regression results
 summary(modelt)#no pvalues!
 
-# MEANS / SD / SE / CI  
+# MEANS / SD / SE / CI  ----
 init.lm2<-init.lm
 levels(init.lm2$rating)
 init.lm2$rating<-init.lm2$rating %>% as.character(init.lm$rating)
