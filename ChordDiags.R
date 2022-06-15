@@ -20,7 +20,7 @@ intchord<-Interact %>%
   tally() %>% 
   filter(n>1) %>% 
   select(-isout)
-view(intchord)
+#view(intchord)
 
 reciplist<-Interact %>% select(recipsp)
 reciplist$recipsp<-as.factor(reciplist$recipsp)
@@ -38,7 +38,7 @@ intchord<-intchord %>%
     recipsp=="Brown throated sunbird"~"SB",recipsp=="Collared kingfisher"~"KF",recipsp=="Common flameback"~"WP",recipsp=="Common hill myna"~"CHM",recipsp=="Common iora"~"CI",recipsp=="Grey headed fish eagle"~"GFE",recipsp=="Grey heron"~"GH",        
     recipsp=="House crow"~"HC",recipsp=="House sparrow"~"HS",recipsp=="Javan myna"~"JM",recipsp=="Large billed crow"~"LBC",recipsp=="Lesser green leafbird"~"LGL",recipsp=="Lineated barbet"~"LB",
     recipsp=="Little tern"~"LT",recipsp=="Long-tailed macaque"~"MQ",recipsp=="NA"~"NA",recipsp== "Oriental dollarbird"~"ODB",recipsp== "Oriental magpie robin"~"OMPR",recipsp=="Oriental pied hornbill"~"OPH",
-    recipsp=="Pink necked green pigeon"~"DV",recipsp=="Purple heron"~"PH",recipsp=="Rock dove"~"DV",recipsp=="Spotted dove"~"DV",recipsp=="Stork billed kingfisher"~"KF",recipsp=="Swift sp."~"SW",recipsp=="White-bellied kingfisher"~"KF",recipsp=="Yellow vented bulbul"~"BB",
+    recipsp=="Pink necked green pigeon"~"DV",recipsp=="Purple heron"~"PH",recipsp=="Rock dove"~"DV",recipsp=="Rufous woodpecker"~"WP",recipsp=="Spotted dove"~"DV",recipsp=="Stork billed kingfisher"~"KF",recipsp=="Swift sp."~"SW",recipsp=="White-bellied kingfisher"~"KF",recipsp=="Yellow vented bulbul"~"BB",
     recipsp=="Zebra dove"~"DV",recipsp=="Yellow crested cockatoo"~"YCC"))    
 
 inchord2<-intchord %>% ungroup %>% select(IS,RS,n)
@@ -160,7 +160,7 @@ title(main = "Long-tailed parakeet initiated interactions")
 all.ch<-Interact %>% 
   filter(recipsp!="NA") %>% filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
   group_by(interaction,recipsp,isout) %>% tally() %>% select(-isout)
-view(all.ch)
+#view(all.ch)
 all.ch<-all.ch %>% 
   mutate(RS=case_when(
     recipsp=="Monk parakeet"~"MP",recipsp=="Tanimbar corella"~"TC",recipsp=="Rose ringed parakeet"~"RRP",recipsp=="Red-breasted parakeet"~"RBP",recipsp=="Long-tailed parakeet"~"LTP",
@@ -168,14 +168,14 @@ all.ch<-all.ch %>%
     recipsp=="Brown throated sunbird"~"SB",recipsp=="Collared kingfisher"~"KF",recipsp=="Common flameback"~"WP",recipsp=="Common hill myna"~"CHM",recipsp=="Common iora"~"CI",recipsp=="Grey headed fish eagle"~"GFE",recipsp=="Grey heron"~"GH",        
     recipsp=="House crow"~"HC",recipsp=="House sparrow"~"HS",recipsp=="Javan myna"~"JM",recipsp=="Large billed crow"~"LBC",recipsp=="Lesser green leafbird"~"LGL",recipsp=="Lineated barbet"~"LB",
     recipsp=="Little tern"~"LT",recipsp=="Long-tailed macaque"~"MQ",recipsp=="NA"~"NA",recipsp== "Oriental dollarbird"~"ODB",recipsp== "Oriental magpie robin"~"OMPR",recipsp=="Oriental pied hornbill"~"OPH",
-    recipsp=="Pink necked green pigeon"~"DV",recipsp=="Purple heron"~"PH",recipsp=="Rock dove"~"DV",recipsp=="Spotted dove"~"DV",recipsp=="Stork billed kingfisher"~"KF",recipsp=="Swift sp."~"SW",recipsp=="White-bellied kingfisher"~"KF",recipsp=="Yellow vented bulbul"~"BB",
+    recipsp=="Pink necked green pigeon"~"DV",recipsp=="Purple heron"~"PH",recipsp=="Rock dove"~"DV",recipsp=="Rufous woodpecker"~"WP",recipsp=="Spotted dove"~"DV",recipsp=="Stork billed kingfisher"~"KF",recipsp=="Swift sp."~"SW",recipsp=="White-bellied kingfisher"~"KF",recipsp=="Yellow vented bulbul"~"BB",
     recipsp=="Zebra dove"~"DV",recipsp=="Yellow crested cockatoo"~"YCC"))    
 all.ch<-all.ch %>% ungroup %>% select(interaction,RS,n)
 # #...RBP----
 rbp.ch<-Interact %>% 
   filter(recipsp!="NA") %>% filter(initsp=="Red-breasted parakeet") %>%  
   group_by(interaction,recipsp,isout) %>% tally() %>% select(-isout)
-view(rbp.ch)
+#view(rbp.ch)
 rbp.ch<-rbp.ch %>% 
   mutate(RS=case_when(
     recipsp=="Monk parakeet"~"MP",recipsp=="Tanimbar corella"~"TC",recipsp=="Rose ringed parakeet"~"RRP",recipsp=="Red-breasted parakeet"~"RBP",recipsp=="Long-tailed parakeet"~"LTP",
@@ -183,7 +183,7 @@ rbp.ch<-rbp.ch %>%
     recipsp=="Brown throated sunbird"~"SB",recipsp=="Collared kingfisher"~"KF",recipsp=="Common flameback"~"WP",recipsp=="Common hill myna"~"CHM",recipsp=="Common iora"~"CI",recipsp=="Grey headed fish eagle"~"GFE",recipsp=="Grey heron"~"GH",        
     recipsp=="House crow"~"HC",recipsp=="House sparrow"~"HS",recipsp=="Javan myna"~"JM",recipsp=="Large billed crow"~"LBC",recipsp=="Lesser green leafbird"~"LGL",recipsp=="Lineated barbet"~"LB",
     recipsp=="Little tern"~"LT",recipsp=="Long-tailed macaque"~"MQ",recipsp=="NA"~"NA",recipsp== "Oriental dollarbird"~"ODB",recipsp== "Oriental magpie robin"~"OMPR",recipsp=="Oriental pied hornbill"~"OPH",
-    recipsp=="Pink necked green pigeon"~"DV",recipsp=="Purple heron"~"PH",recipsp=="Rock dove"~"DV",recipsp=="Spotted dove"~"DV",recipsp=="Stork billed kingfisher"~"KF",recipsp=="Swift sp."~"SW",recipsp=="White-bellied kingfisher"~"KF",recipsp=="Yellow vented bulbul"~"BB",
+    recipsp=="Pink necked green pigeon"~"DV",recipsp=="Purple heron"~"PH",recipsp=="Rock dove"~"DV",recipsp=="Rufous woodpecker"~"WP",recipsp=="Spotted dove"~"DV",recipsp=="Stork billed kingfisher"~"KF",recipsp=="Swift sp."~"SW",recipsp=="White-bellied kingfisher"~"KF",recipsp=="Yellow vented bulbul"~"BB",
     recipsp=="Zebra dove"~"DV",recipsp=="Yellow crested cockatoo"~"YCC"))    
 rbp.ch<-rbp.ch %>% ungroup %>% select(interaction,RS,n)
 
@@ -191,7 +191,7 @@ rbp.ch<-rbp.ch %>% ungroup %>% select(interaction,RS,n)
 mp.ch<-Interact %>% 
   filter(recipsp!="NA") %>% filter(initsp=="Monk parakeet") %>%  
   group_by(interaction,recipsp,isout) %>% tally() %>% select(-isout)
-view(mp.ch)
+#view(mp.ch)
 mp.ch<-mp.ch %>% 
   mutate(RS=case_when(
     recipsp=="Monk parakeet"~"MP",recipsp=="Tanimbar corella"~"TC",recipsp=="Rose ringed parakeet"~"RRP",recipsp=="Red-breasted parakeet"~"RBP",recipsp=="Long-tailed parakeet"~"LTP",
@@ -199,7 +199,7 @@ mp.ch<-mp.ch %>%
     recipsp=="Brown throated sunbird"~"SB",recipsp=="Collared kingfisher"~"KF",recipsp=="Common flameback"~"WP",recipsp=="Common hill myna"~"CHM",recipsp=="Common iora"~"CI",recipsp=="Grey headed fish eagle"~"GFE",recipsp=="Grey heron"~"GH",        
     recipsp=="House crow"~"HC",recipsp=="House sparrow"~"HS",recipsp=="Javan myna"~"JM",recipsp=="Large billed crow"~"LBC",recipsp=="Lesser green leafbird"~"LGL",recipsp=="Lineated barbet"~"LB",
     recipsp=="Little tern"~"LT",recipsp=="Long-tailed macaque"~"MQ",recipsp=="NA"~"NA",recipsp== "Oriental dollarbird"~"ODB",recipsp== "Oriental magpie robin"~"OMPR",recipsp=="Oriental pied hornbill"~"OPH",
-    recipsp=="Pink necked green pigeon"~"DV",recipsp=="Purple heron"~"PH",recipsp=="Rock dove"~"DV",recipsp=="Spotted dove"~"DV",recipsp=="Stork billed kingfisher"~"KF",recipsp=="Swift sp."~"SW",recipsp=="White-bellied kingfisher"~"KF",recipsp=="Yellow vented bulbul"~"BB",
+    recipsp=="Pink necked green pigeon"~"DV",recipsp=="Purple heron"~"PH",recipsp=="Rock dove"~"DV",recipsp=="Rufous woodpecker"~"WP",recipsp=="Spotted dove"~"DV",recipsp=="Stork billed kingfisher"~"KF",recipsp=="Swift sp."~"SW",recipsp=="White-bellied kingfisher"~"KF",recipsp=="Yellow vented bulbul"~"BB",
     recipsp=="Zebra dove"~"DV",recipsp=="Yellow crested cockatoo"~"YCC"))    
 mp.ch<-mp.ch %>% ungroup %>% select(interaction,RS,n)
 
@@ -207,7 +207,7 @@ mp.ch<-mp.ch %>% ungroup %>% select(interaction,RS,n)
 tc.ch<-Interact %>% 
   filter(recipsp!="NA") %>% filter(initsp=="Tanimbar corella") %>%  
   group_by(interaction,recipsp,isout) %>% tally() %>% select(-isout)
-view(tc.ch)
+#view(tc.ch)
 tc.ch<-tc.ch %>% 
   mutate(RS=case_when(
     recipsp=="Monk parakeet"~"MP",recipsp=="Tanimbar corella"~"TC",recipsp=="Rose ringed parakeet"~"RRP",recipsp=="Red-breasted parakeet"~"RBP",recipsp=="Long-tailed parakeet"~"LTP",
@@ -215,7 +215,7 @@ tc.ch<-tc.ch %>%
     recipsp=="Brown throated sunbird"~"SB",recipsp=="Collared kingfisher"~"KF",recipsp=="Common flameback"~"WP",recipsp=="Common hill myna"~"CHM",recipsp=="Common iora"~"CI",recipsp=="Grey headed fish eagle"~"GFE",recipsp=="Grey heron"~"GH",        
     recipsp=="House crow"~"HC",recipsp=="House sparrow"~"HS",recipsp=="Javan myna"~"JM",recipsp=="Large billed crow"~"LBC",recipsp=="Lesser green leafbird"~"LGL",recipsp=="Lineated barbet"~"LB",
     recipsp=="Little tern"~"LT",recipsp=="Long-tailed macaque"~"MQ",recipsp=="NA"~"NA",recipsp== "Oriental dollarbird"~"ODB",recipsp== "Oriental magpie robin"~"OMPR",recipsp=="Oriental pied hornbill"~"OPH",
-    recipsp=="Pink necked green pigeon"~"DV",recipsp=="Purple heron"~"PH",recipsp=="Rock dove"~"DV",recipsp=="Spotted dove"~"DV",recipsp=="Stork billed kingfisher"~"KF",recipsp=="Swift sp."~"SW",recipsp=="White-bellied kingfisher"~"KF",recipsp=="Yellow vented bulbul"~"BB",
+    recipsp=="Pink necked green pigeon"~"DV",recipsp=="Purple heron"~"PH",recipsp=="Rock dove"~"DV",recipsp=="Rufous woodpecker"~"WP",recipsp=="Spotted dove"~"DV",recipsp=="Stork billed kingfisher"~"KF",recipsp=="Swift sp."~"SW",recipsp=="White-bellied kingfisher"~"KF",recipsp=="Yellow vented bulbul"~"BB",
     recipsp=="Zebra dove"~"DV",recipsp=="Yellow crested cockatoo"~"YCC"))    
 tc.ch<-tc.ch %>% ungroup %>% select(interaction,RS,n)
 
@@ -223,7 +223,7 @@ tc.ch<-tc.ch %>% ungroup %>% select(interaction,RS,n)
 rrp.ch<-Interact %>% 
   filter(recipsp!="NA") %>% filter(initsp=="Rose ringed parakeet") %>%  
   group_by(interaction,recipsp,isout) %>% tally() %>% select(-isout)
-view(rrp.ch)
+#view(rrp.ch)
 rrp.ch<-rrp.ch %>% 
   mutate(RS=case_when(
     recipsp=="Monk parakeet"~"MP",recipsp=="Tanimbar corella"~"TC",recipsp=="Rose ringed parakeet"~"RRP",recipsp=="Red-breasted parakeet"~"RBP",recipsp=="Long-tailed parakeet"~"LTP",
@@ -231,7 +231,7 @@ rrp.ch<-rrp.ch %>%
     recipsp=="Brown throated sunbird"~"SB",recipsp=="Collared kingfisher"~"KF",recipsp=="Common flameback"~"WP",recipsp=="Common hill myna"~"CHM",recipsp=="Common iora"~"CI",recipsp=="Grey headed fish eagle"~"GFE",recipsp=="Grey heron"~"GH",        
     recipsp=="House crow"~"HC",recipsp=="House sparrow"~"HS",recipsp=="Javan myna"~"JM",recipsp=="Large billed crow"~"LBC",recipsp=="Lesser green leafbird"~"LGL",recipsp=="Lineated barbet"~"LB",
     recipsp=="Little tern"~"LT",recipsp=="Long-tailed macaque"~"MQ",recipsp=="NA"~"NA",recipsp== "Oriental dollarbird"~"ODB",recipsp== "Oriental magpie robin"~"OMPR",recipsp=="Oriental pied hornbill"~"OPH",
-    recipsp=="Pink necked green pigeon"~"DV",recipsp=="Purple heron"~"PH",recipsp=="Rock dove"~"DV",recipsp=="Spotted dove"~"DV",recipsp=="Stork billed kingfisher"~"KF",recipsp=="Swift sp."~"SW",recipsp=="White-bellied kingfisher"~"KF",recipsp=="Yellow vented bulbul"~"BB",
+    recipsp=="Pink necked green pigeon"~"DV",recipsp=="Purple heron"~"PH",recipsp=="Rock dove"~"DV",recipsp=="Rufous woodpecker"~"WP",recipsp=="Spotted dove"~"DV",recipsp=="Stork billed kingfisher"~"KF",recipsp=="Swift sp."~"SW",recipsp=="White-bellied kingfisher"~"KF",recipsp=="Yellow vented bulbul"~"BB",
     recipsp=="Zebra dove"~"DV",recipsp=="Yellow crested cockatoo"~"YCC"))    
 rrp.ch<-rrp.ch %>% ungroup %>% select(interaction,RS,n)
 
@@ -239,7 +239,7 @@ rrp.ch<-rrp.ch %>% ungroup %>% select(interaction,RS,n)
 ltp.ch<-Interact %>% 
   filter(recipsp!="NA") %>% filter(initsp=="Long-tailed parakeet") %>%  
   group_by(interaction,recipsp,isout) %>% tally() %>% select(-isout)
-view(ltp.ch)
+#view(ltp.ch)
 ltp.ch<-ltp.ch %>% 
   mutate(RS=case_when(
     recipsp=="Monk parakeet"~"MP",recipsp=="Tanimbar corella"~"TC",recipsp=="Rose ringed parakeet"~"RRP",recipsp=="Red-breasted parakeet"~"RBP",recipsp=="Long-tailed parakeet"~"LTP",
@@ -247,7 +247,7 @@ ltp.ch<-ltp.ch %>%
     recipsp=="Brown throated sunbird"~"SB",recipsp=="Collared kingfisher"~"KF",recipsp=="Common flameback"~"WP",recipsp=="Common hill myna"~"CHM",recipsp=="Common iora"~"CI",recipsp=="Grey headed fish eagle"~"GFE",recipsp=="Grey heron"~"GH",        
     recipsp=="House crow"~"HC",recipsp=="House sparrow"~"HS",recipsp=="Javan myna"~"JM",recipsp=="Large billed crow"~"LBC",recipsp=="Lesser green leafbird"~"LGL",recipsp=="Lineated barbet"~"LB",
     recipsp=="Little tern"~"LT",recipsp=="Long-tailed macaque"~"MQ",recipsp=="NA"~"NA",recipsp== "Oriental dollarbird"~"ODB",recipsp== "Oriental magpie robin"~"OMPR",recipsp=="Oriental pied hornbill"~"OPH",
-    recipsp=="Pink necked green pigeon"~"DV",recipsp=="Purple heron"~"PH",recipsp=="Rock dove"~"DV",recipsp=="Spotted dove"~"DV",recipsp=="Stork billed kingfisher"~"KF",recipsp=="Swift sp."~"SW",recipsp=="White-bellied kingfisher"~"KF",recipsp=="Yellow vented bulbul"~"BB",
+    recipsp=="Pink necked green pigeon"~"DV",recipsp=="Purple heron"~"PH",recipsp=="Rock dove"~"DV",recipsp=="Rufous woodpecker"~"WP",recipsp=="Spotted dove"~"DV",recipsp=="Stork billed kingfisher"~"KF",recipsp=="Swift sp."~"SW",recipsp=="White-bellied kingfisher"~"KF",recipsp=="Yellow vented bulbul"~"BB",
     recipsp=="Zebra dove"~"DV",recipsp=="Yellow crested cockatoo"~"YCC"))    
 ltp.ch<-ltp.ch %>% ungroup %>% select(interaction,RS,n)
 
