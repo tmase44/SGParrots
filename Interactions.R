@@ -89,6 +89,7 @@ levels(isrs2$species)
 levels(isrs2$outcome)
 
 
+
 #CHARTS----
 # clean wrapped labels!!!!
 isrs2$species2 = str_wrap(isrs2$species, width = 10)
@@ -101,7 +102,8 @@ isrsall %>% group_by(species) %>% summarise(n=sum(total)) %>%
   ggplot(aes(reorder(species,n),n,fill=species))+ # this order high to low
   geom_col(position='dodge',alpha=0.8)+coord_flip()+
   labs(x='Species',y='total interactions',title='Total interactions')+
-  scale_y_continuous(expand = c(0,2))+ 
+  scale_y_continuous(expand = c(0,2))+
+  theme(legend.position = 'none')+
   scale_fill_manual(values=c('Red-breasted parakeet'='red','Monk parakeet'='#3ACF3A','Rose ringed parakeet'='purple',
                               'Tanimbar corella'='orange','Long-tailed parakeet'='#1DACE8',"Others"="dark grey"))
  
@@ -133,7 +135,7 @@ isrs2 %>%
   summarise(n=sum(total)) %>%
   mutate(freq=n/sum(n)*100) %>% 
   ggplot(aes(reorder(species,-n),freq,fill=role))+
-  geom_col(position = 'fill')+
+  geom_col(position = 'fill')+theme_minimal()+
   geom_text(aes(label = round(freq,1)),position=position_fill(vjust=.5))+ 
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
   labs(x='Species',y='%',title='Proportion interactions intiated and recieved')+
@@ -389,3 +391,24 @@ isrs2.lm %>%
   ggplot(aes(species,rating))+
   geom_violin()+
   geom_jitter(aes(color=interaction),width=0.2,height=0.3,alpha=0.3)
+
+
+# species count x interactions----  
+
+abun<-Composition %>% 
+  filter(Species=="Red-breasted parakeet" | Species=="Tanimbar corella"|
+           Species=="Rose ringed parakeet"|Species=="Long tailed parakeet"|
+           Species=="Monk parakeet") %>% 
+  select(Species) %>% count(Species)
+  
+recips<-Interact2 %>%
+  select(initsp,recipsp) %>% filter(recipsp!='NA') %>% 
+  group_by(initsp) %>% mutate(n=n_distinct(recipsp)) %>% 
+  summarise(recipsp_tot=mean(n))
+
+abun<-cbind(abun,recips[,2])
+abun %>% ggplot(aes(n,recipsp_tot))+
+  geom_point(aes(color=Species,size=4))+
+  ylim(5,30)+
+  labs(y='Numer of recipient species',x='n parrots observed',
+       title = 'Parrot abundance vs number of species involved in interactions')
