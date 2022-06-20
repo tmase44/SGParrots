@@ -216,20 +216,16 @@ isrs2 %>%
 
   #grid.arrange(p3,p4,p5,ncol=3)
 
-# PROXIMITY TO NEST
-
-Interact$interaction<-factor(Interact$interaction,
-                            levels = c("Neutral","Displace","Threat","Swoop","Chase","Contact","Fight"))
+# PROXIMITY TO NEST----
 
 
 Interact %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
-  ggplot(aes(nxt_cav,rating,color=interaction))+
-  geom_jitter(size=2,alpha=0.5,width=1.5)+xlim(0,80)+
-  scale_y_continuous(breaks = c(1,2,3,4))+
-  labs(title = 'Interaction proximity with nearest nest',
-    y='Aggression level',x='Distance from nest')+
-  facet_wrap(~initsp)
+  ggplot(aes(y=seq(1,length(nxt_cav)),nxt_cav))+geom_jitter(aes(color=initsp),width=3,alpha=0.6,size=4)+
+  xlim(0,80)+
+  labs(y='observation n',x='distance from cavity',title='Distance of interaction from the nearest cavity')
+
+
 
 
 # SUBSETS----

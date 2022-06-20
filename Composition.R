@@ -82,7 +82,7 @@ colnames(richness)<-"Richness"
 #view(richness)
 
 #Shannon index----
-for (Comp.alpha.row in 1:3)
+for (Comp.alpha.row in 1:4)
 {shannon<- matrix(diversity(Comp.alpha[,], index = "shannon"))}
 shannon<-round(shannon,3)
 #Adjusting output names of rows and columns
@@ -91,7 +91,7 @@ colnames(shannon)<-"Shannon"
 #view(shannon)
 
 #Simpson index----
-for (Comp.alpha.row in 1:3)
+for (Comp.alpha.row in 1:4)
 {simpson<- matrix(diversity(Comp.alpha[,], index = "simpson"))}
 simpson<-round(simpson,3)
 #Adjusting the names of rows and columns
@@ -110,7 +110,7 @@ plot.indices<-Indices %>%
   ggplot(aes(x=Simpson,y=Shannon,
                            label=row.names(Indices))) +
   geom_point(aes(color=Richness), size=4) +
-  xlim(0.85,1.0)+ylim(2.5,4.0)+
+  xlim(0.8,0.98)+ylim(1.8,4.1)+
   geom_text(hjust=0.5,vjust=-1)+
   labs(title = 'Alpha biodiversity of each survey site')
 plot.indices

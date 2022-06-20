@@ -1,5 +1,5 @@
 library(pacman)
-p_load(Rmisc,rcompanion,brant,ordinal,MASS,DescTools,formattable,knitr,kableExtra,tidyverse,vegan,
+p_load(kableExtra,Rmisc,rcompanion,brant,ordinal,MASS,DescTools,formattable,knitr,kableExtra,tidyverse,vegan,
        lubridate,gridExtra,circlize,stringr,readxl)
 
 # STATISTICAL TESTS----
@@ -75,6 +75,7 @@ model1<-clm(as.factor(init.lm$interaction)~species,
                link='loglog')
 
 anova(modelnull,model1)
+
 # p >0.5 = signif *
 # likelihood ratio = 11.987, signifcant (>10)
 nagelkerke(fit = model1,
@@ -84,6 +85,7 @@ nagelkerke(fit = model1,
 ##Cox and Snell (ML)                 0.02974310
 #Nagelkerke (Cragg and Uhler)       0.03092320
 summary(model1)
+
 # LTP is first referece category - summary shows, strong variance between:
 ## RRP-LTP ***
 ## TC-LTP  **
@@ -110,6 +112,7 @@ init.lm2$rating<-init.lm2$rating %>% as.numeric(init.lm$rating)
 
 parrotmeans <- summarySE(init.lm2, measurevar="rating", groupvars="species")
 parrotmeans
+formattable(parrotmeans)
 
 # W/L ~ species----
 ## Null model----
