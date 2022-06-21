@@ -217,15 +217,20 @@ isrs2 %>%
   #grid.arrange(p3,p4,p5,ncol=3)
 
 # PROXIMITY TO NEST----
-
-
+## all interactions
 Interact %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
   ggplot(aes(y=seq(1,length(nxt_cav)),nxt_cav))+geom_jitter(aes(color=initsp),width=3,alpha=0.6,size=4)+
   xlim(0,80)+
   labs(y='observation n',x='distance from cavity',title='Distance of interaction from the nearest cavity')
-
-
+## species on Y axis
+Interact %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
+  ggplot(aes(nxt_cav,initsp))+
+  geom_jitter(aes(color=initsp),width=2,height=0.1,alpha=0.4,size=3)+
+  xlim(0,80)+
+  labs(y='observation n',x='distance from cavity',title='Distance of interaction from the nearest cavity')+
+  theme(legend.position = 'none')
 
 
 # SUBSETS----
@@ -357,24 +362,6 @@ rating %>%
   geom_density()
 
 isrs<-rbind(initiators,recipients)
-
-#...winrate per IS for each action
-modeldata<-isrs2 %>% 
-  filter(outcome!='NE'&role=='IS') %>%
-  group_by(species) %>% 
-  mutate(winrate=total/sum(total)) %>% 
-  group_by(species,interaction) %>% 
-  mutate(int.winrate=total/sum(total)*100) %>% 
-  group_by(species,interaction,outcome) %>% 
-  mutate(agg=sum(winrate*rating))
-
-ggplot(modeldata,aes(interaction,total))+
-  geom_point()+stat_smooth(method='lm')+facet_wrap(~species)
-
-mean(rating$`Aggression score`)
-# 1.976
-
-t.test(2.16,1.77,var.equal=TRUE)
 
 
 # boxpoint all ints----

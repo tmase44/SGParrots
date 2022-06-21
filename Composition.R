@@ -23,21 +23,11 @@ Daily.richness<-Composition %>%
 
 Daily.richness %>% 
   ggplot(aes(Surveyno,n,color=Study.Area))+
-  geom_smooth()+
+  geom_line()+
   geom_point()+
   scale_x_continuous(breaks = c(1,2,3,4,5,6,7,8,9,10))+
   labs(y = 'n species detected', x='survey number',
        title = 'Daily composition: detected unique species')
-
-Daily.interact<-Interact %>% 
-  group_by(Study.Area,Surveyno) %>% 
-  mutate(n = n_distinct(id)) %>% ungroup() %>% select(Study.Area,Surveyno,n)
-Daily.interact %>% 
-  ggplot(aes(Surveyno,n,color=Study.Area))+
-  geom_smooth()+
-  geom_point()+scale_x_continuous(breaks = c(1,2,3,4,5,6,7,8,9,10))+
-  labs(y = 'n interactions observed', x='survey number',
-       title = 'Daily interactions observed')
 
 
 #histogram line parrots
@@ -62,7 +52,7 @@ Comp.max<-Composition %>%
 #view(Comp.max)
 
 Comp.max %>% ggplot(aes(Study.Area,max_obs))+
-  geom_jitter(aes(color=Species),width=0.2,size=5,alpha=0.6)+coord_trans(y='log2')+
+  geom_jitter(aes(color=Species),width=0.18,size=3,alpha=0.6)+coord_trans(y='log2')+
   scale_color_manual(values=c('Red-breasted parakeet'='red','Monk parakeet'='#3ACF3A','Rose ringed parakeet'='purple',
                               'Tanimbar corella'='orange','Long tailed parakeet'='#1DACE8','Javan myna'='black',"Others"="dark grey"))+
   #ylim(0,40)+ # outlier 75 mynas 
@@ -125,14 +115,14 @@ Comp.max2<-Comp.max %>%
 # plot proportion at sites----
 plot.prop<-Comp.max2 %>% 
   filter(Species=="Monk parakeet"|Species=="Red-breasted parakeet"|Species=="Tanimbar corella"|
-           Species=="Long tailed parakeet"|Species=="Rose ringed parakeet"|Species=="Javan myna") %>% 
+           Species=="Long tailed parakeet"|Species=="Rose ringed parakeet") %>% 
   ggplot(aes(Study.Area,Proportion,color=Species,size=max_obs))+
   geom_point()+labs(title = 'Proportion of parrots in community')  
 plot.prop
 #table
 plot.prop.table<-Comp.max2 %>% 
   filter(Species=="Monk parakeet"|Species=="Red-breasted parakeet"|Species=="Tanimbar corella"|
-           Species=="Long tailed parakeet"|Species=="Rose ringed parakeet"|Species=="Javan myna")
+           Species=="Long tailed parakeet"|Species=="Rose ringed parakeet")
   
 formattable(plot.prop.table)
 
