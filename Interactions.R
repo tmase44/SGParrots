@@ -6,7 +6,7 @@ p_load(formattable,knitr,kableExtra,tidyverse,vegan,
 # IMPORT DATA----
 Interact <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                        sheet = "Interactions")
-View(Interact)
+#View(Interact)
 ls(Interact)
 unique(Interact$initsp)
 unique(Interact$interaction)
