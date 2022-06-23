@@ -202,7 +202,7 @@ isrs2 %>%
 isrs2 %>% 
   filter(role=='IS') %>% group_by(species) %>% mutate(freq=total/sum(total)*100) %>% 
   ggplot(aes(interaction,freq,fill=species))+geom_col(width=1)+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ylim(0,50)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ylim(0,40)+
   theme(legend.position = 'none')+labs(y='relative frequency',x='interaction',title='Interaction distribution: positively skewed')+
   facet_wrap(~species)
 
@@ -220,7 +220,8 @@ isrs2 %>%
 ## all interactions
 Interact %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
-  ggplot(aes(y=seq(1,length(nxt_cav)),nxt_cav))+geom_jitter(aes(color=initsp),width=3,alpha=0.6,size=4)+
+  ggplot(aes(y=interaction,nxt_cav))+geom_jitter(aes(color=initsp),width=3,alpha=0.6,size=1)+
+  geom_smooth()+
   xlim(0,80)+
   labs(y='observation n',x='distance from cavity',title='Distance of interaction from the nearest cavity')
 ## species on Y axis
@@ -232,6 +233,8 @@ Interact %>%
   labs(y='observation n',x='distance from cavity',title='Distance of interaction from the nearest cavity')+
   theme(legend.position = 'none')
 
+v<-lm(nxt_cav~rating+interaction,data=Interact)
+summary(v)
 
 # SUBSETS----
 Interact %>% 
