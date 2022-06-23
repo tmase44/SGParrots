@@ -261,9 +261,11 @@ ltp.ch<-ltp.ch %>%
 ltp.ch<-ltp.ch %>% ungroup %>% select(interaction,RS,n)
 
 #PLOTS----
-par(mfrow=c(1,1))
+#par(mfrow=c(1,1))
 circos.clear()
 par(mfrow=c(2,3))
+par(cex = 0.5, mar = c(0, 0, 0, 0)) #adjust text size
+circos.par(start.degree = 0)
 #plot all----
 grid.col.all=c("Neutral"="#f7f7f7","Displace"="#eaeccc","Threat"="#feda8b","Swoop"="#fdb366","Chase"="#f67e4b","Contact"="#dd3d2d","Fight"="#a50026",
                "MP"="grey","TC"="grey","RRP"="grey","RBP"="grey","LTP"="grey","AGS"="grey","AK"="grey","BNO"="grey","BE"="grey","SB"="grey","KF"="grey","WP"="grey","CHM"="grey","HC"="grey","HS"="grey","JM"="grey","LBC"="grey","LGL"="grey","LB"="grey","LT"="grey","MQ"="grey","NA"="grey", "ODB"="grey", "OMPR"="grey","OPH"="grey","DV"="grey","SW"="grey","BB"="grey","YCC"="grey","CI"="grey","GFE"="grey","GH"="grey","PH"="grey","C"="grey","O"="grey")

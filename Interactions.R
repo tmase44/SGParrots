@@ -104,8 +104,11 @@ isrsall %>% group_by(species) %>% summarise(n=sum(total)) %>%
   labs(x='Species',y='total interactions',title='Total interactions')+
   scale_y_continuous(expand = c(0,2))+
   theme(legend.position = 'none')+
-  scale_fill_manual(values=c('Red-breasted parakeet'='red','Monk parakeet'='#3ACF3A','Rose ringed parakeet'='purple',
-                              'Tanimbar corella'='orange','Long-tailed parakeet'='#1DACE8',"Others"="dark grey"))
+  scale_fill_manual(values=c('Red-breasted parakeet'='#CC3311',
+                             'Monk parakeet'='#004488',
+                             'Rose ringed parakeet'='#EE3377',
+                             'Tanimbar corella'='#33BBEE',
+                             'Long-tailed parakeet'='#009988',"Others"="dark grey"))
  
 ##Parrot all interactions----
 isrs2 %>% 
@@ -127,7 +130,7 @@ isrs2 %>%
   geom_text(aes(label = n),position=position_stack(vjust=.5))+ 
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
   labs(x='Species',y='n',title='n interactions intiated and recieved')+
-  scale_fill_manual(values=c('IS'='#456355','RS'='#FCD16B'))
+  scale_fill_manual(values=c('IS'='#4a7b77','RS'='#f67e4b'))
 
 # % IS RS----
 isrs2 %>% 
@@ -139,7 +142,7 @@ isrs2 %>%
   geom_text(aes(label = round(freq,1)),position=position_fill(vjust=.5))+ 
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
   labs(x='Species',y='%',title='Proportion interactions intiated and recieved')+
-  scale_fill_manual(values=c('IS'='#456355','RS'='#FCD16B'))
+  scale_fill_manual(values=c('IS'='#4a7b77','RS'='#f67e4b'))
 
 # 3. W/L/NE summary
 ## n W/L/NE all ints----
@@ -151,7 +154,7 @@ isrs2 %>%
   geom_text(aes(label = n),position=position_stack(vjust=.5))+ 
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
   labs(x='Species',y='n',title='n wins, losses and neutral outcomes')+
-  scale_fill_manual(values=c('W'='#00BFC4','NE'='#C4CFD0','L'='#F8766D'))
+  scale_fill_manual(values=c('W'='#4393c3','NE'='#f7f7f7','L'='#d6604d'))
 #### ..all species----
 isrs %>%  
   group_by(species,outcome) %>% 
@@ -160,7 +163,7 @@ isrs %>%
   geom_col(position = 'stack')+coord_flip()+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   labs(x='Species',y='n',title='n wins, losses and neutral outcomes')+
-  scale_fill_manual(values=c('W'='#00BFC4','NE'='#C4CFD0','L'='#F8766D'))
+  scale_fill_manual(values=c('W'='#4393c3','NE'='#f7f7f7','L'='#d6604d'))
 
 ## % W/L/NE all ints----
 isrs2 %>% 
@@ -172,7 +175,7 @@ isrs2 %>%
   geom_text(aes(label = round(freq,1)),position=position_fill(vjust=.5))+ 
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
   labs(x='Species',y='%',title='Proportion wins, losses and neutral outcomes')+
-  scale_fill_manual(values=c('W'='#00BFC4','NE'='#C4CFD0','L'='#F8766D'))
+  scale_fill_manual(values=c('W'='#4393c3','NE'='#f7f7f7','L'='#d6604d'))
 
 ## W/L by IS RS----
 isrs2 %>% 
@@ -185,7 +188,7 @@ isrs2 %>%
   geom_text(aes(label = round(freq,1)),position=position_fill(vjust=.5))+ 
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
   labs(x='Species',y='%',title='Proportion wins, losses and neutral outcomes')+
-  scale_fill_manual(values=c('W'='#00BFC4','NE'='#C4CFD0','L'='#F8766D'))+
+  scale_fill_manual(values=c('W'='#4393c3','NE'='#f7f7f7','L'='#d6604d'))+
   facet_wrap(~role)
 
 #3. INTERACTIONS----
@@ -196,7 +199,12 @@ isrs2 %>%
   ggplot(aes(interaction,total,fill=species))+geom_col(width=1)+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   theme(legend.position = 'none')+labs(y='absolute frequency',x='interaction',title='Interaction distribution: positively skewed')+
-  facet_wrap(~species,scales='free')
+  facet_wrap(~species,scales='free')+
+  scale_fill_manual(values=c('Red-breasted parakeet'='#CC3311',
+                             'Monk parakeet'='#004488',
+                             'Rose ringed parakeet'='#EE3377',
+                             'Tanimbar corella'='#33BBEE',
+                             'Long-tailed parakeet'='#009988'))
 
 ### relative freq (%)----
 isrs2 %>% 
@@ -204,7 +212,13 @@ isrs2 %>%
   ggplot(aes(interaction,freq,fill=species))+geom_col(width=1)+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ylim(0,40)+
   theme(legend.position = 'none')+labs(y='relative frequency',x='interaction',title='Interaction distribution: positively skewed')+
-  facet_wrap(~species)
+  facet_wrap(~species)+
+  scale_fill_manual(values=c('Red-breasted parakeet'='#CC3311',
+                             'Monk parakeet'='#004488',
+                             'Rose ringed parakeet'='#EE3377',
+                             'Tanimbar corella'='#33BBEE',
+                             'Long-tailed parakeet'='#009988'))
+
 
 # a bar chart has to be used because the variable of interest (interaction)
   # is not continuous numeric. It is continuous because interactions
@@ -223,7 +237,13 @@ Interact %>%
   ggplot(aes(y=interaction,nxt_cav))+geom_jitter(aes(color=initsp),width=3,alpha=0.6,size=1)+
   geom_smooth()+
   xlim(0,80)+
-  labs(y='observation n',x='distance from cavity',title='Distance of interaction from the nearest cavity')
+  labs(y='observation n',x='distance from cavity',title='Distance of interaction from the nearest cavity')+
+  scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
+                             'Monk parakeet'='#004488',
+                             'Rose ringed parakeet'='#EE3377',
+                             'Tanimbar corella'='#33BBEE',
+                             'Long-tailed parakeet'='#009988'))
+
 ## species on Y axis
 Interact %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
@@ -231,7 +251,13 @@ Interact %>%
   geom_jitter(aes(color=initsp),width=2,height=0.1,alpha=0.4,size=3)+
   xlim(0,80)+
   labs(y='observation n',x='distance from cavity',title='Distance of interaction from the nearest cavity')+
-  theme(legend.position = 'none')
+  theme(legend.position = 'none')+
+  scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
+                             'Monk parakeet'='#004488',
+                             'Rose ringed parakeet'='#EE3377',
+                             'Tanimbar corella'='#33BBEE',
+                             'Long-tailed parakeet'='#009988'))
+
 
 v<-lm(nxt_cav~rating+interaction,data=Interact)
 summary(v)
