@@ -52,10 +52,14 @@ Comp.max<-Composition %>%
 #view(Comp.max)
 
 Comp.max %>% ggplot(aes(Study.Area,max_obs))+
-  geom_jitter(aes(color=Species),width=0.18,size=3,alpha=0.6)+coord_trans(y='log2')+
-  scale_color_manual(values=c('Red-breasted parakeet'='red','Monk parakeet'='#99ddff','Rose ringed parakeet'='green',
-                              'Tanimbar corella'='pink','Long tailed parakeet'='gold',"Others"="#DDDDDD"))+
-  #ylim(0,40)+ # outlier 75 mynas 
+  geom_jitter(aes(color=Species),width=0.12,size=3,alpha=0.6)+coord_trans(y='log2')+
+  scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
+                              'Monk parakeet'='#004488',
+                              'Rose ringed parakeet'='#EE3377',
+                              'Tanimbar corella'='#33BBEE',
+                              'Long tailed parakeet'='#009988',
+                              'Yellow crested cockatoo'='#DDAA33'))+
+  theme_light()+
   labs(title = 'Max daily counts per site, species',color="Species")#change legend title!!
 
 # spread/gather for alpha measurement----
