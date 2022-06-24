@@ -5,8 +5,8 @@ p_load(tidyverse,vegan,lubridate,gridExtra,circlize,stringr,readxl,wesanderson,D
 Transect <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                           sheet = "Composition")
 # based on df prepared in Composition
-# distance col must have lower case d----
-Transect<-rename(Transect,distance = Distance)
+view(Transect)
+unique(Transect$Species)
 
 # distance measurements by species
 Transect %>% 
@@ -17,38 +17,25 @@ Transect %>%
                  color="black",fill="white")+
   scale_x_continuous(breaks=seq(0,60,by=5))+
   labs(x="Distance (m)", y="Frequency",
-       title = "Line transects")+
-  facet_wrap(~Species,ncol =6)
+       title = "Line transects")
 
-ts_rbp<-Transect %>% 
-  filter(Species == "Red-breasted parakeet") %>% 
-  select(Region.Label,Study.Area,Area,Sample.Label,Effort,Object,distance)
-view(ts_rbp)
-
+# Changi transect
+changi_rbp<-Transect %>% filter(Study.Area=='Changi Village') %>% filter(object == 'Red-breasted parakeet') %>% 
+  select(Region.Label,Study.Area,Area,Sample.Label,Effort,object,distance)
 # effort multiplier ---- 
   # because each transect was walked 8 times in total
-ts_rbp$Effort <- ts_rbp$Effort * 8
+changi_rbp$Effort <- changi_rbp$Effort * 8
+view(changi_rbp)
 
+ls(changi_rbp$Study.Area)
 
 # https://examples.distancesampling.org/Distance-lines/lines-distill.html
 
 # check total encounters----
-sum(!is.na(ts_rbp$distance)) # 154 observations = good!
+sum(!is.na(changi_rbp$distance)) # 193 observations = good!
+ls(changi_rbp$object)
 
 # RBP----
-# plot transects----
-ts_rbp %>% 
-  ggplot(aes(distance,))+
-  geom_histogram(bins = 11,
-                 binwidth = 5,#sets bins to same as 'by' count below
-                 center = 0,#aligns label to middle of bin,
-                 color="black",fill="white")+
-  scale_x_continuous(breaks=seq(0,60,by=5))+
-  labs(x="Distance (m)", y="Frequency",
-       title = "RBP line transects")
-# or
-hist(ts_rbp$distance, xlab="Distance (m)",
-     main="RBP line transects")#
 
 # fun.conversion factor----
 conversion.factor <- convert_units("meter", "kilometer", "hectare")
@@ -58,7 +45,7 @@ conversion.factor <- convert_units("meter", "kilometer", "hectare")
   # area = hectare
 
 # simple detection function with half normal detection----
-rbp.hn <- ds(data=ts_rbp, key="hn", adjustment=NULL,
+rbp.hn <- ds(data=changi_rbp, key="hn", adjustment=NULL,
               convert_units=conversion.factor)
 summary(rbp.hn)
 
@@ -73,11 +60,11 @@ plot(rbp.hn,
     # detection below 15m almost certain except of birds are quiet or hidden
 
 # uniform detection function----
-rbp.unif.cos <- ds(ts_rbp, key="unif", adjustment="cos",
+rbp.unif.cos <- ds(changi_rbp, key="unif", adjustment="cos",
                     convert_units=conversion.factor)
 
 # hazard rate detection function----
-rbpn.hr.poly <- ds(ts_rbp, key="hr", adjustment="poly", 
+rbpn.hr.poly <- ds(changi_rbp, key="hr", adjustment="poly", 
                    convert_units=conversion.factor)
 # model comparison----
 AIC(rbp.hn,rbpn.hr.poly,rbp.unif.cos)
@@ -113,16 +100,15 @@ summary(rbpn.hr.poly)
 #RBP density = 3.71 birds per sqKM
 
 # TANIMBAR CORELLA----
-ts_tc<-changiv %>% 
-  filter(Object == "Tanimbar corella") %>% 
-  select(Region.Label,Study.Area,Area,Sample.Label,Effort,Object,distance)
-ts_tc$Effort <- ts_tc$Effort * 8
-view(ts_tc)
+changi_tc<-Transect %>% filter(Study.Area=='Changi Village') %>%  filter(object == "Tanimbar corella") %>% 
+  select(Region.Label,Study.Area,Area,Sample.Label,Effort,object,distance)
+changi_tc$Effort <- changi_tc$Effort * 8
+view(changi_tc)
 
 # check total encounters----
-sum(!is.na(ts_tc$distance)) # 49 observations = good!
+sum(!is.na(changi_tc$distance)) # 83 observations = good!
 
-ts_tc %>% 
+changi_tc %>% 
   ggplot(aes(distance,))+
   geom_histogram(bins = 11,
                  binwidth = 5,#sets bins to same as 'by' count below
@@ -132,17 +118,15 @@ ts_tc %>%
   labs(x="Distance (m)", y="Frequency",
        title = "TC line transects")
 
-ts_tc[42, 5] = 0.112
-
 #Half normal----
-tc.hn <- ds(data=ts_tc, key="hn", adjustment=NULL,
+tc.hn <- ds(data=changi_tc, key="hn", adjustment=NULL,
              convert_units=conversion.factor)
 summary(rbp.hn)
 #Uniform cosine
-tc.unif.cos <- ds(ts_tc, key="unif", adjustment="cos",
+tc.unif.cos <- ds(changi_tc, key="unif", adjustment="cos",
                    convert_units=conversion.factor)
 #Hazard rate poly
-tc.hr.poly <- ds(ts_tc, key="hr", adjustment="poly", 
+tc.hr.poly <- ds(changi_tc, key="hr", adjustment="poly", 
                    convert_units=conversion.factor)
 #compare
 AIC(tc.hn,tc.hr.poly,tc.unif.cos)
