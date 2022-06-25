@@ -1,5 +1,5 @@
 library(pacman)
-p_load(tidyverse,vegan,lubridate,gridExtra,circlize,stringr,readxl,Distance,writexl)
+p_load(tidyverse,vegan,lubridate,gridExtra,circlize,stringr,readxl,Distance,writexl,ggrepel)
 
 # IMPORT DATA----
 Transect <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
@@ -39,7 +39,7 @@ conversion.factor <- convert_units("meter", "kilometer", "hectare")
   # transect length = kilometer
   # area = hectare
 
-# simple detection function with half normal detection----
+## simple detection function with half normal detection----
 rbp.hn <- ds(data=changi_rbp, key="hn", adjustment=NULL,
               convert_units=conversion.factor)
 summary(rbp.hn)
@@ -54,19 +54,19 @@ plot(rbp.hn,
   # logical because high visibility and vocal nauture of RBP
     # detection below 15m almost certain except of birds are quiet or hidden
 
-# uniform detection function----
+## uniform detection function----
 rbp.unif.cos <- ds(changi_rbp, key="unif", adjustment="cos",
                     convert_units=conversion.factor)
 
-# hazard rate detection function----
+## hazard rate detection function----
 rbpn.hr.poly <- ds(changi_rbp, key="hr", adjustment="poly", 
                    convert_units=conversion.factor)
-# model comparison----
+## model comparison----
 AIC(rbp.hn,rbpn.hr.poly,rbp.unif.cos)
 # AIC = Aike information criterion
   # LOWEST AIC = BEST FIT ----
     # in this case: hazard rate
-# goodness of fit----
+## goodness of fit----
 gof_ds(rbpn.hr.poly,
        main="Goodness of fit: RBP Hazard rate detection model")
 # Goodness of fit results for ddf object
@@ -75,7 +75,7 @@ gof_ds(rbpn.hr.poly,
 # good fit 
 knitr::kable(summarize_ds_models(rbp.hn,rbp.unif.cos,rbpn.hr.poly),digits=3,
              caption="Model comparison table.")
-# compare plots----
+## compare plots----
 par(mfrow=c(1,3))
 plot(rbpn.hr.poly, breaks=cutpoints, main="Hazard rate")
 plot(rbp.unif.cos, breaks=cutpoints, main="Uniform cosine")
@@ -94,18 +94,18 @@ changi_x<-Transect %>% filter(Study.Area=='Queenstown Stadium') %>%  filter(Spec
   select(Region.Label,Study.Area,Area,Sample.Label,Effort,Species,distance)
 changi_x$Effort <- changi_x$Effort * 8
 sum(!is.na(changi_x$distance)) 
-#Half normal----
+###Half normal----
 x.hn <- ds(data=changi_x, key="hn", adjustment=NULL,
             convert_units=conversion.factor)
-#Uniform cosine
+##Uniform cosine
 x.unif.cos <- ds(changi_x, key="unif", adjustment="cos",
                   convert_units=conversion.factor)
-#Hazard rate poly
+##Hazard rate poly
 x.hr.poly <- ds(changi_x, key="hr", adjustment="poly", 
                  convert_units=conversion.factor)
-#compare
+##compare
 AIC(x.hn,x.hr.poly,x.unif.cos)
-#plot
+##plot
 par(mfrow=c(1,3))
 plot(x.hr.poly, breaks=cutpoints, main="Hazard rate")
 plot(x.unif.cos, breaks=cutpoints, main="Uniform cosine")
@@ -119,13 +119,58 @@ summary(x.hn)
 RAD <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                           sheet = "DenAb")
 ls(RAD)
+#Top 
+TTopAB<-RAD %>% arrange(Study.Area,desc(RA))
+view(TTopAB)
+
+## Fixed scale RAD----
 RAD %>% 
   ggplot(aes(RA,D))+
-  geom_jitter(aes(color=Study.Area),width=2,height=.5,size=2,alpha=.7)+
-  facet_wrap(~Study.Area,scales='free')+
+  geom_jitter(aes(color=Study.Area),width=2,height=.5,size=3,alpha=.7,shape=20)+
+  facet_wrap(~Study.Area)+
   theme(legend.position = 'none')+
   labs(x='Relative abundance',y='Density',title='Correlation between distance-based density estimates and relative abundances')+
-  scale_color_manual(values=c('Changi Village'='#CC3311',
-                              'Pasir Ris Sports Center'='#004488',
-                              'Queenstown Stadium'='#EE3377',
-                              'Springleaf'='#33BBEE'))
+  scale_color_manual(values=c('Changi Village'='#CC3311','Pasir Ris Sports Center'='#004488','Queenstown Stadium'='#EE3377','Springleaf'='#33BBEE'))
+
+## Free scale RAD----
+RAD %>% ggplot(aes(RA,D))+
+  geom_jitter(aes(color=Study.Area),width=2,height=.5,size=3,alpha=.7,shape=20)+
+  facet_wrap(~Study.Area,scales = 'free')+
+  theme(legend.position = 'none')+
+  labs(x='Relative abundance',y='Density',title='Correlation between distance-based density estimates and relative abundances')+
+  scale_color_manual(values=c('Changi Village'='#CC3311','Pasir Ris Sports Center'='#004488','Queenstown Stadium'='#EE3377','Springleaf'='#33BBEE'))
+
+# n initiations per site and species-----
+nInts<-isrs %>% 
+  group_by(Study.Area,species) %>% summarise(n=sum(n)) %>% arrange(Study.Area,desc(n))
+view(nInts)
+
+RAD2<-merge(RAD,nInts,by.x=c("Study.Area","Species"),by.y=c("Study.Area","species"),all.x=TRUE)
+RAD2 %>% ggplot(aes(RA,n))+
+  geom_jitter(aes(color=Species),width=2,height=.5,size=5,shape=20)+
+  theme_bw()+
+  labs(x='Relative abundance',y='n interactions',title='Correlation between relative abundance and total interaction frequency')+
+  scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
+                              'Monk parakeet'='#004488',
+                              'Rose-ringed parakeet'='#EE3377',
+                              'Tanimbar corella'='#33BBEE',
+                              'Long-tailed parakeet'='#009988'))
+
+## initations only-----
+nInts2<-isrs %>% 
+  filter(role=='IS') %>% 
+  group_by(Study.Area,species) %>% summarise(n=sum(n)) %>% arrange(Study.Area,desc(n))
+view(nInts)
+
+RAD3<-merge(RAD,nInts2,by.x=c("Study.Area","Species"),by.y=c("Study.Area","species"),all.x=TRUE)
+RAD3 %>% ggplot(aes(RA,n))+
+  geom_jitter(aes(color=Species),width=2,height=.5,size=5,shape=20)+
+  theme_bw()+
+  labs(x='Relative abundance',y='n interactions',title='Correlation between relative abundance and initiated interaction frequency')+
+  scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
+                              'Monk parakeet'='#004488',
+                              'Rose-ringed parakeet'='#EE3377',
+                              'Tanimbar corella'='#33BBEE',
+                              'Long-tailed parakeet'='#009988'))
+
+# DO THIS BUT WITH NATIVE/NON STATUS

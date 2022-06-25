@@ -33,9 +33,9 @@ Daily.richness %>%
 #histogram line parrots
 Composition %>% 
   filter(Species=="Red-breasted parakeet" | Species=="Tanimbar corella"|
-           Species=="Rose ringed parakeet"|Species=="Long tailed parakeet"|
+           Species=="Rose-ringed parakeet"|Species=="Long-tailed parakeet"|
            Species=="Monk parakeet") %>% 
-  ggplot(aes(Distance,color=Species,fill=Species)) + 
+  ggplot(aes(distance,color=Species,fill=Species)) + 
   geom_density(adjust=2,alpha=0.1)+labs(title = "Transect observations: Parrots")
 
 
@@ -55,9 +55,9 @@ Comp.max %>% ggplot(aes(Study.Area,max_obs))+
   geom_jitter(aes(color=Species),width=0.12,size=3,alpha=0.6)+coord_trans(y='log2')+
   scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
                               'Monk parakeet'='#004488',
-                              'Rose ringed parakeet'='#EE3377',
+                              'Rose-ringed parakeet'='#EE3377',
                               'Tanimbar corella'='#33BBEE',
-                              'Long tailed parakeet'='#009988',
+                              'Long-tailed parakeet'='#009988',
                               'Yellow crested cockatoo'='#DDAA33'))+
   theme_light()+
   labs(title = 'Max daily counts per site, species',color="Species")#change legend title!!
@@ -119,14 +119,14 @@ Comp.max2<-Comp.max %>%
 # plot proportion at sites----
 plot.prop<-Comp.max2 %>% 
   filter(Species=="Monk parakeet"|Species=="Red-breasted parakeet"|Species=="Tanimbar corella"|
-           Species=="Long tailed parakeet"|Species=="Rose ringed parakeet") %>% 
+           Species=="Long-tailed parakeet"|Species=="Rose-ringed parakeet") %>% 
   ggplot(aes(Study.Area,Proportion,color=Species,size=max_obs))+
   geom_point()+labs(title = 'Proportion of parrots in community')  
 plot.prop
 #table
 plot.prop.table<-Comp.max2 %>% 
   filter(Species=="Monk parakeet"|Species=="Red-breasted parakeet"|Species=="Tanimbar corella"|
-           Species=="Long tailed parakeet"|Species=="Rose ringed parakeet")
+           Species=="Long-tailed parakeet"|Species=="Rose-ringed parakeet")
   
 formattable(plot.prop.table)
 

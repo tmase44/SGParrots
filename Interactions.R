@@ -25,9 +25,9 @@ Interact<-Interact %>%
     interaction=="Displace"~"1",
     interaction=="Threat"~"2",
     interaction=="Swoop"~"3",
-    interaction=="Chase"~"3",
-    interaction=="Contact"~"4",
-    interaction=="Fight"~"4"))
+    interaction=="Chase"~"4",
+    interaction=="Contact"~"5",
+    interaction=="Fight"~"6"))
 Interact$rating<-as.numeric(Interact$rating)
 
 Interact$interaction<-factor(Interact$interaction,
@@ -36,11 +36,11 @@ Interact$interaction<-factor(Interact$interaction,
 
 #PARROTS ONLY----
 Interact2<-Interact %>% 
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|
                                  initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
   mutate(SP=case_when(initsp=="Monk parakeet"~"MP",
                      initsp=="Tanimbar corella"~"TC",
-                     initsp=="Rose ringed parakeet"~"RRP",
+                     initsp=="Rose-ringed parakeet"~"RRP",
                      initsp=="Red-breasted parakeet"~"RBP",
                      initsp=="Long-tailed parakeet"~"LTP"))
 
@@ -48,7 +48,7 @@ Interact2<-Interact %>%
 # ...all initators----
 initiators<-Interact %>% 
   filter(recipsp!="NA") %>% 
-  group_by(initsp,interaction,rating,isout) %>% 
+  group_by(Study.Area,initsp,interaction,rating,isout) %>% 
   tally()
 initiators<-rename(initiators,species=initsp)  
 initiators<-rename(initiators,outcome=isout)
@@ -56,7 +56,7 @@ initiators$role<-'IS' # identify IS/RS
 # ...all recipients----
 recipients<-Interact %>% 
   filter(recipsp!="NA") %>% 
-  group_by(recipsp,interaction,rating,rsout) %>% 
+  group_by(Study.Area,recipsp,interaction,rating,rsout) %>% 
   tally()
 recipients<-rename(recipients,species=recipsp)  
 recipients<-rename(recipients,outcome=rsout)
@@ -66,7 +66,7 @@ isrs<-rbind(initiators,recipients)
 
 #...no filter
 isrsall<-isrs %>% 
-  group_by(species,role,interaction,rating,outcome) %>%
+  group_by(Study.Area,species,role,interaction,rating,outcome) %>%
   summarise(total=sum(n))
 
 isrsall$interaction<-factor(isrsall$interaction,
@@ -76,7 +76,7 @@ isrsall$outcome<-factor(isrsall$outcome,
 
 #... parrot filter
 isrs2<-isrs %>% 
-  filter(species=="Monk parakeet"|species=="Tanimbar corella"|species=="Rose ringed parakeet"|species=="Red-breasted parakeet"|species=="Long-tailed parakeet") %>%  
+  filter(species=="Monk parakeet"|species=="Tanimbar corella"|species=="Rose-ringed parakeet"|species=="Red-breasted parakeet"|species=="Long-tailed parakeet") %>%  
   group_by(species,role,interaction,rating,outcome) %>%
   summarise(total=sum(n))
 
@@ -106,7 +106,7 @@ isrsall %>% group_by(species) %>% summarise(n=sum(total)) %>%
   theme(legend.position = 'none')+
   scale_fill_manual(values=c('Red-breasted parakeet'='#CC3311',
                              'Monk parakeet'='#004488',
-                             'Rose ringed parakeet'='#EE3377',
+                             'Rose-ringed parakeet'='#EE3377',
                              'Tanimbar corella'='#33BBEE',
                              'Long-tailed parakeet'='#009988',"Others"="dark grey"))
  
@@ -202,7 +202,7 @@ isrs2 %>%
   facet_wrap(~species,scales='free')+
   scale_fill_manual(values=c('Red-breasted parakeet'='#CC3311',
                              'Monk parakeet'='#004488',
-                             'Rose ringed parakeet'='#EE3377',
+                             'Rose-ringed parakeet'='#EE3377',
                              'Tanimbar corella'='#33BBEE',
                              'Long-tailed parakeet'='#009988'))
 
@@ -215,7 +215,7 @@ isrs2 %>%
   facet_wrap(~species)+
   scale_fill_manual(values=c('Red-breasted parakeet'='#CC3311',
                              'Monk parakeet'='#004488',
-                             'Rose ringed parakeet'='#EE3377',
+                             'Rose-ringed parakeet'='#EE3377',
                              'Tanimbar corella'='#33BBEE',
                              'Long-tailed parakeet'='#009988'))
 
@@ -240,7 +240,7 @@ Interact %>%
   labs(y='observation n',x='distance from cavity',title='Distance of interaction from the nearest cavity')+
   scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
                              'Monk parakeet'='#004488',
-                             'Rose ringed parakeet'='#EE3377',
+                             'Rose-ringed parakeet'='#EE3377',
                              'Tanimbar corella'='#33BBEE',
                              'Long-tailed parakeet'='#009988'))
 
@@ -254,7 +254,7 @@ Interact %>%
   theme(legend.position = 'none')+
   scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
                              'Monk parakeet'='#004488',
-                             'Rose ringed parakeet'='#EE3377',
+                             'Rose-ringed parakeet'='#EE3377',
                              'Tanimbar corella'='#33BBEE',
                              'Long-tailed parakeet'='#009988'))
 
@@ -275,13 +275,13 @@ Interact %>%
 
 ## true pop mean----
 tmean<-Interact %>% 
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|
            initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
   select(interaction,rating) %>% 
   summarise('Aggression score'=round(mean(rating),2))
 #1.63
 tactions<-Interact %>%   
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|
            initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
   select(interaction,rating) %>% group_by(interaction) %>% 
   tally() %>% mutate(freq=round(n/sum(n)*100,2)) %>% select(-n) %>% 
@@ -292,26 +292,26 @@ tactions<-cbind(tactions,tmean[,1]) %>% relocate(1,9,2,3,4,5,6,7,8)
 
 ## AGGRESSION SCORE----
 rating<-Interact %>% select(initsp,interaction,rating)%>%    
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|
            initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
   group_by(initsp) %>% summarise('Aggression score'=round(mean(rating),2)) %>% 
-  arrange(match(initsp,c("Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet","Monk parakeet","Long-tailed parakeet"))) %>%
+  arrange(match(initsp,c("Rose-ringed parakeet","Tanimbar corella","Red-breasted parakeet","Monk parakeet","Long-tailed parakeet"))) %>%
   rename(Species=initsp) #%>% column_to_rownames(var="Species")
 #view(rating)
 ### Actions----
 actions<-Interact %>% select(initsp,interaction,rating)%>%   
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|
            initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
   group_by(initsp,interaction) %>% 
   tally() %>% mutate(freq=round(n/sum(n)*100,2)) %>% select(-n) %>% 
   spread(key=interaction,value = freq) %>% replace(is.na(.), 0) %>% 
-  arrange(match(initsp,c("Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet",
+  arrange(match(initsp,c("Rose-ringed parakeet","Tanimbar corella","Red-breasted parakeet",
                              "Monk parakeet","Long-tailed parakeet"))) %>% rename(Species=initsp)
 actions<-cbind(actions,rating[,2]) %>% relocate(1,9,2,3,4,5,6,7,8)
 actions<-rbind(actions,tactions[1,])
 #view(actions)
 actions$Species<-actions$Species %>%
-  factor(levels=c("Population means","Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet",
+  factor(levels=c("Population means","Rose-ringed parakeet","Tanimbar corella","Red-breasted parakeet",
                              "Monk parakeet","Long-tailed parakeet")) 
 actions<-actions %>% arrange(Species)
 
@@ -334,7 +334,7 @@ kbl(actions) %>% kable_material("striped") %>%
 
 # WIN AGG SCORE----
 ratingW<-Interact %>% select(initsp,interaction,isout,rating) %>% filter(interaction!='Neutral'& isout=="W") %>%    
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|
            initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
   group_by(initsp) %>% summarise('WIN Aggression score'=round(mean(rating),2)) %>% 
   arrange(match(initsp,c("Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet","Monk parakeet","Long-tailed parakeet"))) %>%
@@ -342,12 +342,12 @@ ratingW<-Interact %>% select(initsp,interaction,isout,rating) %>% filter(interac
 view(ratingW)
 
 actionsW<-Interact %>% select(initsp,interaction,isout,rating) %>% filter(interaction!='Neutral'&isout=='W') %>%   
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|
            initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
   group_by(initsp,interaction) %>% 
   tally() %>% mutate(freq=round(n/sum(n)*100,2)) %>% select(-n) %>% 
   spread(key=interaction,value = freq) %>% replace(is.na(.), 0) %>% 
-  arrange(match(initsp,c("Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet",
+  arrange(match(initsp,c("Rose-ringed parakeet","Tanimbar corella","Red-breasted parakeet",
                          "Monk parakeet","Long-tailed parakeet"))) %>% rename(Species=initsp)
 actionsW<-cbind(actionsW,ratingW[,2]) %>% relocate(1,8,2,3,4,5,6,7)
 view(actionsW)
@@ -367,11 +367,11 @@ formattable(actionsW,
 
 rating2<-Interact %>% 
   select(Study.Area,initsp,interaction,rating) %>%filter(interaction!='Neutral') %>%    
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|
            initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
   group_by(Study.Area,initsp) %>% summarise('Aggression score'=round(mean(rating),2)) %>% 
   spread(key=Study.Area,value = 'Aggression score') %>% 
-  arrange(match(initsp,c("Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet",
+  arrange(match(initsp,c("Rose-ringed parakeet","Tanimbar corella","Red-breasted parakeet",
                          "Monk parakeet","Long-tailed parakeet"))) %>% 
   rename(Species=initsp)
 rating2<-cbind(rating2,rating[,2,drop=FALSE]) %>% relocate(1,5,2,3,4)
@@ -409,7 +409,7 @@ isrs2.lm %>%
 
 abun<-Composition %>% 
   filter(Species=="Red-breasted parakeet" | Species=="Tanimbar corella"|
-           Species=="Rose ringed parakeet"|Species=="Long tailed parakeet"|
+           Species=="Rose-ringed parakeet"|Species=="Long tailed parakeet"|
            Species=="Monk parakeet") %>% 
   select(Species) %>% count(Species)
   
@@ -424,3 +424,5 @@ abun %>% ggplot(aes(n,recipsp_tot))+
   ylim(5,30)+
   labs(y='Numer of recipient species',x='n parrots observed',
        title = 'Parrot abundance vs number of species involved in interactions')
+
+
