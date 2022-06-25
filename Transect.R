@@ -146,15 +146,15 @@ nInts<-isrs %>%
 view(nInts)
 
 RAD2<-merge(RAD,nInts,by.x=c("Study.Area","Species"),by.y=c("Study.Area","species"),all.x=TRUE)
+RAD2<-RAD2 %>% replace(is.na(.), 0)
 RAD2 %>% ggplot(aes(RA,n))+
-  geom_jitter(aes(color=Species),width=2,height=.5,size=5,shape=20)+
+  geom_jitter(aes(color=factor(CavityYN)),width=2,height=.5,size=2,shape=20)+
+  stat_smooth(method='lm')+
   theme_bw()+
   labs(x='Relative abundance',y='n interactions',title='Correlation between relative abundance and total interaction frequency')+
-  scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
-                              'Monk parakeet'='#004488',
-                              'Rose-ringed parakeet'='#EE3377',
-                              'Tanimbar corella'='#33BBEE',
-                              'Long-tailed parakeet'='#009988'))
+  scale_color_manual(values=c('0'='#33BBEE',
+                              '1'='#004488',
+                              '2'='#EE3377'))
 
 ## initations only-----
 nInts2<-isrs %>% 
@@ -163,14 +163,26 @@ nInts2<-isrs %>%
 view(nInts)
 
 RAD3<-merge(RAD,nInts2,by.x=c("Study.Area","Species"),by.y=c("Study.Area","species"),all.x=TRUE)
-RAD3 %>% ggplot(aes(RA,n))+
-  geom_jitter(aes(color=Species),width=2,height=.5,size=5,shape=20)+
+RAD3<-RAD3 %>% replace(is.na(.), 0) %>% filter(n>0)
+RAD3 %>% ggplot(aes(n,RA))+
+  geom_jitter(width=2,height=.5,size=2,shape=20)+
+  stat_smooth(method='lm')+
   theme_bw()+
-  labs(x='Relative abundance',y='n interactions',title='Correlation between relative abundance and initiated interaction frequency')+
-  scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
-                              'Monk parakeet'='#004488',
-                              'Rose-ringed parakeet'='#EE3377',
-                              'Tanimbar corella'='#33BBEE',
-                              'Long-tailed parakeet'='#009988'))
+  labs(x='n initiated interactions',y='Relative abundance',title='Correlation between relative abundance and initiated interaction frequency')+
+  facet_wrap(vars(CavityYN))
+
+# REgression----
+lmRAD3s<-lm(n~RA,data=RAD3)
+summary(lmRAD3s)
+# *** between n ints & RA
+hist(lmRAD3s$resid)
+qqnorm(lmRAD3s$resid)
+
+lmRAD3m<-lm(n~RA+CavityYN,data=RAD3)
+summary(lmRAD3m)
+# *** between n ints & RA
+# ** between n ints and cavity nesters
+
+
 
 # DO THIS BUT WITH NATIVE/NON STATUS

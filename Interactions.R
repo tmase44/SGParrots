@@ -48,7 +48,7 @@ Interact2<-Interact %>%
 # ...all initators----
 initiators<-Interact %>% 
   filter(recipsp!="NA") %>% 
-  group_by(Study.Area,initsp,interaction,rating,isout) %>% 
+  group_by(Study.Area,initsp,interaction,rating,isout,) %>% 
   tally()
 initiators<-rename(initiators,species=initsp)  
 initiators<-rename(initiators,outcome=isout)
