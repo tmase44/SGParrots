@@ -1,39 +1,31 @@
 library(pacman)
-p_load(tidyverse,vegan,lubridate,gridExtra,circlize,stringr,readxl,wesanderson,Distance)
+p_load(tidyverse,vegan,lubridate,gridExtra,circlize,stringr,readxl,Distance)
 
 # IMPORT DATA----
 Transect <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                           sheet = "Composition")
 # based on df prepared in Composition
 view(Transect)
+ls(Transect)
 unique(Transect$Species)
 
-# distance measurements by species
-Transect %>% 
-  ggplot(aes(distance))+
-  geom_histogram(bins = 11,
-                 binwidth = 5,#sets bins to same as 'by' count below
-                 center = 0,#aligns label to middle of bin,
-                 color="black",fill="white")+
-  scale_x_continuous(breaks=seq(0,60,by=5))+
-  labs(x="Distance (m)", y="Frequency",
-       title = "Line transects")
+# Top10 species by site----
+TTop10<-Transect %>% group_by(Study.Area,Species,Surveyno) %>% summarise(n=n()) %>% select(-Surveyno) %>% summarise(max_obs = max(n)) %>% 
+  arrange(Study.Area,desc(max_obs)) %>% top_n(10)
+view(TTop10)
 
 # Changi transect
-changi_rbp<-Transect %>% filter(Study.Area=='Changi Village') %>% filter(object == 'Red-breasted parakeet') %>% 
-  select(Region.Label,Study.Area,Area,Sample.Label,Effort,object,distance)
+changi_rbp<-Transect %>% filter(Study.Area=='Changi Village') %>% filter(Species=='Red-breasted parakeet') %>% 
+  select(Region.Label,Study.Area,Area,Sample.Label,Effort,Species,distance)
 # effort multiplier ---- 
   # because each transect was walked 8 times in total
 changi_rbp$Effort <- changi_rbp$Effort * 8
-view(changi_rbp)
-
-ls(changi_rbp$Study.Area)
 
 # https://examples.distancesampling.org/Distance-lines/lines-distill.html
 
 # check total encounters----
 sum(!is.na(changi_rbp$distance)) # 193 observations = good!
-ls(changi_rbp$object)
+ls(changi_rbp$Species)
 
 # RBP----
 
@@ -80,9 +72,7 @@ gof_ds(rbpn.hr.poly,
 # Test statistic = 0.328923 p-value = 0.112286
 # good fit 
 
-knitr::kable(summarize_ds_models(rbp.hn,
-                                 rbp.unif.cos,
-                                 rbpn.hr.poly),digits=3,
+knitr::kable(summarize_ds_models(rbp.hn,rbp.unif.cos,rbpn.hr.poly),digits=3,
              caption="Model comparison table.")
 
 # compare plots----
@@ -96,12 +86,12 @@ plot(rbp.hn, breaks=cutpoints, main="Halfnormal")
 
 summary(rbp.unif.cos)
 summary(rbpn.hr.poly)
-#RBP abundance = 31.36 % relative representation in the ecosystem  
+#RBP abundance = 25.47 % relative representation in the ecosystem  
 #RBP density = 3.71 birds per sqKM
 
 # TANIMBAR CORELLA----
-changi_tc<-Transect %>% filter(Study.Area=='Changi Village') %>%  filter(object == "Tanimbar corella") %>% 
-  select(Region.Label,Study.Area,Area,Sample.Label,Effort,object,distance)
+changi_tc<-Transect %>% filter(Study.Area=='Changi Village') %>%  filter(Species=="Tanimbar corella") %>% 
+  select(Region.Label,Study.Area,Area,Sample.Label,Effort,Species,distance)
 changi_tc$Effort <- changi_tc$Effort * 8
 view(changi_tc)
 
@@ -121,7 +111,6 @@ changi_tc %>%
 #Half normal----
 tc.hn <- ds(data=changi_tc, key="hn", adjustment=NULL,
              convert_units=conversion.factor)
-summary(rbp.hn)
 #Uniform cosine
 tc.unif.cos <- ds(changi_tc, key="unif", adjustment="cos",
                    convert_units=conversion.factor)
@@ -135,6 +124,32 @@ par(mfrow=c(1,3))
 plot(tc.hr.poly, breaks=cutpoints, main="Hazard rate")
 plot(tc.unif.cos, breaks=cutpoints, main="Uniform cosine")
 plot(tc.hn, breaks=cutpoints, main="Halfnormal")
-#NOT ENOUGH DATA FOR TC----
+#Uniform cosine----
+knitr::kable(summarize_ds_models(tc.hn,tc.unif.cos,tc.hr.poly),digits=3,
+             caption="Model comparison table.")
+summary(tc.unif.cos)
+summary(tc.hn)
 
-
+# REPEAT
+changi_x<-Transect %>% filter(Study.Area=='Changi Village') %>%  filter(Species=="House crow") %>% 
+  select(Region.Label,Study.Area,Area,Sample.Label,Effort,Species,distance)
+#changi_tc$Effort <- changi_tc$Effort * 8
+#Half normal----
+x.hn <- ds(data=changi_x, key="hn", adjustment=NULL,
+            convert_units=conversion.factor)
+#Uniform cosine
+x.unif.cos <- ds(changi_x, key="unif", adjustment="cos",
+                  convert_units=conversion.factor)
+#Hazard rate poly
+x.hr.poly <- ds(changi_x, key="hr", adjustment="poly", 
+                 convert_units=conversion.factor)
+#compare
+AIC(x.hn,x.hr.poly,x.unif.cos)
+# all are not great
+par(mfrow=c(1,3))
+plot(x.hr.poly, breaks=cutpoints, main="Hazard rate")
+plot(x.unif.cos, breaks=cutpoints, main="Uniform cosine")
+plot(x.hn, breaks=cutpoints, main="Halfnormal")
+summary(x.hr.poly)
+summary(x.unif.cos)
+summary(x.hn)
