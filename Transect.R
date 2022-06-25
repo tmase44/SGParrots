@@ -130,10 +130,11 @@ knitr::kable(summarize_ds_models(tc.hn,tc.unif.cos,tc.hr.poly),digits=3,
 summary(tc.unif.cos)
 summary(tc.hn)
 
-# REPEAT
-changi_x<-Transect %>% filter(Study.Area=='Changi Village') %>%  filter(Species=="House crow") %>% 
+# REPEAT----
+changi_x<-Transect %>% filter(Study.Area=='Changi Village') %>%  filter(Species=="Red-breasted parakeet") %>% 
   select(Region.Label,Study.Area,Area,Sample.Label,Effort,Species,distance)
-#changi_tc$Effort <- changi_tc$Effort * 8
+changi_x$Effort <- changi_x$Effort * 8
+sum(!is.na(changi_x$distance)) 
 #Half normal----
 x.hn <- ds(data=changi_x, key="hn", adjustment=NULL,
             convert_units=conversion.factor)
