@@ -1,5 +1,5 @@
 library(pacman)
-p_load(tidyverse,vegan,lubridate,gridExtra,circlize,stringr,readxl,Distance)
+p_load(tidyverse,vegan,lubridate,gridExtra,circlize,stringr,readxl,Distance,writexl)
 
 # IMPORT DATA----
 Transect <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
@@ -9,10 +9,13 @@ view(Transect)
 ls(Transect)
 unique(Transect$Species)
 
-# Top10 species by site----
+# Hi-Lo species by site----
 TTop10<-Transect %>% group_by(Study.Area,Species,Surveyno) %>% summarise(n=n()) %>% select(-Surveyno) %>% summarise(max_obs = max(n)) %>% 
-  arrange(Study.Area,desc(max_obs)) %>% top_n(10)
+  arrange(Study.Area,desc(max_obs))
 view(TTop10)
+getwd()
+write_xlsx(TTop10,'C:/Users/tmaso/OneDrive/MSc Environmental Management/Dissertation/R-Analysis/SGParrots/TTop10.xlsx')
+
 
 # Changi transect
 changi_rbp<-Transect %>% filter(Study.Area=='Changi Village') %>% filter(Species=='Red-breasted parakeet') %>% 
@@ -63,7 +66,6 @@ AIC(rbp.hn,rbpn.hr.poly,rbp.unif.cos)
 # AIC = Aike information criterion
   # LOWEST AIC = BEST FIT ----
     # in this case: hazard rate
-
 # goodness of fit----
 gof_ds(rbpn.hr.poly,
        main="Goodness of fit: RBP Hazard rate detection model")
@@ -71,67 +73,24 @@ gof_ds(rbpn.hr.poly,
 # Distance sampling Cramer-von Mises test (unweighted)
 # Test statistic = 0.328923 p-value = 0.112286
 # good fit 
-
 knitr::kable(summarize_ds_models(rbp.hn,rbp.unif.cos,rbpn.hr.poly),digits=3,
              caption="Model comparison table.")
-
 # compare plots----
 par(mfrow=c(1,3))
 plot(rbpn.hr.poly, breaks=cutpoints, main="Hazard rate")
 plot(rbp.unif.cos, breaks=cutpoints, main="Uniform cosine")
 plot(rbp.hn, breaks=cutpoints, main="Halfnormal")
-
 # this shows that UNIFORM COSINE is actually a better fit
   # HR suggests implausibly high detection rate to 35m with excessively shap drop off
-
 summary(rbp.unif.cos)
 summary(rbpn.hr.poly)
 #RBP abundance = 25.47 % relative representation in the ecosystem  
 #RBP density = 3.71 birds per sqKM
 
-# TANIMBAR CORELLA----
-changi_tc<-Transect %>% filter(Study.Area=='Changi Village') %>%  filter(Species=="Tanimbar corella") %>% 
-  select(Region.Label,Study.Area,Area,Sample.Label,Effort,Species,distance)
-changi_tc$Effort <- changi_tc$Effort * 8
-view(changi_tc)
 
-# check total encounters----
-sum(!is.na(changi_tc$distance)) # 83 observations = good!
-
-changi_tc %>% 
-  ggplot(aes(distance,))+
-  geom_histogram(bins = 11,
-                 binwidth = 5,#sets bins to same as 'by' count below
-                 center = 0,#aligns label to middle of bin,
-                 color="black",fill="white")+
-  scale_x_continuous(breaks=seq(0,60,by=5))+
-  labs(x="Distance (m)", y="Frequency",
-       title = "TC line transects")
-
-#Half normal----
-tc.hn <- ds(data=changi_tc, key="hn", adjustment=NULL,
-             convert_units=conversion.factor)
-#Uniform cosine
-tc.unif.cos <- ds(changi_tc, key="unif", adjustment="cos",
-                   convert_units=conversion.factor)
-#Hazard rate poly
-tc.hr.poly <- ds(changi_tc, key="hr", adjustment="poly", 
-                   convert_units=conversion.factor)
-#compare
-AIC(tc.hn,tc.hr.poly,tc.unif.cos)
-# all are not great
-par(mfrow=c(1,3))
-plot(tc.hr.poly, breaks=cutpoints, main="Hazard rate")
-plot(tc.unif.cos, breaks=cutpoints, main="Uniform cosine")
-plot(tc.hn, breaks=cutpoints, main="Halfnormal")
-#Uniform cosine----
-knitr::kable(summarize_ds_models(tc.hn,tc.unif.cos,tc.hr.poly),digits=3,
-             caption="Model comparison table.")
-summary(tc.unif.cos)
-summary(tc.hn)
 
 # REPEAT----
-changi_x<-Transect %>% filter(Study.Area=='Changi Village') %>%  filter(Species=="Red-breasted parakeet") %>% 
+changi_x<-Transect %>% filter(Study.Area=='Queenstown Stadium') %>%  filter(Species=="Oriental pied hornbill") %>% 
   select(Region.Label,Study.Area,Area,Sample.Label,Effort,Species,distance)
 changi_x$Effort <- changi_x$Effort * 8
 sum(!is.na(changi_x$distance)) 
@@ -146,7 +105,7 @@ x.hr.poly <- ds(changi_x, key="hr", adjustment="poly",
                  convert_units=conversion.factor)
 #compare
 AIC(x.hn,x.hr.poly,x.unif.cos)
-# all are not great
+#plot
 par(mfrow=c(1,3))
 plot(x.hr.poly, breaks=cutpoints, main="Hazard rate")
 plot(x.unif.cos, breaks=cutpoints, main="Uniform cosine")
@@ -154,3 +113,19 @@ plot(x.hn, breaks=cutpoints, main="Halfnormal")
 summary(x.hr.poly)
 summary(x.unif.cos)
 summary(x.hn)
+
+# Abundance & Density----
+## IMPORT DATA----
+RAD <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
+                          sheet = "DenAb")
+ls(RAD)
+RAD %>% 
+  ggplot(aes(RA,D))+
+  geom_jitter(aes(color=Study.Area),width=2,height=.5,size=2,alpha=.7)+
+  facet_wrap(~Study.Area,scales='free')+
+  theme(legend.position = 'none')+
+  labs(x='Relative abundance',y='Density',title='Correlation between distance-based density estimates and relative abundances')+
+  scale_color_manual(values=c('Changi Village'='#CC3311',
+                              'Pasir Ris Sports Center'='#004488',
+                              'Queenstown Stadium'='#EE3377',
+                              'Springleaf'='#33BBEE'))
