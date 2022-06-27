@@ -52,7 +52,7 @@ Comp.max<-Composition %>%
 #view(Comp.max)
 
 Comp.max %>% ggplot(aes(Study.Area,max_obs))+
-  geom_jitter(aes(color=Species),width=0.12,size=3,alpha=0.6)+coord_trans(y='log2')+
+  geom_jitter(aes(color=Species),width=0.12,size=3,alpha=0.7,shape=20)+coord_trans(y='log2')+
   scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
                               'Monk parakeet'='#004488',
                               'Rose-ringed parakeet'='#EE3377',
@@ -76,7 +76,7 @@ colnames(richness)<-"Richness"
 #view(richness)
 
 #Shannon index----
-for (Comp.alpha.row in 1:4)
+for (Comp.alpha.row in 1:5)
 {shannon<- matrix(diversity(Comp.alpha[,], index = "shannon"))}
 shannon<-round(shannon,3)
 #Adjusting output names of rows and columns
@@ -85,7 +85,7 @@ colnames(shannon)<-"Shannon"
 #view(shannon)
 
 #Simpson index----
-for (Comp.alpha.row in 1:4)
+for (Comp.alpha.row in 1:5)
 {simpson<- matrix(diversity(Comp.alpha[,], index = "simpson"))}
 simpson<-round(simpson,3)
 #Adjusting the names of rows and columns

@@ -120,6 +120,13 @@ isrs2 %>%
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
   labs(x='Species',y='n',title='Total interactions')
 
+## who interacted with who MATRIX----
+tmp <- Interact %>% select(initsp,recipsp) %>% group_by(initsp,recipsp) %>% mutate(count=n()) %>% 
+  distinct(initsp,recipsp,.keep_all = TRUE) # remove dups
+tmp <- pivot_wider(tmp,names_from = recipsp, values_from = count) %>% replace(is.na(.), 0) %>% arrange(initsp)
+tmp <- tmp %>% column_to_rownames(var="initsp") # initsp to row names
+tmp <- tmp %>% select(order(colnames(tmp))) # cols A-Z
+view(tmp)
 #2. ROLES----
 ## n IS RS----
 isrs2 %>% 
@@ -196,10 +203,10 @@ isrs2 %>%
 ### absolute freq (n)----
 isrs2 %>% 
   filter(role=='IS') %>% 
-  ggplot(aes(interaction,total,fill=species))+geom_col(width=1)+
+  ggplot(aes(interaction,total))+geom_col(width=0.95)+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   theme(legend.position = 'none')+labs(y='absolute frequency',x='interaction',title='Interaction distribution: positively skewed')+
-  facet_wrap(~species,scales='free')+
+  facet_wrap(~species,scales='free')#+
   scale_fill_manual(values=c('Red-breasted parakeet'='#CC3311',
                              'Monk parakeet'='#004488',
                              'Rose-ringed parakeet'='#EE3377',
@@ -209,7 +216,7 @@ isrs2 %>%
 ### relative freq (%)----
 isrs2 %>% 
   filter(role=='IS') %>% group_by(species) %>% mutate(freq=total/sum(total)*100) %>% 
-  ggplot(aes(interaction,freq,fill=species))+geom_col(width=1)+
+  ggplot(aes(interaction,freq,fill=species))+geom_col(width=0.95)+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ylim(0,40)+
   theme(legend.position = 'none')+labs(y='relative frequency',x='interaction',title='Interaction distribution: positively skewed')+
   facet_wrap(~species)+
@@ -233,7 +240,7 @@ isrs2 %>%
 # PROXIMITY TO NEST----
 ## all interactions
 Interact %>% 
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
   ggplot(aes(y=interaction,nxt_cav))+geom_jitter(aes(color=initsp),width=3,alpha=0.6,size=1)+
   geom_smooth()+
   xlim(0,80)+
@@ -246,30 +253,34 @@ Interact %>%
 
 ## species on Y axis
 Interact %>% 
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
   ggplot(aes(nxt_cav,initsp))+
-  geom_jitter(aes(color=initsp),width=2,height=0.1,alpha=0.4,size=3)+
+  geom_jitter(aes(color=initsp),width=2,height=0.1,alpha=0.4,size=3,shape=20)+
   xlim(0,80)+
-  labs(y='observation n',x='distance from cavity',title='Distance of interaction from the nearest cavity')+
+  labs(y='Species observed',x='distance from cavity',title='Distance of interaction from the nearest cavity')+
   theme(legend.position = 'none')+
   scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
                              'Monk parakeet'='#004488',
                              'Rose-ringed parakeet'='#EE3377',
                              'Tanimbar corella'='#33BBEE',
                              'Long-tailed parakeet'='#009988'))
+## foods
+Interact %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
+  ggplot(aes(food_dis,initsp))+
+  geom_jitter(aes(color=initsp),width=2,height=0.1,alpha=0.4,size=3,shape=20)+
+  labs(y='Species observed',x='distance from food',title='Distance of interaction from the nearest food source')+
+  theme(legend.position = 'none')+
+  scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
+                              'Monk parakeet'='#004488',
+                              'Rose-ringed parakeet'='#EE3377',
+                              'Tanimbar corella'='#33BBEE',
+                              'Long-tailed parakeet'='#009988'))
 
 
 v<-lm(nxt_cav~rating+interaction,data=Interact)
 summary(v)
 
-# SUBSETS----
-Interact %>% 
-  filter(interaction!="Neutral") %>% 
-  group_by(initsp,recipsp) %>% 
-  tally() %>% 
-  mutate(freq=n/sum(n)*100) %>%
-  arrange(desc(initsp)) %>% 
-  arrange(initsp)
 
 # TABLES----
 
@@ -409,17 +420,17 @@ isrs2.lm %>%
 
 abun<-Composition %>% 
   filter(Species=="Red-breasted parakeet" | Species=="Tanimbar corella"|
-           Species=="Rose-ringed parakeet"|Species=="Long tailed parakeet"|
+           Species=="Rose-ringed parakeet"|Species=="Long-tailed parakeet"|
            Species=="Monk parakeet") %>% 
   select(Species) %>% count(Species)
   
 recips<-Interact2 %>%
-  select(initsp,recipsp) %>% filter(recipsp!='NA') %>% 
+  select(initsp,recipsp) %>% 
   group_by(initsp) %>% mutate(n=n_distinct(recipsp)) %>% 
   summarise(recipsp_tot=mean(n))
 
 abun<-cbind(abun,recips[,2])
-abun %>% ggplot(aes(n,recipsp_tot))+
+abun %>% ggplot(aes(n,recips))+
   geom_point(aes(color=Species,size=4))+
   ylim(5,30)+
   labs(y='Numer of recipient species',x='n parrots observed',

@@ -90,7 +90,7 @@ summary(rbpn.hr.poly)
 
 
 # REPEAT----
-changi_x<-Transect %>% filter(Study.Area=='Queenstown Stadium') %>%  filter(Species=="Oriental pied hornbill") %>% 
+changi_x<-Transect %>% filter(Study.Area=='Pasir Ris Town Park') %>%  filter(Species=="Red-breasted parakeet") %>% 
   select(Region.Label,Study.Area,Area,Sample.Label,Effort,Species,distance)
 changi_x$Effort <- changi_x$Effort * 8
 sum(!is.na(changi_x$distance)) 
@@ -129,8 +129,8 @@ RAD %>%
   geom_jitter(aes(color=Study.Area),width=2,height=.5,size=3,alpha=.7,shape=20)+
   facet_wrap(~Study.Area)+
   theme(legend.position = 'none')+
-  labs(x='Relative abundance',y='Density',title='Correlation between distance-based density estimates and relative abundances')+
-  scale_color_manual(values=c('Changi Village'='#CC3311','Pasir Ris Sports Center'='#004488','Queenstown Stadium'='#EE3377','Springleaf'='#33BBEE'))
+  labs(x='Relative abundance',y='Density',title='Correlation between distance-based density estimates and relative abundances')#+
+  scale_color_manual(values=c('Changi Village'='#CC3311','Pasir Ris Sports Center'='#004488','Q'='#EE3377','Springleaf'='#33BBEE'))
 
 ## Free scale RAD----
 RAD %>% ggplot(aes(RA,D))+
@@ -168,8 +168,7 @@ RAD3 %>% ggplot(aes(n,RA))+
   geom_jitter(width=2,height=.5,size=2,shape=20)+
   stat_smooth(method='lm')+
   theme_bw()+
-  labs(x='n initiated interactions',y='Relative abundance',title='Correlation between relative abundance and initiated interaction frequency')+
-  facet_wrap(vars(CavityYN))
+  labs(x='n initiated interactions',y='Relative abundance',title='Correlation between relative abundance and initiated interaction frequency')
 
 # REgression----
 lmRAD3s<-lm(n~RA,data=RAD3)
@@ -184,5 +183,3 @@ summary(lmRAD3m)
 # ** between n ints and cavity nesters
 
 
-
-# DO THIS BUT WITH NATIVE/NON STATUS
