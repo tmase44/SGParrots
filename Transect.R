@@ -148,14 +148,15 @@ view(nInts)
 RAD2<-merge(RAD,nInts,by.x=c("Study.Area","Species"),by.y=c("Study.Area","species"),all.x=TRUE)
 RAD2<-RAD2 %>% replace(is.na(.), 0)
 RAD2 %>% ggplot(aes(RA,n))+
-  geom_jitter(aes(color=factor(CavityYN)),width=2,height=.5,size=2,shape=20)+
-  stat_smooth(method='lm')+
-  theme_bw()+
+  geom_jitter(aes(color=Species),width=2,height=.5,size=2)+
+  facet_wrap(~Study.Area,scales = 'free')+
   labs(x='Relative abundance',y='n interactions',title='Correlation between relative abundance and total interaction frequency')+
-  scale_color_manual(values=c('0'='#33BBEE',
-                              '1'='#004488',
-                              '2'='#EE3377'))
-
+  scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
+                              'Monk parakeet'='#004488',
+                              'Rose-ringed parakeet'='#EE3377',
+                              'Tanimbar corella'='#33BBEE',
+                              'Long-tailed parakeet'='#009988'))
+  
 ## initations only-----
 nInts2<-isrs %>% 
   filter(role=='IS') %>% 

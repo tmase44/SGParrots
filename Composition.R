@@ -52,7 +52,7 @@ Comp.max<-Composition %>%
 #view(Comp.max)
 
 Comp.max %>% ggplot(aes(Study.Area,max_obs))+
-  geom_jitter(aes(color=Species),width=0.12,size=3,alpha=0.7,shape=20)+coord_trans(y='log2')+
+  geom_jitter(aes(color=Species),width=0.12,size=3,alpha=0.85,shape=20)+coord_trans(y='log2')+
   scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
                               'Monk parakeet'='#004488',
                               'Rose-ringed parakeet'='#EE3377',
