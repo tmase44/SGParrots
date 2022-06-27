@@ -1,6 +1,6 @@
 # LOAD PACKS----
 library(pacman)
-p_load(formattable,knitr,kableExtra,tidyverse,vegan,
+p_load(reshape2,formattable,knitr,kableExtra,tidyverse,vegan,
        lubridate,gridExtra,circlize,stringr,readxl,wesanderson)
 
 # IMPORT DATA----
@@ -127,6 +127,13 @@ tmp <- pivot_wider(tmp,names_from = recipsp, values_from = count) %>% replace(is
 tmp <- tmp %>% column_to_rownames(var="initsp") # initsp to row names
 tmp <- tmp %>% select(order(colnames(tmp))) # cols A-Z
 view(tmp)
+# creating correlation matrix
+corr_mat <- round(cor(data),2)
+# reduce the size of correlation matrix
+melted_corr_mat <- melt(corr_mat)
+view(melted_corr_mat)
+melted_corr_mat %>% ggplot(aes(Var1,Var2,fill=value))+geom_tile()
+
 #2. ROLES----
 ## n IS RS----
 isrs2 %>% 
