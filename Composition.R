@@ -116,9 +116,11 @@ Comp.max2<-Comp.max %>%
   group_by(Study.Area) %>% 
   mutate(Proportion=round(max_obs/sum(max_obs)*100,2))
 
+# propo + indices in one table
 Comp.max3<-Comp.max2 %>% filter(Species=="Monk parakeet"|Species=="Red-breasted parakeet"|Species=="Tanimbar corella"|
            Species=="Long-tailed parakeet"|Species=="Rose-ringed parakeet") %>% group_by(Study.Area) %>% summarise(sum(Proportion))
-Indices2<-cbind(richness, shannon, simpson,Comp.max3)
+Indices2<-cbind(richness, shannon, simpson,Comp.max3) #%>% select(-Study.Area)
+
 # plot proportion at sites----
 plot.prop<-Comp.max2 %>% 
   filter(Species=="Monk parakeet"|Species=="Red-breasted parakeet"|Species=="Tanimbar corella"|
@@ -134,3 +136,4 @@ plot.prop.table<-Comp.max2 %>%
 formattable(plot.prop.table)
 
 grid.arrange(plot.indices,plot.prop,ncol=2)
+

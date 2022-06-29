@@ -122,7 +122,7 @@ isrs2 %>%
 
 #2. ROLES----
 ## n IS RS----
-isrs2 %>% 
+isrs2 %>% filter(interaction!='Neutral') %>% 
   group_by(species,role) %>% 
   summarise(n=sum(total)) %>% 
   ggplot(aes(reorder(species,-n),n,fill=role))+
@@ -133,7 +133,19 @@ isrs2 %>%
   scale_fill_manual(values=c('IS'='#4a7b77','RS'='#f67e4b'))
 
 # % IS RS----
-isrs2 %>% 
+isrs2 %>% filter(interaction!='Neutral') %>% 
+  group_by(species,role) %>% 
+  summarise(n=sum(total)) %>%
+  mutate(freq=n/sum(n)*100) %>% 
+  ggplot(aes(reorder(species,-n),freq,fill=role))+
+  geom_col(position = 'fill')+theme_minimal()+
+  geom_text(aes(label = round(freq,1)),position=position_fill(vjust=.5))+ 
+  scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
+  labs(x='Species',y='%',title='Proportion interactions intiated and recieved')+
+  scale_fill_manual(values=c('IS'='#4a7b77','RS'='#f67e4b'))
+
+# Neutral----
+isrs2 %>% filter(interaction!='Neutral') %>% 
   group_by(species,role) %>% 
   summarise(n=sum(total)) %>%
   mutate(freq=n/sum(n)*100) %>% 
@@ -153,15 +165,6 @@ isrs2 %>%
   geom_col(position = 'stack')+ 
   geom_text(aes(label = n),position=position_stack(vjust=.5))+ 
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
-  labs(x='Species',y='n',title='n wins, losses and neutral outcomes')+
-  scale_fill_manual(values=c('W'='#4393c3','NE'='#f7f7f7','L'='#d6604d'))
-#### ..all species----
-isrs %>%  
-  group_by(species,outcome) %>% 
-  summarise(n=sum(n)) %>% 
-  ggplot(aes(reorder(species,n),n,fill=outcome))+
-  geom_col(position = 'stack')+coord_flip()+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   labs(x='Species',y='n',title='n wins, losses and neutral outcomes')+
   scale_fill_manual(values=c('W'='#4393c3','NE'='#f7f7f7','L'='#d6604d'))
 
@@ -188,7 +191,7 @@ isrs2 %>%
   geom_text(aes(label = round(freq,1)),position=position_fill(vjust=.5))+ 
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
   labs(x='Species',y='%',title='Proportion wins, losses and neutral outcomes')+
-  scale_fill_manual(values=c('W'='#4393c3','NE'='#f7f7f7','L'='#d6604d'))+
+  scale_fill_manual(values=c('W'='#4393c3','L'='#d6604d'))+
   facet_wrap(~role)
 
 #3. INTERACTIONS----
@@ -229,8 +232,6 @@ isrs2 %>%
 Interact %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
   ggplot(aes(y=interaction,nxt_cav))+geom_jitter(aes(color=initsp),width=3,alpha=0.6,size=1)+
-  geom_smooth()+
-  xlim(0,80)+
   labs(y='observation n',x='distance from cavity',title='Distance of interaction from the nearest cavity')+
   scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
                              'Monk parakeet'='#004488',
@@ -243,7 +244,6 @@ Interact %>%
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
   ggplot(aes(nxt_cav,initsp))+
   geom_jitter(aes(color=initsp),width=2,height=0.1,alpha=0.4,size=3,shape=20)+
-  xlim(0,80)+
   labs(y='Species observed',x='distance from cavity',title='Distance of interaction from the nearest cavity')+
   theme(legend.position = 'none')+
   scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
@@ -252,9 +252,16 @@ Interact %>%
                              'Tanimbar corella'='#33BBEE',
                              'Long-tailed parakeet'='#009988'))
 
-Interact %>% filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
-  ggplot(aes(nxt_cav,initsp))+
-  geom_boxplot()+xlim(0,100)
+Interact %>% filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%
+  filter(interaction!='Neutral') %>% 
+  ggplot(aes(initsp,nxt_cav))+
+  geom_boxplot()
+
+Interact %>% filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%
+  filter(interaction!='Neutral') %>% 
+  ggplot(aes(initsp,food_dis))+
+  geom_boxplot()
+
 
 ## foods
 Interact %>% 
@@ -428,4 +435,61 @@ abun %>% ggplot(aes(n,recips))+
   labs(y='Numer of recipient species',x='n parrots observed',
        title = 'Parrot abundance vs number of species involved in interactions')
 
+# N site visits / n ints per site----
+Composition %>% group_by(Study.Area) %>% summarise(hours=max(Surveyno))
+hourly<-Interact %>% filter(interaction!='Neutral') %>% group_by(Study.Area) %>% count(interaction) %>% 
+  mutate(hours=case_when(Study.Area=='Changi Village'~10,
+                         Study.Area=='Pasir Ris Town Park'~12,
+                         Study.Area=='Palawan Beach'~1,
+                         Study.Area=='Sengkang Riverside Park'~4,
+                         Study.Area=='Springleaf'~10,
+                         Study.Area=='Stirling Road'~6)) %>% 
+  mutate(ints_hr=n/hours) %>% group_by(Study.Area) %>% mutate(sum=sum(n)) %>% mutate(sum_hr=sum(ints_hr)) %>% 
+  group_by(Study.Area) %>% mutate(avg_hr=mean(ints_hr))
+hourly
+Indices3<-full_join(hourly,Indices2,by='Study.Area')
+Indices3<-full_join(Indices3,cavs,by='Study.Area')
+Indices3$interaction<-factor(Indices3$interaction,
+                             levels = c("Neutral","Displace","Threat","Swoop","Chase","Contact","Fight"))
 
+
+# LOWER BIODIVERSITY = GREATER FREQUENCY OF AGGRESSION 
+Indices3 %>% 
+  ggplot(aes(Simpson,avg_hr,color=Study.Area))+geom_point(size=4)+
+  labs(y='average hourly aggressions',x='Alpha biodiversity (Simpson)',title='Corellation between Alpha BD & Interaction frequency')
+
+Indices3 %>%
+  ggplot(aes(Richness,avg_hr))+
+  stat_summary()+
+  geom_smooth(method='lm')+geom_point(aes(color=Study.Area))+
+  labs(y='average hourly aggressions',x='Alpha biodiversity (Simpson)',title='Corellation between Alpha BD & Interaction frequency')
+
+x<-lm(avg_hr~CavityYN,Indices3)
+summary(x)
+## Richness R-sq = 0.3976
+## Simpson = 0.5834
+## Shannon = 0.4893
+
+Indices3%>% 
+  ggplot(aes(Richness,ints_hr))+
+  stat_summary(fun.data=mean_cl_normal)+
+  geom_smooth(method='lm')+geom_point(aes(color=Study.Area))+
+  labs(y='average hourly aggressions',x='Alpha biodiversity (Simpson)',title='Corellation between Alpha BD & Interaction frequency')+
+  facet_wrap(~interaction)
+
+# % Cavity nesters != FX on BD
+Indices3 %>% 
+  ggplot(aes(Simpson,freq,color=CavityYN))+geom_point(size=4)+
+  labs(y='Proportion of obligate cavity nesters',x='Alpha biodiversity (Simpson)',title='Corellation between Alpha BD & Interaction frequency')
+
+
+Interact %>% filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|
+                        initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% filter(interaction!='Neutral') %>% 
+  ggplot(aes(initsp,Temperature))+geom_boxplot()
+
+Interact %>% filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|
+                      initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% filter(interaction!='Neutral') %>% 
+  ggplot(aes(initsp,Temperature))+geom_boxplot()
+
+Interact2 %>% filter(interaction!='Neutral') %>% ggplot(aes(initsp,Temperature))+geom_boxplot()
+Interact2 %>% filter(interaction!='Neutral') %>% ggplot(aes(initsp,nxt_cav))+geom_boxplot()

@@ -156,6 +156,10 @@ RAD2 %>% ggplot(aes(RA,n))+
                               'Rose-ringed parakeet'='#EE3377',
                               'Tanimbar corella'='#33BBEE',
                               'Long-tailed parakeet'='#009988'))
+
+RAD2$CavityYN<-as.factor(RAD2$CavityYN)
+cavs<-RAD2 %>% group_by(Study.Area,CavityYN) %>% count(CavityYN) %>% group_by(Study.Area) %>% 
+  mutate(freq=n/sum(n)*100) %>% filter(CavityYN=='2')
   
 ## initations only-----
 nInts2<-isrs %>% 
