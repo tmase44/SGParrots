@@ -120,20 +120,6 @@ isrs2 %>%
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
   labs(x='Species',y='n',title='Total interactions')
 
-## who interacted with who MATRIX----
-tmp <- Interact %>% select(initsp,recipsp) %>% group_by(initsp,recipsp) %>% mutate(count=n()) %>% 
-  distinct(initsp,recipsp,.keep_all = TRUE) # remove dups
-tmp <- pivot_wider(tmp,names_from = recipsp, values_from = count) %>% replace(is.na(.), 0) %>% arrange(initsp)
-tmp <- tmp %>% column_to_rownames(var="initsp") # initsp to row names
-tmp <- tmp %>% select(order(colnames(tmp))) # cols A-Z
-view(tmp)
-# creating correlation matrix
-corr_mat <- round(cor(data),2)
-# reduce the size of correlation matrix
-melted_corr_mat <- melt(corr_mat)
-view(melted_corr_mat)
-melted_corr_mat %>% ggplot(aes(Var1,Var2,fill=value))+geom_tile()
-
 #2. ROLES----
 ## n IS RS----
 isrs2 %>% 
@@ -223,16 +209,10 @@ isrs2 %>%
 ### relative freq (%)----
 isrs2 %>% 
   filter(role=='IS') %>% group_by(species) %>% mutate(freq=total/sum(total)*100) %>% 
-  ggplot(aes(interaction,freq,fill=species))+geom_col(width=0.95)+
+  ggplot(aes(interaction,freq))+geom_col(width=0.95)+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ylim(0,40)+
   theme(legend.position = 'none')+labs(y='relative frequency',x='interaction',title='Interaction distribution: positively skewed')+
-  facet_wrap(~species)+
-  scale_fill_manual(values=c('Red-breasted parakeet'='#CC3311',
-                             'Monk parakeet'='#004488',
-                             'Rose-ringed parakeet'='#EE3377',
-                             'Tanimbar corella'='#33BBEE',
-                             'Long-tailed parakeet'='#009988'))
-
+  facet_wrap(~species)
 
 # a bar chart has to be used because the variable of interest (interaction)
   # is not continuous numeric. It is continuous because interactions
@@ -257,7 +237,7 @@ Interact %>%
                              'Rose-ringed parakeet'='#EE3377',
                              'Tanimbar corella'='#33BBEE',
                              'Long-tailed parakeet'='#009988'))
-
+  
 ## species on Y axis
 Interact %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
@@ -271,6 +251,11 @@ Interact %>%
                              'Rose-ringed parakeet'='#EE3377',
                              'Tanimbar corella'='#33BBEE',
                              'Long-tailed parakeet'='#009988'))
+
+Interact %>% filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
+  ggplot(aes(nxt_cav,initsp))+
+  geom_boxplot()+xlim(0,100)
+
 ## foods
 Interact %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  

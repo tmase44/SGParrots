@@ -76,7 +76,7 @@ colnames(richness)<-"Richness"
 #view(richness)
 
 #Shannon index----
-for (Comp.alpha.row in 1:5)
+for (Comp.alpha.row in 1:6)
 {shannon<- matrix(diversity(Comp.alpha[,], index = "shannon"))}
 shannon<-round(shannon,3)
 #Adjusting output names of rows and columns
@@ -85,7 +85,7 @@ colnames(shannon)<-"Shannon"
 #view(shannon)
 
 #Simpson index----
-for (Comp.alpha.row in 1:5)
+for (Comp.alpha.row in 1:6)
 {simpson<- matrix(diversity(Comp.alpha[,], index = "simpson"))}
 simpson<-round(simpson,3)
 #Adjusting the names of rows and columns
@@ -116,6 +116,9 @@ Comp.max2<-Comp.max %>%
   group_by(Study.Area) %>% 
   mutate(Proportion=round(max_obs/sum(max_obs)*100,2))
 
+Comp.max3<-Comp.max2 %>% filter(Species=="Monk parakeet"|Species=="Red-breasted parakeet"|Species=="Tanimbar corella"|
+           Species=="Long-tailed parakeet"|Species=="Rose-ringed parakeet") %>% group_by(Study.Area) %>% summarise(sum(Proportion))
+Indices2<-cbind(richness, shannon, simpson,Comp.max3)
 # plot proportion at sites----
 plot.prop<-Comp.max2 %>% 
   filter(Species=="Monk parakeet"|Species=="Red-breasted parakeet"|Species=="Tanimbar corella"|
