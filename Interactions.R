@@ -1,7 +1,8 @@
 # LOAD PACKS----
 library(pacman)
 p_load(reshape2,formattable,knitr,kableExtra,tidyverse,vegan,
-       lubridate,gridExtra,circlize,stringr,readxl,wesanderson)
+       lubridate,gridExtra,circlize,stringr,readxl,BBmisc)
+library(caret)
 
 # IMPORT DATA----
 Interact <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
@@ -77,7 +78,7 @@ isrsall$outcome<-factor(isrsall$outcome,
 #... parrot filter
 isrs2<-isrs %>% 
   filter(species=="Monk parakeet"|species=="Tanimbar corella"|species=="Rose-ringed parakeet"|species=="Red-breasted parakeet"|species=="Long-tailed parakeet") %>%  
-  group_by(species,role,interaction,rating,outcome) %>%
+  group_by(species,Study.Area,role,interaction,rating,outcome) %>%
   summarise(total=sum(n))
 
 isrs2$interaction<-factor(isrs2$interaction,
@@ -88,7 +89,12 @@ levels(isrs2$interaction)
 levels(isrs2$species)
 levels(isrs2$outcome)
 
-
+# DATA SUMMARY ----
+Composition %>% summarise(n_distinct(Species)) ### 78 species observed in total
+isrs %>% ungroup() %>%  summarise(n_distinct(species)) ### 48 species observed interacting
+Interact %>% count(initsp) %>% summarise(sum(n)) ### 790 interactions in total
+Interact %>% summarise(n_distinct(initsp)) ### 30 species observed initiating interactions
+Interact %>% summarise(n_distinct(recipsp)) ### 44 species observed receiving interactions
 
 #CHARTS----
 # clean wrapped labels!!!!
@@ -97,12 +103,12 @@ isrs2
 #palettes https://rstudio-pubs-static.s3.amazonaws.com/5312_98fc1aba2d5740dd849a5ab797cc2c8d.html 
 
 # 1. SUMMARY----
+
 ##Total interactions----
 isrsall %>% group_by(species) %>% summarise(n=sum(total)) %>% 
   ggplot(aes(reorder(species,n),n,fill=species))+ # this order high to low
   geom_col(position='dodge',alpha=0.8)+coord_flip()+
   labs(x='Species',y='total interactions',title='Total interactions')+
-  scale_y_continuous(expand = c(0,2))+
   theme(legend.position = 'none')+
   scale_fill_manual(values=c('Red-breasted parakeet'='#CC3311',
                              'Monk parakeet'='#004488',
@@ -119,6 +125,52 @@ isrs2 %>%
   geom_text(aes(label = n), vjust = -0.5)+
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
   labs(x='Species',y='n',title='Total interactions')
+
+# install and loading packages
+#install.packages("BBmisc")
+#library(BBmisc)
+
+# method = range for normalisation ----
+isrsnorm <- isrsall %>% group_by(species) %>% summarise(n=sum(total)) %>% arrange(desc(n))
+scaled_df_norm = normalize(isrsnorm[,2], method = "range", range = c(0, 1))
+colnames(scaled_df_norm)[1]<-"total_norm"
+summary(scaled_df_norm)
+isrsnorm<-cbind(isrsnorm,scaled_df_norm)
+
+# Involvement in interactions
+isrsnorm %>%  
+  ggplot(aes(reorder(species,total_norm),total_norm))+
+  geom_col(position='dodge',alpha=0.8)+coord_flip()+
+  labs(x='Species',y='proportion of interactions',title='Frequency of observed interactions')
+
+# Proportion of IS
+isrsall %>% group_by(species) %>% filter(role=='IS') %>% 
+  summarise(n=sum(total)) %>% arrange(desc(n)) %>% 
+  mutate(freq=n/sum(n)*100) %>% filter(freq>1) %>% 
+  ggplot(aes(reorder(species,freq),freq))+
+  geom_col(position='dodge',alpha=0.8)+coord_flip()+
+  labs(x='Species',y='proportion of interactions',title='Frequency of intiated interactions')
+
+# Proportion of RS
+isrsall %>% group_by(species) %>% filter(role=='RS') %>% 
+  summarise(n=sum(total)) %>% arrange(desc(n)) %>% 
+  mutate(freq=n/sum(n)*100) %>% filter(freq>1) %>% 
+  ggplot(aes(reorder(species,freq),freq))+
+  geom_col(position='dodge',alpha=0.8)+coord_flip()+
+  labs(x='Species',y='proportion of interactions',title='Frequency of received interactions')
+
+# Proportion of RS with parrots removed as RS
+isrsall %>% group_by(species) %>% 
+  filter(species!="Monk parakeet"&species!="Tanimbar corella"&species!="Rose-ringed parakeet"&
+           species!="Red-breasted parakeet") %>%
+  filter(role=='RS') %>% 
+  summarise(n=sum(total)) %>% arrange(desc(n)) %>% 
+  mutate(freq=n/sum(n)*100) %>%
+  ggplot(aes(reorder(species,freq),freq))+
+  geom_col(position='dodge',alpha=0.8)+coord_flip()+scale_y_log10()+
+  labs(x='Species',y='proportion of interactions',title='Frequency of received interactions without non-native parrots')
+
+
 
 #2. ROLES----
 ## n IS RS----
@@ -145,16 +197,13 @@ isrs2 %>% filter(interaction!='Neutral') %>%
   scale_fill_manual(values=c('IS'='#4a7b77','RS'='#f67e4b'))
 
 # Neutral----
-isrs2 %>% filter(interaction!='Neutral') %>% 
-  group_by(species,role) %>% 
+isrs2 %>% filter(interaction=='Neutral') %>% 
+  group_by(species) %>% 
   summarise(n=sum(total)) %>%
-  mutate(freq=n/sum(n)*100) %>% 
-  ggplot(aes(reorder(species,-n),freq,fill=role))+
-  geom_col(position = 'fill')+theme_minimal()+
-  geom_text(aes(label = round(freq,1)),position=position_fill(vjust=.5))+ 
+    ggplot(aes(reorder(species,-n),n))+
+  geom_col()+theme_minimal()+
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
-  labs(x='Species',y='%',title='Proportion interactions intiated and recieved')+
-  scale_fill_manual(values=c('IS'='#4a7b77','RS'='#f67e4b'))
+  labs(x='Species',y='%',title='n neutral interactions')
 
 # 3. W/L/NE summary
 ## n W/L/NE all ints----
@@ -275,12 +324,6 @@ Interact %>%
                               'Rose-ringed parakeet'='#EE3377',
                               'Tanimbar corella'='#33BBEE',
                               'Long-tailed parakeet'='#009988'))
-
-
-v<-lm(nxt_cav~rating+interaction,data=Interact)
-summary(v)
-
-
 # TABLES----
 
 ## true pop mean----
@@ -373,34 +416,6 @@ formattable(actionsW,
                  'Contact'=color_tile(customL,customH),
                  'Fight'=color_tile(customL,customH)))
 
-# site split----
-
-rating2<-Interact %>% 
-  select(Study.Area,initsp,interaction,rating) %>%filter(interaction!='Neutral') %>%    
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|
-           initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
-  group_by(Study.Area,initsp) %>% summarise('Aggression score'=round(mean(rating),2)) %>% 
-  spread(key=Study.Area,value = 'Aggression score') %>% 
-  arrange(match(initsp,c("Rose-ringed parakeet","Tanimbar corella","Red-breasted parakeet",
-                         "Monk parakeet","Long-tailed parakeet"))) %>% 
-  rename(Species=initsp)
-rating2<-cbind(rating2,rating[,2,drop=FALSE]) %>% relocate(1,5,2,3,4)
-view(rating2)
-
-formattable(rating2,
-            align=c('r','c','c','c','c'),
-            list(`Species` = formatter("span", style = ~ style(font.weight = "bold"))))
-
-
-rating %>% 
-  ggplot(aes(sample=`Aggression score`))+
-  stat_qq()
-
-rating %>% 
-  ggplot(aes(`Aggression score`))+
-  geom_density()
-
-isrs<-rbind(initiators,recipients)
 
 
 # boxpoint all ints----
@@ -415,31 +430,34 @@ isrs2.lm %>%
   geom_jitter(aes(color=interaction),width=0.2,height=0.3,alpha=0.3)
 
 
-# species count x interactions----  
-
+# ABUN X INTS----  
 abun<-Composition %>% 
-  filter(Species=="Red-breasted parakeet" | Species=="Tanimbar corella"|
-           Species=="Rose-ringed parakeet"|Species=="Long-tailed parakeet"|
-           Species=="Monk parakeet") %>% 
-  select(Species) %>% count(Species)
+  select(Species) %>% count(Species) %>% arrange(desc(n)) # n = total observed
   
-recips<-Interact2 %>%
-  select(initsp,recipsp) %>% 
-  group_by(initsp) %>% mutate(n=n_distinct(recipsp)) %>% 
-  summarise(recipsp_tot=mean(n))
+recips<-isrsall %>%  
+  group_by(species) %>% summarise(allints=sum(total)) %>% rename(Species=species) #sum = total interactions
 
-abun<-cbind(abun,recips[,2])
-abun %>% ggplot(aes(n,recips))+
-  geom_point(aes(color=Species,size=4))+
-  ylim(5,30)+
-  labs(y='Numer of recipient species',x='n parrots observed',
-       title = 'Parrot abundance vs number of species involved in interactions')
+abun<-merge(abun,recips,by="Species",all=T) %>%  replace(is.na(.), 0) 
+  
+abun %>% ggplot(aes(n,allints,color=Species))+
+  geom_point(size=3,alpha=0.8)+
+  labs(x='total abundance',y='total interaction involvement',
+       title = 'Total observations / Total times involved in interactions')+
+  scale_x_log10()+
+  scale_color_manual(values=c('Red-breasted parakeet'='#CC3311','Monk parakeet'='#004488',
+                              'Rose-ringed parakeet'='#EE3377', 'Tanimbar corella'='#33BBEE','Long-tailed parakeet'='#009988',
+                              'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))
+
+## APPEND TO THIS CAVITY NESTER OR NOT!!! ----
+
+x<-lm(n~allints,abun)
+summary(x)
 
 # N site visits / n ints per site----
 Composition %>% group_by(Study.Area) %>% summarise(hours=max(Surveyno))
 hourly<-Interact %>% filter(interaction!='Neutral') %>% group_by(Study.Area) %>% count(interaction) %>% 
   mutate(hours=case_when(Study.Area=='Changi Village'~10,
-                         Study.Area=='Pasir Ris Town Park'~12,
+                         Study.Area=='Pasir Ris Town Park'~15,
                          Study.Area=='Palawan Beach'~1,
                          Study.Area=='Sengkang Riverside Park'~4,
                          Study.Area=='Springleaf'~10,
