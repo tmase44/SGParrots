@@ -443,7 +443,7 @@ abun %>% ggplot(aes(n,allints,color=Species))+
   geom_point(size=3,alpha=0.8)+
   labs(x='total abundance',y='total interaction involvement',
        title = 'Total observations / Total times involved in interactions')+
-  scale_x_log10()+
+  scale_x_log10()+scale_y_log10()+
   scale_color_manual(values=c('Red-breasted parakeet'='#CC3311','Monk parakeet'='#004488',
                               'Rose-ringed parakeet'='#EE3377', 'Tanimbar corella'='#33BBEE','Long-tailed parakeet'='#009988',
                               'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))
