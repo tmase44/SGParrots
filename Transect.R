@@ -185,32 +185,38 @@ RAD3 %>% ggplot(aes(n,RA))+
   theme_bw()+
   labs(x='n initiated interactions',y='Relative abundance',title='Correlation between relative abundance and initiated interaction frequency')
 
-# REgression----
-lmRAD3s<-lm(n~RA,data=RAD3)
-summary(lmRAD3s)
-# *** between n ints & RA
-hist(lmRAD3s$resid)
-qqnorm(lmRAD3s$resid)
-
-lmRAD3m<-lm(n~RA+CavityYN,data=RAD3)
-summary(lmRAD3m)
-# *** between n ints & RA
-# ** between n ints and cavity nesters
 
 # multi species----
+## Changi----
 Changi<-Transect %>% filter(Study.Area=='Changi Village')
 Changi$Effort<-Changi$Effort*10
 Changi<-Changi %>% select(Region.Label,Area,Sample.Label,Effort,distance,Species,Surveyno) %>% 
   rename(species=Species) %>% rename(visit=Surveyno)
 convunit <- convert_units("meter", "kilometer", "hectare")
-all.birds <- ds(data = Changi,
+Changi.birds <- ds(data = Changi,
                 key="hn", convert_units = convunit,
                 formula=~species, truncation = 70)
-bird.ests <- dht2(ddf=all.birds, flatfile=Changi,
+gof_ds(Changi.birds)
+Changi.ests <- dht2(ddf=Changi.birds, flatfile=Changi,
                   strat_formula = ~species, convert_units = convunit,
                   stratification = "object") 
-view(bird.ests)
-changiDAB<-bird.ests %>% 
-  select(species,n,p_var,p_average,ER,Abundance,Abundance_se,Abundance_CV,
-         bigC,LCI,UCI) %>% arrange(desc(Abundance))
+view(Changi.ests)
+changiDAB<-Changi.ests %>% 
+  select(Area,df_var,species,n,p_var,p_average,ER,Abundance,Abundance_se,Abundance_CV,bigC,LCI,UCI) %>% 
+  arrange(desc(Abundance)) %>% 
+  mutate(Study.Area='Changi Village',.before=1)
+# generate density results https://rdrr.io/cran/Distance/src/R/dht2.R
+changiDAB<-changiDAB %>% 
+  mutate(Density = Abundance/Area,
+       df_var2 = df_var/Area^2) %>%
+  mutate(Density_se = sqrt(Abundance_se^2/Area^2)) %>%
+  mutate(Density_CV = Density_se/Density)
 view(changiDAB)
+
+## Pasir Ris----
+## Springleaf----
+## Sengkang----
+## Stirling/Queenstown----
+
+### MERGE ALL
+#DAB_master <- rbind(changiDAB,,,,,,)
