@@ -430,7 +430,7 @@ isrs2.lm %>%
   geom_jitter(aes(color=interaction),width=0.2,height=0.3,alpha=0.3)
 
 
-# ABUN X INTS----  
+# !! ABUN X INTS----  
 abun<-Composition %>% 
   select(Species) %>% count(Species) %>% arrange(desc(n)) # n = total observed
   
@@ -447,6 +447,45 @@ abun %>% ggplot(aes(n,allints,color=Species))+
   scale_color_manual(values=c('Red-breasted parakeet'='#CC3311','Monk parakeet'='#004488',
                               'Rose-ringed parakeet'='#EE3377', 'Tanimbar corella'='#33BBEE','Long-tailed parakeet'='#009988',
                               'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))
+rm(abun2)
+rm(recips2)
+## BY SITE!!! ----
+abun2<-Composition %>% 
+  select(Study.Area,Species) %>%  group_by(Study.Area,Species) %>% count(Species) %>% arrange(desc(n)) # n = total observed
+
+recips2<-isrsall %>%  
+  group_by(Study.Area,species) %>% summarise(allints=sum(total)) %>% rename(Species=species) #sum = total interactions
+
+abun2<-merge(abun2,recips2,by=c("Study.Area","Species")) 
+
+abun2 %>% ggplot(aes(n,allints,color=Species))+
+  geom_point(size=3,alpha=0.8)+
+  labs(x='total observations',y='total interaction involvement',
+       title = 'Total observations / Total times involved in interactions')+
+  scale_color_manual(values=c('Red-breasted parakeet'='#CC3311','Monk parakeet'='#004488',
+                              'Rose-ringed parakeet'='#EE3377', 'Tanimbar corella'='#33BBEE','Long-tailed parakeet'='#009988',
+                              'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))+
+  facet_wrap(~Study.Area)
+
+### Add aggression rating
+rm(abun3)
+rm(agg)
+agg<-isrsall %>%  
+  mutate(agg=rating*total) %>% 
+  group_by(Study.Area,species) %>% summarise(Aggression_weight=sum(agg)) %>% rename(Species=species) %>% 
+  arrange(desc(Aggression_weight))
+
+abun3<-merge(abun2,agg,by=c("Study.Area","Species")) 
+
+abun3 %>% ggplot(aes(n,allints,color=Species,size=Aggression_weight))+
+  geom_point(alpha=0.8)+
+  labs(x='total observations',y='total interaction involvement',
+       title = 'Total observations / Total times involved in interactions')+
+  scale_color_manual(values=c('Red-breasted parakeet'='#CC3311','Monk parakeet'='#004488',
+                              'Rose-ringed parakeet'='#EE3377', 'Tanimbar corella'='#33BBEE','Long-tailed parakeet'='#009988',
+                              'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))+
+  facet_wrap(~Study.Area)
+
 
 ## APPEND TO THIS CAVITY NESTER OR NOT!!! ----
 

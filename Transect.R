@@ -9,15 +9,16 @@ view(Transect)
 ls(Transect)
 unique(Transect$Species)
 
+
 # Hi-Lo species by site----
-TTop10<-Transect %>% group_by(Study.Area,Species,Surveyno) %>% summarise(n=n()) %>% select(-Surveyno) %>% summarise(max_obs = max(n)) %>% 
+Composition_Rank<-Transect %>% group_by(Study.Area,Species,Surveyno) %>% summarise(n=n()) %>% select(-Surveyno) %>% summarise(max_obs = max(n)) %>% 
   arrange(Study.Area,desc(max_obs))
-view(TTop10)
+view(Composition_Rank)
 getwd()
-write_xlsx(TTop10,'C:/Users/tmaso/OneDrive/MSc Environmental Management/Dissertation/R-Analysis/SGParrots/TTop10.xlsx')
+write_xlsx(Composition_Rank,'C:/Users/tmaso/OneDrive/MSc Environmental Management/Dissertation/R-Analysis/SGParrots/Composition_Rank.xlsx')
 
 
-# Changi transect
+# example transect----
 changi_rbp<-Transect %>% filter(Study.Area=='Changi Village') %>% filter(Species=='Red-breasted parakeet') %>% 
   select(Region.Label,Study.Area,Area,Sample.Label,Effort,Species,distance)
 # effort multiplier ---- 
@@ -90,19 +91,27 @@ summary(rbpn.hr.poly)
 
 
 # REPEAT----
-changi_x<-Transect %>% filter(Study.Area=='Pasir Ris Town Park') %>%  filter(Species=="Red-breasted parakeet") %>% 
+##efforts by site:
+Transect %>% group_by(Study.Area) %>% summarise(max(Surveyno))
+###Changi Village                         10
+###2 Palawan Beach                         1
+###3 Pasir Ris Town Park                  12
+###4 Sengkang Riverside Park               7
+###5 Springleaf                           10
+###6 Stirling Road                         8
+
+tsect<-Transect %>% 
+  filter(Study.Area=='Springleaf') %>%  
+  filter(Species=="Long-tailed parakeet") %>% 
   select(Region.Label,Study.Area,Area,Sample.Label,Effort,Species,distance)
-changi_x$Effort <- changi_x$Effort * 8
-sum(!is.na(changi_x$distance)) 
+tsect$Effort <- tsect$Effort * 10
+sum(!is.na(tsect$distance)) 
 ###Half normal----
-x.hn <- ds(data=changi_x, key="hn", adjustment=NULL,
-            convert_units=conversion.factor)
+x.hn <- ds(data=tsect, key="hn", adjustment=NULL,convert_units=conversion.factor)
 ##Uniform cosine
-x.unif.cos <- ds(changi_x, key="unif", adjustment="cos",
-                  convert_units=conversion.factor)
+x.unif.cos <- ds(tsect, key="unif", adjustment="cos",convert_units=conversion.factor)
 ##Hazard rate poly
-x.hr.poly <- ds(changi_x, key="hr", adjustment="poly", 
-                 convert_units=conversion.factor)
+x.hr.poly <- ds(tsect, key="hr", adjustment="poly",convert_units=conversion.factor)
 ##compare
 AIC(x.hn,x.hr.poly,x.unif.cos)
 ##plot
@@ -116,11 +125,12 @@ summary(x.hn)
 
 # Abundance & Density----
 ## IMPORT DATA----
-RAD <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
-                          sheet = "DenAb")
-ls(RAD)
+RM(RAD)
+DAB <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
+                          sheet = "DAB")
+ls(DAB)
 #Top 
-TTopAB<-RAD %>% arrange(Study.Area,desc(RA))
+TTopAB<-DAB %>% arrange(Study.Area,desc(RA))
 view(TTopAB)
 
 ## Fixed scale RAD----
@@ -187,4 +197,20 @@ summary(lmRAD3m)
 # *** between n ints & RA
 # ** between n ints and cavity nesters
 
-
+# multi species----
+Changi<-Transect %>% filter(Study.Area=='Changi Village')
+Changi$Effort<-Changi$Effort*10
+Changi<-Changi %>% select(Region.Label,Area,Sample.Label,Effort,distance,Species,Surveyno) %>% 
+  rename(species=Species) %>% rename(visit=Surveyno)
+convunit <- convert_units("meter", "kilometer", "hectare")
+all.birds <- ds(data = Changi,
+                key="hn", convert_units = convunit,
+                formula=~species, truncation = 70)
+bird.ests <- dht2(ddf=all.birds, flatfile=Changi,
+                  strat_formula = ~species, convert_units = convunit,
+                  stratification = "object") 
+view(bird.ests)
+changiDAB<-bird.ests %>% 
+  select(species,n,p_var,p_average,ER,Abundance,Abundance_se,Abundance_CV,
+         bigC,LCI,UCI) %>% arrange(desc(Abundance))
+view(changiDAB)
