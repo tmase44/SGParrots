@@ -152,7 +152,7 @@ RAD %>% ggplot(aes(RA,D))+
 
 # n initiations per site and species-----
 nInts<-isrs %>% 
-  group_by(Study.Area,species) %>% summarise(n=sum(n)) %>% arrange(Study.Area,desc(n))
+  group_by(Study.Area,species) %>% summarise(n=sum(n)) %>% arrange(Study.Area,desc(n)) %>% rename(Species=species)
 view(nInts)
 
 RAD2<-merge(RAD,nInts,by.x=c("Study.Area","Species"),by.y=c("Study.Area","species"),all.x=TRUE)
@@ -174,7 +174,7 @@ cavs<-RAD2 %>% group_by(Study.Area,CavityYN) %>% count(CavityYN) %>% group_by(St
 ## initations only-----
 nInts2<-isrs %>% 
   filter(role=='IS') %>% 
-  group_by(Study.Area,species) %>% summarise(n=sum(n)) %>% arrange(Study.Area,desc(n))
+  group_by(Study.Area,species) %>% summarise(n=sum(n)) %>% arrange(Study.Area,desc(n)) %>% rename(Species=species)
 view(nInts)
 
 RAD3<-merge(RAD,nInts2,by.x=c("Study.Area","Species"),by.y=c("Study.Area","species"),all.x=TRUE)
@@ -328,5 +328,5 @@ view(StirlingDAB)
 
 ### MERGE ALL
 DAB_master <- rbind(changiDAB,PasirDAB,SpringleafDAB,StirlingDAB,SengkangDAB)
-DAB_master<-DAB_master %>% filter(species!='Total')
+DAB_master<-DAB_master %>% filter(species!='Total') %>% rename(Species=species)
 view(DAB_master)

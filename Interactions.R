@@ -486,7 +486,28 @@ abun3 %>% ggplot(aes(n,allints,color=Species,size=Aggression_weight))+
                               'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))+
   facet_wrap(~Study.Area)
 
+DAB_master2<-merge(DAB_master,abun3,by=c('Study.Area','Species'))
+DAB_master2<-merge(DAB_master2,nInts2,by=c('Study.Area','Species'))
 
+# total ints x relative abundance
+DAB_master2 %>% ggplot(aes(Abundance,allints,color=Species))+
+  geom_point(alpha=0.8)+
+  labs(x='total observations',y='total interaction involvement',
+       title = 'Total observations / Total times involved in interactions')+
+  scale_color_manual(values=c('Red-breasted parakeet'='#CC3311','Monk parakeet'='#004488',
+                              'Rose-ringed parakeet'='#EE3377', 'Tanimbar corella'='#33BBEE','Long-tailed parakeet'='#009988',
+                              'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))+
+  facet_wrap(~Study.Area)
+
+# only IS x relative abundance
+DAB_master2 %>% ggplot(aes(Abundance,n,color=Species))+
+  geom_point(alpha=0.8)+
+  labs(x='total observations',y='total interaction involvement',
+       title = 'Total observations / Total times involved in interactions')+
+  scale_color_manual(values=c('Red-breasted parakeet'='#CC3311','Monk parakeet'='#004488',
+                              'Rose-ringed parakeet'='#EE3377', 'Tanimbar corella'='#33BBEE','Long-tailed parakeet'='#009988',
+                              'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))+
+  facet_wrap(~Study.Area,scales = 'free')
 ## APPEND TO THIS CAVITY NESTER OR NOT!!! ----
 
 x<-lm(n~allints,abun)
