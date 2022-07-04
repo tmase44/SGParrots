@@ -1,12 +1,14 @@
 # LOAD PACKS----
 library(pacman)
 p_load(reshape2,formattable,knitr,kableExtra,tidyverse,vegan,
-       lubridate,gridExtra,circlize,stringr,readxl,BBmisc)
-library(caret)
+       lubridate,gridExtra,circlize,stringr,readxl,BBmisc,ggpmisc)
+#library(caret)
+
 
 # IMPORT DATA----
 Interact <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                        sheet = "Interactions")
+Interact<-Interact %>% filter(Study.Area!='Palawan Beach')
 #View(Interact)
 ls(Interact)
 unique(Interact$initsp)
@@ -381,54 +383,6 @@ formattable(actions,
                  'Fight'=color_tile(customL,customH),
                  'Aggression score'=color_tile(customL,customH))) 
 
-#kable
-kbl(actions) %>% kable_material("striped") %>%
-  row_spec(1,bold=T,background = '#f8eac1')
-
-# WIN AGG SCORE----
-ratingW<-Interact %>% select(initsp,interaction,isout,rating) %>% filter(interaction!='Neutral'& isout=="W") %>%    
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|
-           initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
-  group_by(initsp) %>% summarise('WIN Aggression score'=round(mean(rating),2)) %>% 
-  arrange(match(initsp,c("Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet","Monk parakeet","Long-tailed parakeet"))) %>%
-  rename(Species=initsp) #%>% column_to_rownames(var="Species")
-view(ratingW)
-
-actionsW<-Interact %>% select(initsp,interaction,isout,rating) %>% filter(interaction!='Neutral'&isout=='W') %>%   
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|
-           initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
-  group_by(initsp,interaction) %>% 
-  tally() %>% mutate(freq=round(n/sum(n)*100,2)) %>% select(-n) %>% 
-  spread(key=interaction,value = freq) %>% replace(is.na(.), 0) %>% 
-  arrange(match(initsp,c("Rose-ringed parakeet","Tanimbar corella","Red-breasted parakeet",
-                         "Monk parakeet","Long-tailed parakeet"))) %>% rename(Species=initsp)
-actionsW<-cbind(actionsW,ratingW[,2]) %>% relocate(1,8,2,3,4,5,6,7)
-view(actionsW)
-
-formattable(actionsW,
-            align=c('r','c','c','c','c','c','c','c','c'),
-            list(`Species` = formatter("span", style = ~ style(font.weight = "bold")),
-                 'Neutral'=color_tile(customL,customH),
-                 'Displace'=color_tile(customL,customH),
-                 'Threat'=color_tile(customL,customH),
-                 'Swoop'=color_tile(customL,customH),
-                 'Chase'=color_tile(customL,customH),
-                 'Contact'=color_tile(customL,customH),
-                 'Fight'=color_tile(customL,customH)))
-
-
-
-# boxpoint all ints----
-isrs2.lm %>% 
-  ggplot(aes(species,rating))+
-  geom_boxplot()+labs(x='Species',y='Interaction type',title='Interaction distribution by species')+
-  geom_jitter(aes(color=interaction),width=0.1,alpha=0.23)
-##violin----
-isrs2.lm %>% 
-  ggplot(aes(species,rating))+
-  geom_violin()+
-  geom_jitter(aes(color=interaction),width=0.2,height=0.3,alpha=0.3)
-
 
 # !! ABUN X INTS----  
 abun<-Composition %>% 
@@ -446,9 +400,17 @@ abun %>% ggplot(aes(n,allints,color=Species))+
   scale_x_log10()+scale_y_log10()+
   scale_color_manual(values=c('Red-breasted parakeet'='#CC3311','Monk parakeet'='#004488',
                               'Rose-ringed parakeet'='#EE3377', 'Tanimbar corella'='#33BBEE','Long-tailed parakeet'='#009988',
-                              'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))
-rm(abun2)
-rm(recips2)
+                              'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='purple'))
+
+abun %>%  ggplot(aes(n,allints))+
+  stat_poly_line()+
+  stat_poly_eq()+
+  geom_point(size=3,alpha=0.8)+
+  labs(x='total abundance',y='total interaction involvement',
+       title = 'Total observations / Total times involved in interactions')+
+  scale_x_log10()+scale_y_log10()
+
+
 ## BY SITE!!! ----
 abun2<-Composition %>% 
   select(Study.Area,Species) %>%  group_by(Study.Area,Species) %>% count(Species) %>% arrange(desc(n)) # n = total observed
@@ -458,13 +420,22 @@ recips2<-isrsall %>%
 
 abun2<-merge(abun2,recips2,by=c("Study.Area","Species")) 
 
-abun2 %>% ggplot(aes(n,allints,color=Species))+
+abun2 %>% filter(Study.Area!='Palawan Beach') %>% ggplot(aes(n,allints,color=Species))+
   geom_point(size=3,alpha=0.8)+
   labs(x='total observations',y='total interaction involvement',
        title = 'Total observations / Total times involved in interactions')+
   scale_color_manual(values=c('Red-breasted parakeet'='#CC3311','Monk parakeet'='#004488',
                               'Rose-ringed parakeet'='#EE3377', 'Tanimbar corella'='#33BBEE','Long-tailed parakeet'='#009988',
                               'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))+
+  facet_wrap(~Study.Area)
+
+abun2 %>% filter(Study.Area!='Palawan Beach') %>% 
+  ggplot(aes(n,allints))+
+  stat_poly_line()+
+  stat_poly_eq()+
+  geom_point(size=3,alpha=0.8)+
+  labs(x='total observations',y='total interaction involvement',
+       title = 'Total observations / Total times involved in interactions')+
   facet_wrap(~Study.Area)
 
 ### Add aggression rating
@@ -489,7 +460,7 @@ abun3 %>% ggplot(aes(n,allints,color=Species,size=Aggression_weight))+
 DAB_master2<-merge(DAB_master,abun3,by=c('Study.Area','Species'))
 DAB_master2<-merge(DAB_master2,nInts2,by=c('Study.Area','Species'))
 
-# total ints x relative abundance
+# total ints x relative abundance----
 DAB_master2 %>% ggplot(aes(Abundance,allints,color=Species))+
   geom_point(alpha=0.8)+
   labs(x='total observations',y='total interaction involvement',
@@ -499,22 +470,37 @@ DAB_master2 %>% ggplot(aes(Abundance,allints,color=Species))+
                               'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))+
   facet_wrap(~Study.Area)
 
-# only IS x relative abundance
+# only IS x relative abundance----
 DAB_master2 %>% ggplot(aes(Abundance,n,color=Species))+
+  stat_poly_line()+
+  stat_poly_eq()+
   geom_point(alpha=0.8)+
   labs(x='total observations',y='total interaction involvement',
-       title = 'Total observations / Total times involved in interactions')+
+       title = 'Total observations / Total times initiating interactions')+
   scale_color_manual(values=c('Red-breasted parakeet'='#CC3311','Monk parakeet'='#004488',
                               'Rose-ringed parakeet'='#EE3377', 'Tanimbar corella'='#33BBEE','Long-tailed parakeet'='#009988',
                               'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))+
-  facet_wrap(~Study.Area,scales = 'free')
+  facet_wrap(~Study.Area)
+
+# only IS x relative abundance----
+DAB_master2 %>% ggplot(aes(Abundance,n))+
+  stat_poly_line()+
+  stat_poly_eq()+
+  geom_point(alpha=0.8)+
+  labs(x='relative abundance',y='total interaction involvement',
+       title = 'Total observations / Total times initiating interactions')+
+  facet_wrap(~Study.Area)
+
+
 ## APPEND TO THIS CAVITY NESTER OR NOT!!! ----
 
 x<-lm(n~allints,abun)
 summary(x)
 
 # N site visits / n ints per site----
-Composition %>% group_by(Study.Area) %>% summarise(hours=max(Surveyno))
+Composition %>% group_by(Study.Area) %>% 
+  filter(Study.Area!='Palawan Beach') %>%
+  summarise(hours=max(Surveyno))
 hourly<-Interact %>% filter(interaction!='Neutral') %>% group_by(Study.Area) %>% count(interaction) %>% 
   mutate(hours=case_when(Study.Area=='Changi Village'~10,
                          Study.Area=='Pasir Ris Town Park'~15,
@@ -531,43 +517,4 @@ Indices3$interaction<-factor(Indices3$interaction,
                              levels = c("Neutral","Displace","Threat","Swoop","Chase","Contact","Fight"))
 
 
-# LOWER BIODIVERSITY = GREATER FREQUENCY OF AGGRESSION 
-Indices3 %>% 
-  ggplot(aes(Simpson,avg_hr,color=Study.Area))+geom_point(size=4)+
-  labs(y='average hourly aggressions',x='Alpha biodiversity (Simpson)',title='Corellation between Alpha BD & Interaction frequency')
 
-Indices3 %>%
-  ggplot(aes(Richness,avg_hr))+
-  stat_summary()+
-  geom_smooth(method='lm')+geom_point(aes(color=Study.Area))+
-  labs(y='average hourly aggressions',x='Alpha biodiversity (Simpson)',title='Corellation between Alpha BD & Interaction frequency')
-
-x<-lm(avg_hr~CavityYN,Indices3)
-summary(x)
-## Richness R-sq = 0.3976
-## Simpson = 0.5834
-## Shannon = 0.4893
-
-Indices3%>% 
-  ggplot(aes(Richness,ints_hr))+
-  stat_summary(fun.data=mean_cl_normal)+
-  geom_smooth(method='lm')+geom_point(aes(color=Study.Area))+
-  labs(y='average hourly aggressions',x='Alpha biodiversity (Simpson)',title='Corellation between Alpha BD & Interaction frequency')+
-  facet_wrap(~interaction)
-
-# % Cavity nesters != FX on BD
-Indices3 %>% 
-  ggplot(aes(Simpson,freq,color=CavityYN))+geom_point(size=4)+
-  labs(y='Proportion of obligate cavity nesters',x='Alpha biodiversity (Simpson)',title='Corellation between Alpha BD & Interaction frequency')
-
-
-Interact %>% filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|
-                        initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% filter(interaction!='Neutral') %>% 
-  ggplot(aes(initsp,Temperature))+geom_boxplot()
-
-Interact %>% filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|
-                      initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% filter(interaction!='Neutral') %>% 
-  ggplot(aes(initsp,Temperature))+geom_boxplot()
-
-Interact2 %>% filter(interaction!='Neutral') %>% ggplot(aes(initsp,Temperature))+geom_boxplot()
-Interact2 %>% filter(interaction!='Neutral') %>% ggplot(aes(initsp,nxt_cav))+geom_boxplot()

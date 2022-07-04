@@ -4,6 +4,7 @@ p_load(tidyverse,vegan,lubridate,gridExtra,circlize,stringr,readxl,Distance,writ
 # IMPORT DATA----
 Transect <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                           sheet = "Composition")
+Transect<-Transect %>% filter(Study.Area!='Palawan Beach')
 # based on df prepared in Composition
 view(Transect)
 ls(Transect)
