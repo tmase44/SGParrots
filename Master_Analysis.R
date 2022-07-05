@@ -559,6 +559,8 @@ view(ISRS)
 #=================#
 # 8.c. Tibbles----
 #=================#
+
+# Abundance, pop, ints----
 rm(Ints.Abundance)
 x<-ISRS %>% 
   group_by(Study.Area,Species) %>% summarise(n_ints=sum(n_ints))
@@ -576,6 +578,23 @@ z<-Composition_2 %>%
   mutate(proportion=max_obs/sum(max_obs)*100)
 
 Ints.Abundance <- merge(Ints.Abundance,z,by=c("Study.Area","Species")) 
+
+# Unique species per parrot sp----
+rm((parrot.targets))
+parrot.targets <- Interact_2 %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
+  select(initsp,recipsp,rating) %>% group_by(initsp,recipsp) %>% count(recipsp) %>% arrange(initsp,desc(n)) %>% rename(n_ints=n)
+x<-Interact_2 %>% 
+  filter(rating=='0') %>% filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
+  select(initsp,recipsp,rating) %>% group_by(initsp,recipsp) %>% count(recipsp) %>% arrange(initsp,desc(n)) %>% rename(n_NE=n)
+parrot.targets<-merge(parrot.targets,x,by=c('initsp','recipsp'),all = TRUE) %>% replace(is.na(.), 0) 
+y<-Interact_2 %>% 
+  filter(rating>=1) %>% filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
+  select(initsp,recipsp,rating) %>% group_by(initsp,recipsp) %>% count(recipsp) %>% arrange(initsp,desc(n)) %>% rename(n_Agg=n)
+parrot.targets<-merge(parrot.targets,y,by=c('initsp','recipsp'),all = TRUE) %>% replace(is.na(.), 0)
+parrot.targets<- parrot.targets%>% arrange(initsp,desc(n_Agg))
+
+view(parrot.targets)
 
 # Trans. ~INDICES
 
@@ -663,10 +682,12 @@ int_pairs <- Interact_2 %>%
   complete(initsp, nesting(recipsp), fill = list(n = 0)) %>% 
   filter(n!='0') %>% 
   arrange(desc(n))
-int_pairs %>% print(n=20) # top 10 interaciton pairs
+int_pairs %>% print(n=20) # top 10 interaction pairs
 
 ## major interactions are limited, primaryy targets of NNP's are
   # Javan myna, rock dove, LTP, hornbill, starling
+
+
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*****
 #!!! Species density / overcrowding could be a driver of interactions
