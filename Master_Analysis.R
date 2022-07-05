@@ -1,9 +1,9 @@
 
-#==========  MASTER ANALYSIS  ==========
+#========== 1 MASTER ANALYSIS  ==========
 
 
 
-#============= LOAD PACKS ==============  
+#============= 2 LOAD PACKS ==============  
 
 
 library(pacman)
@@ -16,33 +16,34 @@ p_load(formattable,knitr,kableExtra, # ncie tables
        readxl,writexl)
 
 
-#============ IMPORT DATA ==============  
+#============ 3 IMPORT DATA ==============  
 
 
-## TRANSECT----
+## Transect----
 Transect <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                        sheet = "Composition")
 Transect<-Transect %>% filter(Study.Area!='Palawan Beach')
 
-## COMPOSITION----
+## Composition----
 Composition <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                           sheet = "Composition")
 Composition<-Composition %>% filter(Study.Area!='Palawan Beach')
 
-## INTERACTIONS
+## Interactions----
 Interact <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                        sheet = "Interactions")
 Interact <- Interact %>% filter(Study.Area!='Palawan Beach')
 
-## NICHE OVERLAP----
+## Niche overlap----
 NO <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                  sheet = "Composition")
 NO<-NO %>% filter(Study.Area!='Palawan Beach')
 
 
 
-#========== TRANSECT ANALYSIS ========== 
-
+#========== 4 TRANSECT ANALYSIS ========== 
+??
+  
 
 # CALCULATIONS FOR ~~RELATIVE ABUNDANCE~~
 # EVERY SITE AND SPECIES
@@ -193,8 +194,8 @@ rm(list = c('Changi','Changi.ests','Pasir','Pasir.ests','Springleaf','Springleaf
             'Stirling','Stirling.ests','Sengkang','Sengkang.ests'))
 
 
-#==== MERGE TRANSECT_2~COMPOSITION ====
-
+#==== 5 MERGE TRANSECT_2~COMPOSITION ====
+?
 
 Composition_2<-merge(Composition,Transect_2,by=c('Study.Area','Species'),all=T)
 View(Composition_2)
@@ -203,7 +204,8 @@ View(Composition_2)
 
 
 
-#=========== BASIC DATA PREP ===========
+#=========== 6. BASIC DATA PREP ===========
+??
 
 
 ## Factorise Composition_2----
@@ -238,7 +240,8 @@ levels(Interact_2$interaction)
 
 
 
-#====== ALPHA BD INDICES ======
+#====== 7 ALPHA BD INDICES ======
+?
 
 
 # Testing 3 possibilities 
@@ -250,40 +253,43 @@ Comp.max<-Composition_2 %>%
   summarise(max_obs = max(n)) %>% 
   arrange(Study.Area,desc(max_obs))
 
-### spread/gather----
+### spread/gather
 Comp.alpha<-Comp.max %>% spread(key=Species,value = max_obs) %>% 
   replace(is.na(.), 0) %>% remove_rownames %>% 
   column_to_rownames(var="Study.Area")
-#view(Comp.alpha)
 
-### Richness----
+### Richness
 fun.1<-function(x){sum(x>0)}
 richness<-apply(Comp.alpha, 1, FUN=fun.1)
 richness<-data.frame(richness)
 colnames(richness)<-"Richness.max"
-#view(richness)
 
-### Shannon index----
+### Shannon index
 for (Comp.alpha.row in 1:5)
 {shannon<- matrix(diversity(Comp.alpha[,], index = "shannon"))}
 shannon<-round(shannon,3)
 #Adjusting output names of rows and columns
 row.names(shannon)<-row.names(Comp.alpha)
 colnames(shannon)<-"Shannon.max"
-#view(shannon)
 
-### Simpson index----
+### Simpson index
 for (Comp.alpha.row in 1:5)
 {simpson<- matrix(diversity(Comp.alpha[,], index = "simpson"))}
 simpson<-round(simpson,3)
 #Adjusting the names of rows and columns
 row.names(simpson)<-row.names(Comp.alpha)
 colnames(simpson)<-"Simpson.max"
-#view(simpson)
 
 # Putting together all indices
 Indices.max<-cbind(richness, shannon, simpson)
 Indices.max<-data.frame(Indices.max)
+
+plot.indices.max<-Indices.max %>% 
+  ggplot(aes(x=Simpson.max,y=Shannon.max,
+             label=row.names(Indices))) +
+  geom_point(aes(color=Richness.max), size=4)+
+  geom_text(hjust=0.7,vjust=-1.2)+
+  labs(title = 'Alpha biodiversity of each survey site (max obs)')
 
 ## Count all----
 Comp.all<-Composition_2 %>% 
@@ -291,6 +297,45 @@ Comp.all<-Composition_2 %>%
   summarise(n=n()) %>% 
   select(-Surveyno) %>% 
   summarise(all_obs=sum(n))
+
+### spread/gather
+Comp.alpha<-Comp.all %>% spread(key=Species,value = all_obs) %>% 
+  replace(is.na(.), 0) %>% remove_rownames %>% 
+  column_to_rownames(var="Study.Area")
+
+### Richness
+fun.1<-function(x){sum(x>0)}
+richness<-apply(Comp.alpha, 1, FUN=fun.1)
+richness<-data.frame(richness)
+colnames(richness)<-"Richness.all"
+
+### Shannon index
+for (Comp.alpha.row in 1:5)
+{shannon<- matrix(diversity(Comp.alpha[,], index = "shannon"))}
+shannon<-round(shannon,3)
+#Adjusting output names of rows and columns
+row.names(shannon)<-row.names(Comp.alpha)
+colnames(shannon)<-"Shannon.all"
+
+### Simpson index
+for (Comp.alpha.row in 1:5)
+{simpson<- matrix(diversity(Comp.alpha[,], index = "simpson"))}
+simpson<-round(simpson,3)
+#Adjusting the names of rows and columns
+row.names(simpson)<-row.names(Comp.alpha)
+colnames(simpson)<-"Simpson.all"
+
+# Putting together all indices
+Indices.all<-cbind(richness, shannon, simpson)
+Indices.all<-data.frame(Indices.all)
+# plot
+plot.indices.all<-Indices.all %>% 
+  ggplot(aes(x=Simpson.all,y=Shannon.all,
+             label=row.names(Indices))) +
+  geom_point(aes(color=Richness.all), size=4)+
+  geom_text(hjust=0.7,vjust=-1.2)+
+  labs(title = 'Alpha biodiversity of each survey site (all obs)')
+
 ## Count mean----
 Comp.mean<-Composition_2 %>% 
   group_by(Study.Area,Species,Surveyno) %>% 
@@ -298,22 +343,50 @@ Comp.mean<-Composition_2 %>%
   select(-Surveyno) %>% 
   summarise(mean_obs=mean(n))
 
+### spread/gather
+Comp.alpha<-Comp.mean %>% spread(key=Species,value = mean_obs) %>% 
+  replace(is.na(.), 0) %>% remove_rownames %>% 
+  column_to_rownames(var="Study.Area")
 
+### Richness
+fun.1<-function(x){sum(x>0)}
+richness<-apply(Comp.alpha, 1, FUN=fun.1)
+richness<-data.frame(richness)
+colnames(richness)<-"Richness.mean"
 
-# Plot indices----
-plot.indices.mean<-Indices %>% 
-  ggplot(aes(x=Simpson,y=Shannon,
+### Shannon index
+for (Comp.alpha.row in 1:5)
+{shannon<- matrix(diversity(Comp.alpha[,], index = "shannon"))}
+shannon<-round(shannon,3)
+#Adjusting output names of rows and columns
+row.names(shannon)<-row.names(Comp.alpha)
+colnames(shannon)<-"Shannon.mean"
+
+### Simpson index
+for (Comp.alpha.row in 1:5)
+{simpson<- matrix(diversity(Comp.alpha[,], index = "simpson"))}
+simpson<-round(simpson,3)
+#Adjusting the names of rows and columns
+row.names(simpson)<-row.names(Comp.alpha)
+colnames(simpson)<-"Simpson.mean"
+
+# Putting together all indices
+Indices.mean<-cbind(richness, shannon, simpson)
+Indices.mean<-data.frame(Indices.mean)
+#plot
+plot.indices.mean<-Indices.mean %>% 
+  ggplot(aes(x=Simpson.mean,y=Shannon.mean,
              label=row.names(Indices))) +
-  geom_point(aes(color=Richness), size=4)+
+  geom_point(aes(color=Richness.mean), size=4)+
   geom_text(hjust=0.7,vjust=-1.2)+
   labs(title = 'Alpha biodiversity of each survey site (mean obs)')
 
+# Merge all variations----
+Indices<-cbind(Indices.all, Indices.mean, Indices.max)
+view(Indices)
+
+# Plot indices----
 grid.arrange(plot.indices.all,plot.indices.max,plot.indices.mean,ncol=3)
-plot.indices.max
-plot.indices.all
-plot.indices.mean
-
-
 # table
 formattable(Indices) 
 
