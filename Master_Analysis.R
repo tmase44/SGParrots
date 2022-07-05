@@ -17,7 +17,7 @@ p_load(formattable,knitr,kableExtra, # ncie tables
 
 
 #============ 3 IMPORT DATA ==============  
-
+#
 
 ## Transect----
 Transect <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
@@ -42,7 +42,7 @@ NO<-NO %>% filter(Study.Area!='Palawan Beach')
 
 
 #========== 4 TRANSECT ANALYSIS ========== 
-??
+#
   
 
 # CALCULATIONS FOR ~~RELATIVE ABUNDANCE~~
@@ -195,17 +195,20 @@ rm(list = c('Changi','Changi.ests','Pasir','Pasir.ests','Springleaf','Springleaf
 
 
 #==== 5 MERGE TRANSECT_2~COMPOSITION ====
-?
+#
 
 Composition_2<-merge(Composition,Transect_2,by=c('Study.Area','Species'),all=T)
-View(Composition_2)
+Composition_2<-Composition_2 %>% select(-Effort,-Area.x,-Area.y,-Weather,-Comments,
+                                        -Pref_hab,-TrophicLevel,-Sci_name,-Sample.Label,
+                                        -Start_time,-End_time,-p_var,-p_average,
+                                        -df_var,-df_var2)
 
 # Transect & Transect_2 are not needed in analysis from this point on
 
 
 
 #=========== 6. BASIC DATA PREP ===========
-??
+#
 
 
 ## Factorise Composition_2----
@@ -215,6 +218,7 @@ cols_comp <-c('Study.Area','Species','Region.Label','Sci_name','SG_status',
               'TrophicNiche','ForagingNiche')
 Composition_2<-Composition_2 %>% mutate_at(cols_comp, factor)
 str(Composition_2)
+rm(cols_comp)
 
 ## Factorise Interact----
 str(Interact)
@@ -222,6 +226,7 @@ cols_int <-c('Region.Label','Study.Area','ampm','initsp','recipsp','interaction'
              'isout','rsout','treeid','treesci','treecom','trim','at_cav')
 Interact_2<-Interact %>% mutate_at(cols_int,factor)  
 str(Interact_2)  
+rm(cols_int)
 
 ## Interaction ratings----
 Interact_2<-Interact_2 %>% 
@@ -241,10 +246,10 @@ levels(Interact_2$interaction)
 
 
 #====== 7 ALPHA BD INDICES ======
-?
+#
 
 
-# Testing 3 possibilities 
+## Testing 3 possibilities----
 ## Count max----
 Comp.max<-Composition_2 %>% 
   group_by(Study.Area,Species,Surveyno) %>% 
@@ -383,12 +388,96 @@ plot.indices.mean<-Indices.mean %>%
 
 # Merge all variations----
 Indices<-cbind(Indices.all, Indices.mean, Indices.max)
+Indices <- rownames_to_column(Indices, "Study.Area")
 view(Indices)
 
-# Plot indices----
+## Plot indices----
 grid.arrange(plot.indices.all,plot.indices.max,plot.indices.mean,ncol=3)
 # table
 formattable(Indices) 
+
+## Clean up----
+rm(list = c('Indices.max','Indices.mean','Indices.all',
+            'Comp.max','Comp.mean','Comp.all','Comp.alpha','simpson','shannon',
+            'Comp.alpha.row'))
+
+#==== 8 MERGE INDICES~COMPOSITION ====
+###
+  
+Composition_2<-merge(Composition_2,Indices,by='Study.Area')
+View(Composition_2)
+  
+
+#====== 9 TRANSFORMATION ======
+###
+
+# To Composition_2
+## add max daily counts and maximum proportion----
+x<-Composition_2 %>% 
+  group_by(Study.Area,Species,Surveyno) %>% 
+  summarise(n=n()) %>% 
+  select(-Surveyno) %>% 
+  summarise(max_obs = max(n)) %>% 
+  arrange(Study.Area,desc(max_obs)) %>% 
+  mutate(max.proportion=max_obs/sum(max_obs)*100) %>% 
+  arrange(Study.Area,desc(max.proportion))
+
+Composition_2<-merge(Composition_2,x,by=c('Study.Area','Species'),all=T)
+
+## add total counts and maximum proportion----
+y<-Composition_2 %>% filter(Species=='Asian glossy starling') %>% 
+  group_by(Study.Area,Species) %>% 
+  tally() %>% 
+  mutate(total.proportion=n/sum(n)*100) %>% 
+  arrange(Study.Area,desc(total.proportion))
+y<-y %>% rename(total_obs=n)
+
+Composition_2<-merge(Composition_2,y,by=c('Study.Area','Species'),all=T)
+
+
+## Transform Long Transform----
+### IS----
+IS<-Interact_2 %>% 
+  filter(recipsp!="NA") %>% 
+  group_by(Study.Area,initsp,interaction,rating,isout,) %>% 
+  tally()
+IS<-rename(IS,species=initsp)  
+IS<-rename(IS,outcome=isout)
+IS$role<-'IS' # identify IS/RS
+
+### RS----
+RS<-Interact_2 %>% 
+  filter(recipsp!="NA") %>% 
+  group_by(Study.Area,recipsp,interaction,rating,rsout) %>% 
+  tally()
+RS<-rename(RS,species=recipsp)  
+RS<-rename(RS,outcome=rsout)
+RS$role<-'RS' # identify IS/RS
+
+#### Combine----
+ISRS<-rbind(IS,RS)
+ISRS<-ISRS %>% relocate(1,2,3,4,5,7,6) %>% rename(n_ints=n)
+view(ISRS)
+
+#To ISRS
+## + abundance, max count, max prop, total count, total prop
+
+#====== 10 CHARTS: COMPOSTION ======
+##
+Composition_2 %>% 
+  group_by(Study.Area,Species) %>% 
+  select(Study.Area,Species,max_obs) %>% 
+  summarise(max_obs=max(max_obs)) %>% 
+  ggplot(aes(Study.Area,max_obs))+
+  geom_jitter(aes(color=Species),width=0.12,size=5,alpha=0.6,shape=20)+coord_trans(y='log10')+
+  scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
+                              'Monk parakeet'='#004488',
+                              'Rose-ringed parakeet'='#EE3377',
+                              'Tanimbar corella'='#33BBEE',
+                              'Long-tailed parakeet'='#009988',
+                              'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))+
+  theme_light()+
+  labs(title = 'Max daily counts per site, species',color="Species")#change legend title!!
 
 
 

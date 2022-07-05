@@ -37,16 +37,6 @@ Interact$interaction<-factor(Interact$interaction,
                           levels = c("Neutral","Displace","Threat","Swoop","Chase","Contact","Fight"))
 
 
-#PARROTS ONLY----
-Interact2<-Interact %>% 
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|
-                                 initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>% 
-  mutate(SP=case_when(initsp=="Monk parakeet"~"MP",
-                     initsp=="Tanimbar corella"~"TC",
-                     initsp=="Rose-ringed parakeet"~"RRP",
-                     initsp=="Red-breasted parakeet"~"RBP",
-                     initsp=="Long-tailed parakeet"~"LTP"))
-
 
 # ...all initators----
 initiators<-Interact %>% 
