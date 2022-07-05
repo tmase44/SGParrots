@@ -436,7 +436,7 @@ abun2 %>% filter(Study.Area!='Palawan Beach') %>%
   geom_point(size=3,alpha=0.8)+
   labs(x='total observations',y='total interaction involvement',
        title = 'Total observations / Total times involved in interactions')+
-  facet_wrap(~Study.Area)
+  scale_x_log10()+scale_y_log10()
 
 ### Add aggression rating
 rm(abun3)
