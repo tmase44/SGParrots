@@ -486,7 +486,7 @@ rm(list = c('Indices.max','Indices.mean','Indices.all',
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
- Composition_2<-merge(Composition_2,Indices,by='Study.Area')
+Composition_2<-merge(Composition_2,Indices,by='Study.Area')
 View(Composition_2)
 
 
@@ -497,7 +497,9 @@ View(Composition_2)
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
-# Trans. ~COMPOSITION_2
+#=====================================#
+# 8.a. Transformations of: COMPOSITION_2----
+#=====================================#
 
 # add max daily counts and maximum proportion
 x<-Composition_2 %>% 
@@ -522,7 +524,10 @@ y<-y %>% rename(total_obs=n)
 Composition_2<-merge(Composition_2,y,by=c('Study.Area','Species'),all=T)
 
 
-# Transform Long Transform
+#========================#
+# 8.b. ISRS Long Transform----
+#========================#
+
 # IS
 IS<-Interact_2 %>% 
   filter(recipsp!="NA") %>% 
@@ -547,6 +552,30 @@ ISRS<-ISRS %>% relocate(1,2,3,4,5,7,6)
 ISRS<-ISRS %>% rename(n_ints=n)
 ISRS<-ISRS %>% rename(Species=species)
 view(ISRS)
+
+
+
+
+#=================#
+# 8.c. Tibbles----
+#=================#
+rm(Ints.Abundance)
+x<-ISRS %>% 
+  group_by(Study.Area,Species) %>% summarise(n_ints=sum(n_ints))
+
+y<-Composition_2 %>% 
+  group_by(Study.Area,Species) %>%summarise(Abundance=mean(Abundance)) %>%
+  arrange(Study.Area,desc(Abundance))
+
+Ints.Abundance <- merge(x,y,by=c("Study.Area","Species")) %>% 
+  arrange(Study.Area,desc(Abundance))
+
+z<-Composition_2 %>% 
+  group_by(Study.Area,Species) %>%summarise(max_obs=max(max_obs)) %>%
+  arrange(Study.Area,desc(max_obs)) %>% 
+  mutate(proportion=max_obs/sum(max_obs)*100)
+
+Ints.Abundance <- merge(Ints.Abundance,z,by=c("Study.Area","Species")) 
 
 # Trans. ~INDICES
 
@@ -612,7 +641,40 @@ Master<-Master %>% distinct(Study.Area,Species,interaction,outcome,
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
-#================================ 9.0 CHARTS =================================
+#=========================== 9.0 DATA EXPLORATION ============================
+#/////////////////////////////////////////////////////////////////////////////#
+#/////////////////////////////////////////////////////////////////////////////#
+
+Composition_2 %>% select(Species) %>% n_distinct()
+# 81 species observed in total [comp surveys]
+
+Interact_2 %>% count(initsp) %>% summarise(sum(n))
+# 752 total interactions - Sentosa excluded
+
+Interact_2 %>% summarise(n_distinct(initsp)) 
+# 30 species observed initiating interactions
+
+Interact_2 %>% summarise(n_distinct(recipsp)) 
+# 44 species observed receiving interactions
+
+# Interaction pairs
+int_pairs <- Interact_2 %>%
+  count(initsp, recipsp) %>%
+  complete(initsp, nesting(recipsp), fill = list(n = 0)) %>% 
+  filter(n!='0') %>% 
+  arrange(desc(n))
+int_pairs %>% print(n=20) # top 10 interaciton pairs
+
+## major interactions are limited, primaryy targets of NNP's are
+  # Javan myna, rock dove, LTP, hornbill, starling
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*****
+#!!! Species density / overcrowding could be a driver of interactions
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*****
+
+#/////////////////////////////////////////////////////////////////////////////#
+#/////////////////////////////////////////////////////////////////////////////#
+#=============================== 10.0 CHARTS =================================
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
@@ -624,7 +686,7 @@ ISRS$Species2 = str_wrap(ISRS$Species, width = 10)
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
-#======================= 9.1 TOP-LINE CORRELATIONS ===========================
+#======================== 10.1 TOP-LINE CORRELATIONS =========================
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
@@ -747,10 +809,41 @@ Indices_2 %>%
            geom_point(size=4)+labs(title = 'Cavity nester proportion = higher aggression')
          
 
+#===============================#
+# Species level correlations----
+#===============================#
+
+Ints.Abundance %>% 
+  ggplot(aes(Abundance,n_ints,color=Species))+
+  geom_point(size=3,alpha=0.8)+
+  labs(x='Relative abundance',y='total interaction involvement',
+       title = 'Relative abundance / Total times involved in interactions')+
+  scale_color_manual(values=c('Red-breasted parakeet'='#CC3311','Monk parakeet'='#004488',
+                              'Rose-ringed parakeet'='#EE3377', 'Tanimbar corella'='#33BBEE','Long-tailed parakeet'='#009988',
+                              'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))
+
+Ints.Abundance %>% 
+  ggplot(aes(max_obs,n_ints,color=Species))+
+  geom_point(size=3,alpha=0.8)+
+  labs(x='Abundance',y='total interaction involvement',
+       title = 'Abundance / Total times involved in interactions')+
+  scale_color_manual(values=c('Red-breasted parakeet'='#CC3311','Monk parakeet'='#004488',
+                              'Rose-ringed parakeet'='#EE3377', 'Tanimbar corella'='#33BBEE','Long-tailed parakeet'='#009988',
+                              'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))
+
+Ints.Abundance %>% 
+  ggplot(aes(proportion,n_ints,color=Species))+
+  geom_point(size=3,alpha=0.8)+
+  labs(x='Proportion of species in the community',y='total interaction involvement',
+       title = 'Proportion of community / Total times involved in interactions')+
+  scale_color_manual(values=c('Red-breasted parakeet'='#CC3311','Monk parakeet'='#004488',
+                              'Rose-ringed parakeet'='#EE3377', 'Tanimbar corella'='#33BBEE','Long-tailed parakeet'='#009988',
+                              'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))
+
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
-#======================= 9.2 TOP-LINE REGRESSIONS ===========================
+#======================= 10.2 TOP-LINE REGRESSIONS ===========================
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
@@ -763,7 +856,7 @@ summary(y)
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
-#======================== 9.3 CHARTS: COMPOSITION ===========================
+#======================== 10.3 CHARTS: COMPOSITION ===========================
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
@@ -786,7 +879,7 @@ Composition_2 %>%
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
-#======================== 9.4 CHARTS: INTERACTIONS ===========================
+#======================== 10.4 CHARTS: INTERACTIONS ===========================
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 

@@ -41,7 +41,7 @@ Interact$interaction<-factor(Interact$interaction,
 # ...all initators----
 initiators<-Interact %>% 
   filter(recipsp!="NA") %>% 
-  group_by(Study.Area,initsp,interaction,rating,isout,) %>% 
+  group_by(Study.Area,initsp,interaction,isout,) %>% 
   tally()
 initiators<-rename(initiators,species=initsp)  
 initiators<-rename(initiators,outcome=isout)
@@ -49,7 +49,7 @@ initiators$role<-'IS' # identify IS/RS
 # ...all recipients----
 recipients<-Interact %>% 
   filter(recipsp!="NA") %>% 
-  group_by(Study.Area,recipsp,interaction,rating,rsout) %>% 
+  group_by(Study.Area,recipsp,interaction,rsout) %>% 
   tally()
 recipients<-rename(recipients,species=recipsp)  
 recipients<-rename(recipients,outcome=rsout)
