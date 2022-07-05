@@ -176,7 +176,7 @@ isrsall %>% group_by(species) %>%
 
 #2. ROLES----
 ## n IS RS----
-isrs2 %>% filter(interaction!='Neutral') %>% 
+isrs2 %>%  
   group_by(species,role) %>% 
   summarise(n=sum(total)) %>% 
   ggplot(aes(reorder(species,-n),n,fill=role))+
@@ -187,7 +187,7 @@ isrs2 %>% filter(interaction!='Neutral') %>%
   scale_fill_manual(values=c('IS'='#4a7b77','RS'='#f67e4b'))
 
 # % IS RS----
-isrs2 %>% filter(interaction!='Neutral') %>% 
+isrs2 %>%  
   group_by(species,role) %>% 
   summarise(n=sum(total)) %>%
   mutate(freq=n/sum(n)*100) %>% 
@@ -199,7 +199,7 @@ isrs2 %>% filter(interaction!='Neutral') %>%
   scale_fill_manual(values=c('IS'='#4a7b77','RS'='#f67e4b'))
 
 # Neutral----
-isrs2 %>% filter(interaction=='Neutral') %>% 
+isrs2 %>%  
   group_by(species) %>% 
   summarise(n=sum(total)) %>%
     ggplot(aes(reorder(species,-n),n))+
@@ -218,6 +218,16 @@ isrs2 %>%
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
   labs(x='Species',y='n',title='n wins, losses and neutral outcomes')+
   scale_fill_manual(values=c('W'='#4393c3','NE'='#f7f7f7','L'='#d6604d'))
+
+isrs2 %>% 
+  group_by(species,outcome) %>% filter(outcome!='NE') %>% 
+  summarise(n=sum(total)) %>% 
+  ggplot(aes(reorder(species,-n),n,fill=outcome))+
+  geom_col(position = 'stack')+ 
+  geom_text(aes(label = n),position=position_stack(vjust=.5))+ 
+  scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
+  labs(x='Species',y='n',title='n wins, losses and neutral outcomes')+
+  scale_fill_manual(values=c('W'='#4393c3','L'='#d6604d'))
 
 ## % W/L/NE all ints----
 isrs2 %>% 
@@ -388,7 +398,7 @@ formattable(actions,
 abun<-Composition %>% 
   select(Species) %>% count(Species) %>% arrange(desc(n)) # n = total observed
   
-recips<-isrsall %>%  
+recips<-isrsall %>%   
   group_by(species) %>% summarise(allints=sum(total)) %>% rename(Species=species) #sum = total interactions
 
 abun<-merge(abun,recips,by="Species",all=T) %>%  replace(is.na(.), 0) 
@@ -415,7 +425,7 @@ abun %>%  ggplot(aes(n,allints))+
 abun2<-Composition %>% 
   select(Study.Area,Species) %>%  group_by(Study.Area,Species) %>% count(Species) %>% arrange(desc(n)) # n = total observed
 
-recips2<-isrsall %>%  
+recips2<-isrsall %>% 
   group_by(Study.Area,species) %>% summarise(allints=sum(total)) %>% rename(Species=species) #sum = total interactions
 
 abun2<-merge(abun2,recips2,by=c("Study.Area","Species")) 
@@ -441,7 +451,7 @@ abun2 %>% filter(Study.Area!='Palawan Beach') %>%
 ### Add aggression rating
 rm(abun3)
 rm(agg)
-agg<-isrsall %>%  
+agg<-isrsall %>%   
   mutate(agg=rating*total) %>% 
   group_by(Study.Area,species) %>% summarise(Aggression_weight=sum(agg)) %>% rename(Species=species) %>% 
   arrange(desc(Aggression_weight))
@@ -463,18 +473,16 @@ DAB_master2<-merge(DAB_master2,nInts2,by=c('Study.Area','Species'))
 # total ints x relative abundance----
 DAB_master2 %>% ggplot(aes(Abundance,allints,color=Species))+
   geom_point(alpha=0.8)+
-  labs(x='total observations',y='total interaction involvement',
-       title = 'Total observations / Total times involved in interactions')+
+  labs(x='Relative abundance',y='total interaction involvement',
+       title = 'Relative abundance / Total times involved in interactions')+
   scale_color_manual(values=c('Red-breasted parakeet'='#CC3311','Monk parakeet'='#004488',
                               'Rose-ringed parakeet'='#EE3377', 'Tanimbar corella'='#33BBEE','Long-tailed parakeet'='#009988',
                               'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))+
   facet_wrap(~Study.Area)
 
 # only IS x relative abundance----
-DAB_master2 %>% ggplot(aes(Abundance,n,color=Species))+
-  stat_poly_line()+
-  stat_poly_eq()+
-  geom_point(alpha=0.8)+
+DAB_master2 %>% ggplot(aes(Abundance,n))+
+    geom_point(alpha=0.8)+
   labs(x='total observations',y='total interaction involvement',
        title = 'Total observations / Total times initiating interactions')+
   scale_color_manual(values=c('Red-breasted parakeet'='#CC3311','Monk parakeet'='#004488',
@@ -483,9 +491,7 @@ DAB_master2 %>% ggplot(aes(Abundance,n,color=Species))+
   facet_wrap(~Study.Area)
 
 # only IS x relative abundance----
-DAB_master2 %>% ggplot(aes(Abundance,n))+
-  stat_poly_line()+
-  stat_poly_eq()+
+DAB_master2 %>% ggplot(aes(Abundance,n,color=Species))+
   geom_point(alpha=0.8)+
   labs(x='relative abundance',y='total interaction involvement',
        title = 'Total observations / Total times initiating interactions')+
@@ -501,7 +507,7 @@ summary(x)
 Composition %>% group_by(Study.Area) %>% 
   filter(Study.Area!='Palawan Beach') %>%
   summarise(hours=max(Surveyno))
-hourly<-Interact %>% filter(interaction!='Neutral') %>% group_by(Study.Area) %>% count(interaction) %>% 
+hourly<-Interact%>% group_by(Study.Area) %>% count(interaction) %>% 
   mutate(hours=case_when(Study.Area=='Changi Village'~10,
                          Study.Area=='Pasir Ris Town Park'~15,
                          Study.Area=='Palawan Beach'~1,
@@ -511,10 +517,9 @@ hourly<-Interact %>% filter(interaction!='Neutral') %>% group_by(Study.Area) %>%
   mutate(ints_hr=n/hours) %>% group_by(Study.Area) %>% mutate(sum=sum(n)) %>% mutate(sum_hr=sum(ints_hr)) %>% 
   group_by(Study.Area) %>% mutate(avg_hr=mean(ints_hr))
 hourly
-Indices3<-full_join(hourly,Indices2,by='Study.Area')
-Indices3<-full_join(Indices3,cavs,by='Study.Area')
+Indices3<-merge(hourly,Indices2,by='Study.Area')
+Indices3<-merge(Indices3,cavs,by='Study.Area')
 Indices3$interaction<-factor(Indices3$interaction,
                              levels = c("Neutral","Displace","Threat","Swoop","Chase","Contact","Fight"))
 
-
-
+m<-Indices3 %>% group_by(Study.Area) %>% summarise(meanintshr=mean(ints_hr)) %>% filter(Study.Area!='Palawan Beach')

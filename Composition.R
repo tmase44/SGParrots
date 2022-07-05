@@ -54,6 +54,11 @@ Comp.max<-Composition %>%
   arrange(Study.Area,desc(max_obs))
 #view(Comp.max)
 
+comp.all<-Composition %>% 
+  group_by(Study.Area,Species,Surveyno) %>% 
+  summarise(n=n()) %>% 
+  select(-Surveyno) %>% summarise(sum=sum(n))
+
 Comp.max %>% 
   ggplot(aes(Study.Area,max_obs))+
   geom_jitter(aes(color=Species),width=0.12,size=5,alpha=0.6,shape=20)+coord_trans(y='log10')+
@@ -67,7 +72,7 @@ Comp.max %>%
   labs(title = 'Max daily counts per site, species',color="Species")#change legend title!!
 
 # spread/gather for alpha measurement----
-Comp.alpha<-Comp.max %>% spread(key=Species,value = max_obs) %>% 
+Comp.alpha<-comp.all %>% spread(key=Species,value = sum) %>% 
   replace(is.na(.), 0) %>% remove_rownames %>% 
   column_to_rownames(var="Study.Area")
 #view(Comp.alpha)
@@ -107,8 +112,7 @@ Indices<-data.frame(Indices)
 plot.indices<-Indices %>% 
   ggplot(aes(x=Simpson,y=Shannon,
                            label=row.names(Indices))) +
-  geom_point(aes(color=Richness), size=4) +
-  xlim(0.85,0.98)+ylim(1.8,4.1)+
+  geom_point(aes(color=Richness), size=4)+
   geom_text(hjust=0.7,vjust=-1.2)+
   labs(title = 'Alpha biodiversity of each survey site')
 plot.indices
@@ -169,7 +173,7 @@ shannxprop <-Indices2 %>%
 ## 75% variation in biodoversity (shann) is attributed to parrot abundance
 y1<-lm(Shannon~ParrProp,Indices2)
 summary(y1)
-
+## plot----
 grid.arrange(richxprop,shannxprop,ncol=2)
 
 ## Tanimbar corella may have a negative effect on Richness and BD within an area
@@ -202,13 +206,14 @@ isxrich<-Indices2 %>%
   labs(title = 'Richness of site is also not a driver of interaction frequency',
        y='n interactions',x='Species richness')
 # R2 = <0.1%
+##plot----
 grid.arrange(isxprop,isxrich,ncol=2)
 
 # 3. average aggression rating by site----
-r<-isrsall %>% 
+r<-isrsall %>% filter(interaction!='Neutral') %>% 
   group_by(Study.Area) %>% 
   summarise(avgrating=mean(rating))
-#Indices2<-cbind(Indices2,r['avgrating'])
+Indices2<-cbind(Indices2,r['avgrating'])
 
 shanxagg<-Indices2 %>% 
   ggplot(aes(avgrating,Shannon))+
@@ -267,3 +272,15 @@ isxsurface<-Indices2 %>%
   geom_point(size=4)+labs(title = 'Correlation between artificial surface cover and n interactions')
 
 grid.arrange(isxcanopy,isxveg,isxbuild,isxsurface,ncol=2,nrow=2)
+
+# ints / hr----
+Indices2<-cbind(Indices2,m[,2])
+
+
+Indices2 %>% 
+  ggplot(aes(ParrProp,meanintshr))+
+  stat_poly_line(se=F)+
+  stat_poly_eq()+
+  geom_point(size=4)+
+# interactions per hour is greater in low BD sites
+

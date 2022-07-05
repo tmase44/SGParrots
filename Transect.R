@@ -125,14 +125,153 @@ summary(x.unif.cos)
 summary(x.hn)
 
 # Abundance & Density----
-## IMPORT DATA----
-RM(RAD)
-DAB <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
-                          sheet = "DAB")
-ls(DAB)
-#Top 
-TTopAB<-DAB %>% arrange(Study.Area,desc(RA))
-view(TTopAB)
+
+#?????????????????????#
+#----MULTI SPECIES-----
+#?????????????????????#
+###Changi Village                         10
+###2 Palawan Beach                         1
+###3 Pasir Ris Town Park                  12
+###4 Sengkang Riverside Park               7
+###5 Springleaf                           10
+###6 Stirling Road                         8
+#https://workshops.distancesampling.org/duke-spatial-2015/practicals/1-detection-functions-solutions.html
+
+## Changi----
+Changi<-Transect %>% filter(Study.Area=='Changi Village')
+Changi$Effort<-Changi$Effort*10
+Changi<-Changi %>% select(Region.Label,Area,Sample.Label,Effort,distance,Species,Surveyno) %>% 
+  rename(species=Species) %>% rename(visit=Surveyno)
+convunit <- convert_units("meter", "kilometer", "hectare")
+Changi.birds <- ds(data = Changi,
+                   key="hn", convert_units = convunit,
+                   formula=~species, truncation = 70)
+gof_ds(Changi.birds)
+Changi.ests <- dht2(ddf=Changi.birds, flatfile=Changi,
+                    strat_formula = ~species, convert_units = convunit,
+                    stratification = "object") 
+view(Changi.ests)
+changiDAB<-Changi.ests %>% 
+  select(Area,df_var,species,n,p_var,p_average,ER,Abundance,Abundance_se,Abundance_CV,bigC,LCI,UCI) %>% 
+  arrange(desc(Abundance)) %>% 
+  mutate(Study.Area='Changi Village',.before=1)
+# generate density results https://rdrr.io/cran/Distance/src/R/dht2.R
+changiDAB<-changiDAB %>% 
+  mutate(Density = Abundance/Area,
+         df_var2 = df_var/Area^2) %>%
+  mutate(Density_se = sqrt(Abundance_se^2/Area^2)) %>%
+  mutate(Density_CV = Density_se/Density)
+view(changiDAB)
+
+## Pasir Ris----
+Pasir<-Transect %>% filter(Study.Area=='Pasir Ris Town Park')
+Pasir$Effort<-Pasir$Effort*12
+Pasir<-Pasir %>% select(Region.Label,Area,Sample.Label,Effort,distance,Species,Surveyno) %>% 
+  rename(species=Species) %>% rename(visit=Surveyno)
+convunit <- convert_units("meter", "kilometer", "hectare")
+Pasir.birds <- ds(data = Pasir,
+                  key="hn", convert_units = convunit,
+                  formula=~species, truncation = 70)
+gof_ds(Pasir.birds)
+Pasir.ests <- dht2(ddf=Pasir.birds, flatfile=Pasir,
+                   strat_formula = ~species, convert_units = convunit,
+                   stratification = "object") 
+view(Pasir.ests)
+PasirDAB<-Pasir.ests %>% 
+  select(Area,df_var,species,n,p_var,p_average,ER,Abundance,Abundance_se,Abundance_CV,bigC,LCI,UCI) %>% 
+  arrange(desc(Abundance)) %>% 
+  mutate(Study.Area='Pasir Ris Town Park',.before=1)
+# generate density results https://rdrr.io/cran/Distance/src/R/dht2.R
+PasirDAB<-PasirDAB %>% 
+  mutate(Density = Abundance/Area,
+         df_var2 = df_var/Area^2) %>%
+  mutate(Density_se = sqrt(Abundance_se^2/Area^2)) %>%
+  mutate(Density_CV = Density_se/Density)
+view(PasirDAB)
+
+## Springleaf----
+Springleaf<-Transect %>% filter(Study.Area=='Springleaf')
+Springleaf$Effort<-Springleaf$Effort*10
+Springleaf<-Springleaf %>% select(Region.Label,Area,Sample.Label,Effort,distance,Species,Surveyno) %>% 
+  rename(species=Species) %>% rename(visit=Surveyno)
+convunit <- convert_units("meter", "kilometer", "hectare")
+Springleaf.birds <- ds(data = Springleaf,
+                       key="hn", convert_units = convunit,
+                       formula=~species, truncation = 70)
+gof_ds(Springleaf.birds,chisq = T)
+Springleaf.ests <- dht2(ddf=Springleaf.birds, flatfile=Springleaf,
+                        strat_formula = ~species, convert_units = convunit,
+                        stratification = "object") 
+view(Springleaf.ests)
+SpringleafDAB<-Springleaf.ests %>% 
+  select(Area,df_var,species,n,p_var,p_average,ER,Abundance,Abundance_se,Abundance_CV,bigC,LCI,UCI) %>% 
+  arrange(desc(Abundance)) %>% 
+  mutate(Study.Area='Springleaf',.before=1)
+# generate density results https://rdrr.io/cran/Distance/src/R/dht2.R
+SpringleafDAB<-SpringleafDAB %>% 
+  mutate(Density = Abundance/Area,
+         df_var2 = df_var/Area^2) %>%
+  mutate(Density_se = sqrt(Abundance_se^2/Area^2)) %>%
+  mutate(Density_CV = Density_se/Density)
+view(SpringleafDAB)
+
+## Sengkang----
+Sengkang<-Transect %>% filter(Study.Area=='Sengkang Riverside Park')
+Sengkang$Effort<-Sengkang$Effort*7
+Sengkang<-Sengkang %>% select(Region.Label,Area,Sample.Label,Effort,distance,Species,Surveyno) %>% 
+  rename(species=Species) %>% rename(visit=Surveyno)
+convunit <- convert_units("meter", "kilometer", "hectare")
+Sengkang.birds <- ds(data = Sengkang,
+                     key="hn", convert_units = convunit,
+                     formula=~species, truncation = 70)
+gof_ds(Sengkang.birds)
+Sengkang.ests <- dht2(ddf=Sengkang.birds, flatfile=Sengkang,
+                      strat_formula = ~species, convert_units = convunit,
+                      stratification = "object") 
+view(Sengkang.ests)
+SengkangDAB<-Sengkang.ests %>% 
+  select(Area,df_var,species,n,p_var,p_average,ER,Abundance,Abundance_se,Abundance_CV,bigC,LCI,UCI) %>% 
+  arrange(desc(Abundance)) %>% 
+  mutate(Study.Area='Sengkang Riverside Park',.before=1)
+# generate density results https://rdrr.io/cran/Distance/src/R/dht2.R
+SengkangDAB<-SengkangDAB %>% 
+  mutate(Density = Abundance/Area,
+         df_var2 = df_var/Area^2) %>%
+  mutate(Density_se = sqrt(Abundance_se^2/Area^2)) %>%
+  mutate(Density_CV = Density_se/Density)
+view(SengkangDAB)
+
+## Stirling/Queenstown----
+Stirling<-Transect %>% filter(Study.Area=='Stirling Road')
+Stirling$Effort<-Stirling$Effort*8
+Stirling<-Stirling %>% select(Region.Label,Area,Sample.Label,Effort,distance,Species,Surveyno) %>% 
+  rename(species=Species) %>% rename(visit=Surveyno)
+convunit <- convert_units("meter", "kilometer", "hectare")
+Stirling.birds <- ds(data = Stirling,
+                     key="hn", convert_units = convunit,
+                     formula=~species, truncation = 70)
+gof_ds(Stirling.birds)
+Stirling.ests <- dht2(ddf=Stirling.birds, flatfile=Stirling,
+                      strat_formula = ~species, convert_units = convunit,
+                      stratification = "object") 
+view(Stirling.ests)
+StirlingDAB<-Stirling.ests %>% 
+  select(Area,df_var,species,n,p_var,p_average,ER,Abundance,Abundance_se,Abundance_CV,bigC,LCI,UCI) %>% 
+  arrange(desc(Abundance)) %>% 
+  mutate(Study.Area='Stirling Road',.before=1)
+# generate density results https://rdrr.io/cran/Distance/src/R/dht2.R
+StirlingDAB<-StirlingDAB %>% 
+  mutate(Density = Abundance/Area,
+         df_var2 = df_var/Area^2) %>%
+  mutate(Density_se = sqrt(Abundance_se^2/Area^2)) %>%
+  mutate(Density_CV = Density_se/Density)
+view(StirlingDAB)
+
+### MERGE ALL
+DAB_master <- rbind(changiDAB,PasirDAB,SpringleafDAB,StirlingDAB,SengkangDAB)
+DAB_master<-DAB_master %>% filter(species!='Total') %>% rename(Species=species)
+view(DAB_master)
+
 
 ## Fixed scale RAD----
 RAD %>% 
@@ -170,7 +309,7 @@ RAD2 %>% ggplot(aes(RA,n))+
 
 RAD2$CavityYN<-as.factor(RAD2$CavityYN)
 cavs<-RAD2 %>% group_by(Study.Area,CavityYN) %>% count(CavityYN) %>% group_by(Study.Area) %>% 
-  mutate(freq=n/sum(n)*100) %>% filter(CavityYN=='2')
+  mutate(freq=n/sum(n)*100) %>% filter(CavityYN=='4')
   
 ## initations only-----
 nInts2<-isrs %>% 
@@ -186,148 +325,3 @@ RAD3 %>% ggplot(aes(n,RA))+
   theme_bw()+
   labs(x='n initiated interactions',y='Relative abundance',title='Correlation between relative abundance and initiated interaction frequency')
 
-#?????????????????????#
-#----MULTI SPECIES-----
-#?????????????????????#
-###Changi Village                         10
-###2 Palawan Beach                         1
-###3 Pasir Ris Town Park                  12
-###4 Sengkang Riverside Park               7
-###5 Springleaf                           10
-###6 Stirling Road                         8
-#https://workshops.distancesampling.org/duke-spatial-2015/practicals/1-detection-functions-solutions.html
-
-## Changi----
-Changi<-Transect %>% filter(Study.Area=='Changi Village')
-Changi$Effort<-Changi$Effort*10
-Changi<-Changi %>% select(Region.Label,Area,Sample.Label,Effort,distance,Species,Surveyno) %>% 
-  rename(species=Species) %>% rename(visit=Surveyno)
-convunit <- convert_units("meter", "kilometer", "hectare")
-Changi.birds <- ds(data = Changi,
-                key="hn", convert_units = convunit,
-                formula=~species, truncation = 70)
-gof_ds(Changi.birds)
-Changi.ests <- dht2(ddf=Changi.birds, flatfile=Changi,
-                  strat_formula = ~species, convert_units = convunit,
-                  stratification = "object") 
-view(Changi.ests)
-changiDAB<-Changi.ests %>% 
-  select(Area,df_var,species,n,p_var,p_average,ER,Abundance,Abundance_se,Abundance_CV,bigC,LCI,UCI) %>% 
-  arrange(desc(Abundance)) %>% 
-  mutate(Study.Area='Changi Village',.before=1)
-# generate density results https://rdrr.io/cran/Distance/src/R/dht2.R
-changiDAB<-changiDAB %>% 
-  mutate(Density = Abundance/Area,
-       df_var2 = df_var/Area^2) %>%
-  mutate(Density_se = sqrt(Abundance_se^2/Area^2)) %>%
-  mutate(Density_CV = Density_se/Density)
-view(changiDAB)
-
-## Pasir Ris----
-Pasir<-Transect %>% filter(Study.Area=='Pasir Ris Town Park')
-Pasir$Effort<-Pasir$Effort*12
-Pasir<-Pasir %>% select(Region.Label,Area,Sample.Label,Effort,distance,Species,Surveyno) %>% 
-  rename(species=Species) %>% rename(visit=Surveyno)
-convunit <- convert_units("meter", "kilometer", "hectare")
-Pasir.birds <- ds(data = Pasir,
-                   key="hn", convert_units = convunit,
-                   formula=~species, truncation = 70)
-gof_ds(Pasir.birds)
-Pasir.ests <- dht2(ddf=Pasir.birds, flatfile=Pasir,
-                    strat_formula = ~species, convert_units = convunit,
-                    stratification = "object") 
-view(Pasir.ests)
-PasirDAB<-Pasir.ests %>% 
-  select(Area,df_var,species,n,p_var,p_average,ER,Abundance,Abundance_se,Abundance_CV,bigC,LCI,UCI) %>% 
-  arrange(desc(Abundance)) %>% 
-  mutate(Study.Area='Pasir Ris Town Park',.before=1)
-# generate density results https://rdrr.io/cran/Distance/src/R/dht2.R
-PasirDAB<-PasirDAB %>% 
-  mutate(Density = Abundance/Area,
-         df_var2 = df_var/Area^2) %>%
-  mutate(Density_se = sqrt(Abundance_se^2/Area^2)) %>%
-  mutate(Density_CV = Density_se/Density)
-view(PasirDAB)
-
-## Springleaf----
-Springleaf<-Transect %>% filter(Study.Area=='Springleaf')
-Springleaf$Effort<-Springleaf$Effort*10
-Springleaf<-Springleaf %>% select(Region.Label,Area,Sample.Label,Effort,distance,Species,Surveyno) %>% 
-  rename(species=Species) %>% rename(visit=Surveyno)
-convunit <- convert_units("meter", "kilometer", "hectare")
-Springleaf.birds <- ds(data = Springleaf,
-                  key="hn", convert_units = convunit,
-                  formula=~species, truncation = 70)
-gof_ds(Springleaf.birds,chisq = T)
-Springleaf.ests <- dht2(ddf=Springleaf.birds, flatfile=Springleaf,
-                   strat_formula = ~species, convert_units = convunit,
-                   stratification = "object") 
-view(Springleaf.ests)
-SpringleafDAB<-Springleaf.ests %>% 
-  select(Area,df_var,species,n,p_var,p_average,ER,Abundance,Abundance_se,Abundance_CV,bigC,LCI,UCI) %>% 
-  arrange(desc(Abundance)) %>% 
-  mutate(Study.Area='Springleaf',.before=1)
-# generate density results https://rdrr.io/cran/Distance/src/R/dht2.R
-SpringleafDAB<-SpringleafDAB %>% 
-  mutate(Density = Abundance/Area,
-         df_var2 = df_var/Area^2) %>%
-  mutate(Density_se = sqrt(Abundance_se^2/Area^2)) %>%
-  mutate(Density_CV = Density_se/Density)
-view(SpringleafDAB)
-
-## Sengkang----
-Sengkang<-Transect %>% filter(Study.Area=='Sengkang Riverside Park')
-Sengkang$Effort<-Sengkang$Effort*7
-Sengkang<-Sengkang %>% select(Region.Label,Area,Sample.Label,Effort,distance,Species,Surveyno) %>% 
-  rename(species=Species) %>% rename(visit=Surveyno)
-convunit <- convert_units("meter", "kilometer", "hectare")
-Sengkang.birds <- ds(data = Sengkang,
-                       key="hn", convert_units = convunit,
-                       formula=~species, truncation = 70)
-gof_ds(Sengkang.birds)
-Sengkang.ests <- dht2(ddf=Sengkang.birds, flatfile=Sengkang,
-                        strat_formula = ~species, convert_units = convunit,
-                        stratification = "object") 
-view(Sengkang.ests)
-SengkangDAB<-Sengkang.ests %>% 
-  select(Area,df_var,species,n,p_var,p_average,ER,Abundance,Abundance_se,Abundance_CV,bigC,LCI,UCI) %>% 
-  arrange(desc(Abundance)) %>% 
-  mutate(Study.Area='Sengkang Riverside Park',.before=1)
-# generate density results https://rdrr.io/cran/Distance/src/R/dht2.R
-SengkangDAB<-SengkangDAB %>% 
-  mutate(Density = Abundance/Area,
-         df_var2 = df_var/Area^2) %>%
-  mutate(Density_se = sqrt(Abundance_se^2/Area^2)) %>%
-  mutate(Density_CV = Density_se/Density)
-view(SengkangDAB)
-
-## Stirling/Queenstown----
-Stirling<-Transect %>% filter(Study.Area=='Stirling Road')
-Stirling$Effort<-Stirling$Effort*8
-Stirling<-Stirling %>% select(Region.Label,Area,Sample.Label,Effort,distance,Species,Surveyno) %>% 
-  rename(species=Species) %>% rename(visit=Surveyno)
-convunit <- convert_units("meter", "kilometer", "hectare")
-Stirling.birds <- ds(data = Stirling,
-                       key="hn", convert_units = convunit,
-                       formula=~species, truncation = 70)
-gof_ds(Stirling.birds)
-Stirling.ests <- dht2(ddf=Stirling.birds, flatfile=Stirling,
-                        strat_formula = ~species, convert_units = convunit,
-                        stratification = "object") 
-view(Stirling.ests)
-StirlingDAB<-Stirling.ests %>% 
-  select(Area,df_var,species,n,p_var,p_average,ER,Abundance,Abundance_se,Abundance_CV,bigC,LCI,UCI) %>% 
-  arrange(desc(Abundance)) %>% 
-  mutate(Study.Area='Stirling Road',.before=1)
-# generate density results https://rdrr.io/cran/Distance/src/R/dht2.R
-StirlingDAB<-StirlingDAB %>% 
-  mutate(Density = Abundance/Area,
-         df_var2 = df_var/Area^2) %>%
-  mutate(Density_se = sqrt(Abundance_se^2/Area^2)) %>%
-  mutate(Density_CV = Density_se/Density)
-view(StirlingDAB)
-
-### MERGE ALL
-DAB_master <- rbind(changiDAB,PasirDAB,SpringleafDAB,StirlingDAB,SengkangDAB)
-DAB_master<-DAB_master %>% filter(species!='Total') %>% rename(Species=species)
-view(DAB_master)
