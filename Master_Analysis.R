@@ -14,7 +14,7 @@
 library(pacman)
 library(Ostats)
 
-p_load(formattable,knitr,kableExtra, # ncie tables
+p_load(formattable,knitr,kableExtra, # nice tables
        tidyverse,vegan,lubridate,gridExtra,ggrepel,reshape2,ggpmisc,BBmisc,stringr,
        ggpubr,AICcmodavg, #anova
        circlize, # interaction networks
@@ -55,6 +55,10 @@ Enviro <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Disse
                      sheet = "Enviro")
 Enviro<-Enviro %>% filter(Study.Area!='Palawan Beach')
 
+# Trees
+
+Tree <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
+                     sheet = "TC")
 
 
 #/////////////////////////////////////////////////////////////////////////////#
@@ -227,7 +231,7 @@ mtext("Goodness of fit - Distance models", side = 3, line = -2, outer = TRUE)
 
 Transect_2 <- rbind(changiDAB,PasirDAB,SpringleafDAB,StirlingDAB,SengkangDAB)
 Transect_2 <- Transect_2 %>% filter(species!='Total') %>% rename(Species=species)
-view(Transect_2)
+#view(Transect_2)
 
 #==================#
 # 3.c. Clean up----
@@ -257,6 +261,7 @@ Composition_2<-Composition_2 %>% select(-Effort,-Area.x,-Area.y,-Weather,-Commen
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 #=========================== 5. BASIC DATA PREP ==============================
+#/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
 # Factorise Composition_2
@@ -291,7 +296,12 @@ Interact_2$interaction<-factor(Interact_2$interaction,
                              levels = c("Neutral","Displace","Threat","Swoop","Chase","Contact","Fight"))
 levels(Interact_2$interaction)
 
-
+# Factorise Tree data
+str(Tree)
+cols_tree <- c('Study.Area','tree_sp','id','cav','food')
+Tree<-Tree %>% mutate_at(cols_tree,factor)  
+str(Tree)  
+rm(cols_tree)
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
@@ -487,7 +497,7 @@ rm(list = c('Indices.max','Indices.mean','Indices.all',
 #/////////////////////////////////////////////////////////////////////////////#
 
 Composition_2<-merge(Composition_2,Indices,by='Study.Area')
-View(Composition_2)
+#View(Composition_2)
 
 
 
@@ -497,9 +507,9 @@ View(Composition_2)
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
-#=====================================#
+#===========================================#
 # 8.a. Transformations of: COMPOSITION_2----
-#=====================================#
+#===========================================#
 
 # add max daily counts and maximum proportion
 x<-Composition_2 %>% 
@@ -524,9 +534,9 @@ y<-y %>% rename(total_obs=n)
 Composition_2<-merge(Composition_2,y,by=c('Study.Area','Species'),all=T)
 
 
-#========================#
+#=============================#
 # 8.b. ISRS Long Transform----
-#========================#
+#=============================#
 
 # IS
 IS<-Interact_2 %>% 
@@ -551,8 +561,7 @@ ISRS<-rbind(IS,RS)
 ISRS<-ISRS %>% relocate(1,2,3,4,5,7,6) 
 ISRS<-ISRS %>% rename(n_ints=n)
 ISRS<-ISRS %>% rename(Species=species)
-view(ISRS)
-
+#view(ISRS)
 
 
 
@@ -583,20 +592,34 @@ Ints.Abundance <- merge(Ints.Abundance,z,by=c("Study.Area","Species"))
 rm((parrot.targets))
 parrot.targets <- Interact_2 %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
-  select(initsp,recipsp,rating) %>% group_by(initsp,recipsp) %>% count(recipsp) %>% arrange(initsp,desc(n)) %>% rename(n_ints=n)
+  select(initsp,recipsp,rating) %>% 
+  group_by(initsp,recipsp) %>% 
+  count(recipsp) %>% 
+  arrange(initsp,desc(n)) %>% rename(n_ints=n)
+# Neutral only
 x<-Interact_2 %>% 
   filter(rating=='0') %>% filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
-  select(initsp,recipsp,rating) %>% group_by(initsp,recipsp) %>% count(recipsp) %>% arrange(initsp,desc(n)) %>% rename(n_NE=n)
+  select(initsp,recipsp,rating) %>% 
+  group_by(initsp,recipsp) %>% 
+  count(recipsp) %>% arrange(initsp,desc(n)) %>% rename(n_NE=n)
+# Merge 1
 parrot.targets<-merge(parrot.targets,x,by=c('initsp','recipsp'),all = TRUE) %>% replace(is.na(.), 0) 
+# Aggressions, no NE
 y<-Interact_2 %>% 
   filter(rating>=1) %>% filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
-  select(initsp,recipsp,rating) %>% group_by(initsp,recipsp) %>% count(recipsp) %>% arrange(initsp,desc(n)) %>% rename(n_Agg=n)
+  select(initsp,recipsp,rating) %>%
+  group_by(initsp,recipsp) %>% count(recipsp) %>% 
+  arrange(initsp,desc(n)) %>% rename(n_Agg=n)
+# Merge 2
 parrot.targets<-merge(parrot.targets,y,by=c('initsp','recipsp'),all = TRUE) %>% replace(is.na(.), 0)
 parrot.targets<- parrot.targets%>% arrange(initsp,desc(n_Agg))
 
-view(parrot.targets)
+#view(parrot.targets)
 
-# Trans. ~INDICES
+
+#============================#
+# Additions to: INDICES_2----
+#============================#
 
 # Environment
 envpc<-Enviro %>% 
@@ -643,18 +666,45 @@ x<-ISRS %>%
   summarise(avgratingNE=mean(rating))
 Indices_2 <- merge(Indices_2,x,by='Study.Area')
 
+
+#============================#
+# 8.d. Tree & Cavity data----
+#============================#
+
+###
+
+
+#===============================#
+# 8.e. Enviro Long Transform----
+#===============================#
+
+# add properly summed Vegetation cover (less canopy cover)
+Enviro <- Enviro %>% 
+  mutate(Vegpc_act=Vegpc-canopypc)
+  
+Enviro_2 <- Enviro %>% 
+  select(Study.Area,canopypc,Vegpc,buildpc,surfacepc,waterpc,Vegpc_act) %>% 
+  gather(key='land_prop',value='proportion',-Study.Area)
+
+Enviro_2$land_prop <- factor(Enviro_2$land_prop
+                             ,levels = c('buildpc','surfacepc','Vegpc_act',
+                                         'canopypc','waterpc'))
+levels(Enviro_2$land_prop)
+
+#===========================#
+# OTHER / UNUSED SCRIPT
+#===========================#
+
 # Master
 # + abundance, max count, max prop, total count, total prop
-x<-Composition_2 %>% select(Study.Area,Species,max_obs,max.proportion,
-                            total_obs,total.proportion,sp_lab,Avg_size,NestType,
-                            CavityYN,Abundance,Richness.all,Richness.max,Shannon.all,
-                            Shannon.max,Simpson.all,Simpson.max) 
-
-Master<-merge(ISRS,x,by=c('Study.Area','Species'),all=T)
-dim(Master)
-
-Master<-Master %>% distinct(Study.Area,Species,interaction,outcome,
-                            role,n_ints, .keep_all = TRUE)
+#x<-Composition_2 %>% select(Study.Area,Species,max_obs,max.proportion,
+#                            total_obs,total.proportion,sp_lab,Avg_size,NestType,
+ #                           CavityYN,Abundance,Richness.all,Richness.max,Shannon.all,
+ #                           Shannon.max,Simpson.all,Simpson.max) 
+#Master<-merge(ISRS,x,by=c('Study.Area','Species'),all=T)
+#dim(Master)
+#Master<-Master %>% distinct(Study.Area,Species,interaction,outcome,
+  #                         role,n_ints, .keep_all = TRUE)
 
 
 
@@ -686,6 +736,52 @@ int_pairs %>% print(n=20) # top 10 interaction pairs
 
 ## major interactions are limited, primaryy targets of NNP's are
   # Javan myna, rock dove, LTP, hornbill, starling
+
+int_pairs %>% 
+  group_by(recipsp) %>% summarise(n=sum(n)) %>% 
+  mutate(freq=n/sum(n)*100) %>% arrange(desc(freq)) %>% 
+  print(n=34)
+
+#recipsp                      n   freq
+#<fct>                    <int>  <dbl>
+#1 Javan myna                 148 19.7  ****
+#2 Red-breasted parakeet      146 19.4  
+#3 Long-tailed parakeet        56  7.45 ****
+#4 Tanimbar corella            49  6.52 
+#5 House crow                  38  5.05 ****
+#6 Rock dove                   38  5.05 ****
+#7 Monk parakeet               31  4.12 
+#8 Oriental pied hornbill      31  4.12 ****
+#9 Yellow crested cockatoo     29  3.86 
+#10 Rose-ringed parakeet        26  3.46 
+#11 Asian glossy starling       24  3.19 ****
+#12 Yellow vented bulbul        16  2.13 ****
+#13 Black naped oriole          13  1.73 ****
+#14 Common flameback             9  1.20 
+#15 Oriental dollarbird          9  1.20 
+#16 Asian koel                   8  1.06 
+#17 Brown throated sunbird       8  1.06 
+#18 Collared kingfisher          8  1.06 
+#19 Pink necked green pigeon     8  1.06 
+
+Tree %>% group_by(Study.Area) %>% summarise(n_distinct(id)) 
+# Changi Village = 208 trees identified
+
+Tree %>% group_by(Study.Area) %>% summarise(n_distinct(tree_sp)) 
+# Changi Village = 15 tree species
+
+Tree %>% filter(cav=='y') %>% 
+  group_by(Study.Area,cav) %>% tally()
+
+# # Changi Village = 236 trees with cavities 
+
+Tree %>% 
+  select(Study.Area,id,cav) %>% 
+  distinct(Study.Area,id,cav) %>% 
+  select(-id) %>% group_by(Study.Area,cav) %>% tally() %>% 
+  mutate(freq=n/sum(n)*100)
+
+# Changi Village = only 62 (29.8%) cavity bearing
 
 
 
@@ -1010,3 +1106,20 @@ Interact %>%
                               'Tanimbar corella'='#33BBEE',
                               'Long-tailed parakeet'='#009988'))
 
+
+#/////////////////////////////////////////////////////////////////////////////#
+#/////////////////////////////////////////////////////////////////////////////#
+#======================= 10.5 CHARTS: ENVIRONMENTAL ==========================
+#/////////////////////////////////////////////////////////////////////////////#
+#/////////////////////////////////////////////////////////////////////////////#
+
+Enviro_2 %>% 
+  filter(land_prop!='Vegpc') %>% 
+  ggplot(aes(Study.Area,proportion,fill=land_prop))+
+  geom_col(position='fill')+
+  labs(y='proportion of land cover type',x='Study Area',title = 'Land type per study site')+
+  scale_fill_manual(values = c('buildpc'='#f6c141',
+                               'surfacepc'='#f1932d',
+                               'Vegpc_act'='#90c987',
+                               'canopypc'='#4eb265',
+                               'waterpc'='#7bafde'))
