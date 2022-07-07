@@ -530,6 +530,19 @@ y<-y %>% rename(total_obs=n)
 
 Composition_2<-merge(Composition_2,y,by=c('Study.Area','Species'),all=T)
 
+Composition_3<-Composition_2 %>% distinct(Study.Area, Species, .keep_all = TRUE)
+Composition_3<-Composition_3 %>% select(-total_obs,-total.proportion)
+
+x<-Composition %>% group_by(Study.Area,Species) %>% tally() %>% rename(total_obs=n) %>% 
+  mutate(total_prop=total_obs/sum(total_obs)*100)
+
+Composition_3<-merge(Composition_3,x,by=c('Study.Area','Species'),all=T)
+
+x<-ISRS %>% 
+  group_by(Study.Area,Species) %>% summarise(n_ints=sum(n_ints))
+
+Composition_3<-merge(Composition_3,x,by=c('Study.Area','Species'),all=T) 
+Composition_3$n_ints<-Composition_3$n_ints %>% replace(is.na(.), 0)
 
 #=============================#
 # 8.b. ISRS Long Transform----
@@ -987,6 +1000,35 @@ grid.arrange(richxprop,shannxprop,ncol=2)
 ## Stirling RD & CV are lowest on Rich&BD
 
 
+#===========================#
+# total obs x total ints.----
+#===========================#
+
+# Parrots removed as these are the foccal species and biased
+x1<-Composition_3 %>% 
+  filter(Species!="Monk parakeet"&Species!='Tanimbar corella'&Species!='Rose-ringed parakeet'&Species!='Red-breasted parakeet')%>%  
+  group_by(Species) %>% summarise(total_obs=sum(total_obs),
+                                  n_ints=sum(n_ints)) %>% 
+  filter(total_obs>0,n_ints>0)
+x1 %>% 
+  ggplot(aes(total_obs,n_ints))+
+  geom_point()+ coord_trans(x='log10',y='log10')+
+  stat_poly_line(se=F)+
+  stat_poly_eq()+
+  geom_text_repel(data=subset(x1,total_obs>10),(aes(label=Species)))+
+  labs(x = 'Number of individuals', y = ' Numer of interactions')
+# R2 = 0.69
+# generally, generally greater total abundance correlated with greater n_ints
+# Javan myna, by far the most abundant, competing for cavities and space 
+
+#//////// Outliers//////// 
+# OPH were rarely observed but highly successful in displacing
+ # larger birds when they came to forage or inspect cavities
+# YCC, low abundance but aggressive and cooperating with Tanimbar Corellas
+# Rock Doves, highly abundant but placid, little overlap for cavities
+# House crows, not cavity users, but cavity foragers and roost competitors
+
+ 
 
 #==========================#
 # ii initiated interactions
@@ -1148,6 +1190,8 @@ Ints.Abundance_reduced %>%
             CavityYN=mean(CavityYN)) %>% 
   ggplot(aes(Avg_size,n_ints,color=Species))+
   geom_jitter()
+
+
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
