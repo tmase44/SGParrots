@@ -572,23 +572,24 @@ ISRS <- merge(ISRS,x,by=c("Study.Area","Species"),all=T) %>%
 
 # Abundance, pop, ints----
 rm(Ints.Abundance)
-x<-ISRS %>% 
-  group_by(Study.Area,Species) %>% summarise(n_ints=sum(n_ints))
+x<-ISRS %>% group_by(Study.Area,Species) %>% summarise(n_ints=sum(n_ints))
 
+# summarise abundance
 y<-Composition_2 %>% 
   group_by(Study.Area,Species) %>%summarise(Abundance=mean(Abundance)) %>%
   arrange(Study.Area,desc(Abundance))
-
+# merge 1
 Ints.Abundance <- merge(x,y,by=c("Study.Area","Species")) %>% 
   arrange(Study.Area,desc(Abundance))
-
+# summarise max obs
 z<-Composition_2 %>% 
-  group_by(Study.Area,Species) %>%summarise(max_obs=max(max_obs)) %>%
+  group_by(Study.Area,Species) %>% summarise(max_obs=max(max_obs)) %>%
   arrange(Study.Area,desc(max_obs)) %>% 
   mutate(proportion=max_obs/sum(max_obs)*100)
-
+# merge 2
 Ints.Abundance <- merge(Ints.Abundance,z,by=c("Study.Area","Species")) 
 
+# cavity, foraging, weight
 z<-Composition %>% 
   select(Study.Area,Species,Avg_size,CavityYN,Foraginglab)
 
@@ -795,11 +796,15 @@ int_pairs %>%
 #  filter(Species!='Red-breasted parakeet',Species!='Rose-ringed parakeet',Species!='Monk parakeet',Species!='Tanimbar corella') %>% 
   
 ISRS %>% 
-  filter(role=='RS') %>%  filter(NestType=='Cavity') %>% # modify IS/RS
+  filter(role=='IS') %>%  filter(NestType=='Cavity') %>% # modify IS/RS
   summarise(n_distinct(Species))
-# 15 cavity nesting sp. were interaction initiators
-  # == 30% of all interacting sp.
-  # == 50% of all initiators
+# 21 cavity nesters involved in interactions
+  # incl 6 parrots [4 focal sp.]
+    # 19 were recipients
+      # 15 were initators
+ISRS %>% filter(NestType=='Cavity') %>% 
+  count(Species,NestType) %>% arrange(desc(n))
+# List of cavity nesters involved in interactions
 
 ISRS %>% 
     filter(role=='RS') %>% filter(NestType=='Cavity') %>%  
@@ -833,9 +838,72 @@ ISRS %>%
 # Non-focal cavity nesters received of 272 (45.48%) of all aggressions 
 
 
+#============================#
+# 9.d. Interaction Detail----
+#============================#
 
+ISRS %>% group_by(interaction) %>%
+  filter(interaction!='Neutral') %>% 
+  summarise(n=sum(n_ints)) %>% mutate(freq=n/sum(n)*100)
+#                  n    %
+# 1 Displace      436  36.6 
+# 2 Threat        340  28.5 
+# 3 Swoop         276  23.2 
+# 4 Chase          92  7.72
+# 5 Contact        36  3.02
+# 6 Fight          12  1.01
+
+ISRS %>% group_by(Species) %>%
+  filter(interaction!='Neutral') %>% 
+  summarise(n=sum(n_ints)) %>% mutate(freq=n/sum(n)*100) %>% arrange(desc(n))
+# Top interacting sp.
+#                              n    %
+# 1 Tanimbar corella          209  17.5 
+# 2 Red-breasted parakeet     193  16.2 
+# 3 Javan myna                151  12.7 
+# 4 Long-tailed parakeet      101  8.47
+# 5 Rose-ringed parakeet       97  8.14
+# 6 Monk parakeet              85  7.13
+# 7 Oriental pied hornbill     70  5.87
+# 8 House crow                 66  5.54
+# 9 Yellow crested cockatoo    40  3.36
+#10 Rock dove                  36  3.02
+
+ISRS %>% group_by(Species,outcome) %>%
+  filter(interaction!='Neutral') %>% 
+  summarise(n=sum(n_ints)) %>% mutate(freq=n/sum(n)*100)%>% 
+  filter(outcome=='W') %>% arrange(desc(n))
+# Wins / all aggressions
+#                                      n    %
+# 1 Tanimbar corella        W         153  73.2
+# 2 Red-breasted parakeet   W          92  47.7
+# 3 Monk parakeet           W          70  82.4
+# 4 Oriental pied hornbill  W          64  91.4
+# 5 Rose-ringed parakeet    W          62  63.9
+# 6 Long-tailed parakeet    W          40  39.6
+# 7 Javan myna              W          39  25.8
+# 8 House crow              W          18  27.3
+# 9 Yellow crested cockatoo W          16  40  
+#10 Large billed crow       W          10  66.7
+
+ISRS %>% group_by(Species,outcome) %>%
+  filter(interaction!='Neutral') %>% filter(role=='IS') %>% 
+  summarise(n=sum(n_ints)) %>% mutate(freq=n/sum(n)*100)%>% 
+  filter(outcome=='W') %>% arrange(desc(n))
+# Wins / initiated aggressions
+#                                      n    %
+# 1 Tanimbar corella        W         133  80.1
+# 2 Red-breasted parakeet   W          68  76.4
+# 3 Monk parakeet           W          62  88.6
+# 4 Rose-ringed parakeet    W          57  74.0
+# 5 Oriental pied hornbill  W          39  100  
+# 6 Long-tailed parakeet    W          29  50.9
+# 7 Javan myna              W          14  63.6
+# 8 Yellow crested cockatoo W          14  63.6
+# 9 House crow              W          13  40.6
+#10 Large billed crow       W           9  90  
 #================================#
-# 9.d. Tree / Cavity profiles----
+# 9.e. Tree / Cavity profiles----
 #================================#
 
 Tree %>% group_by(Study.Area) %>% summarise(n_distinct(id)) 
@@ -1058,6 +1126,8 @@ Ints.Abundance %>%
                               'Rose-ringed parakeet'='#EE3377', 'Tanimbar corella'='#33BBEE','Long-tailed parakeet'='#009988',
                               'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))
 
+
+
 # Proportion by site
 Ints.Abundance %>% 
   ggplot(aes(proportion,n_ints,color=Species))+
@@ -1218,6 +1288,33 @@ ISRS %>%
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
   labs(x='Species',y='%',title='Proportion wins, losses and neutral outcomes')+
   scale_fill_manual(values=c('W'='#4393c3','NE'='#f7f7f7','L'='#d6604d'))
+
+ISRS %>% 
+  filter(outcome!="NE") %>% 
+  filter(Species=="Monk parakeet"|Species=="Tanimbar corella"|Species=="Rose-ringed parakeet"|Species=="Red-breasted parakeet"|Species=="Long-tailed parakeet") %>%  
+    group_by(Species,role,outcome) %>% 
+  summarise(n=sum(n_ints)) %>%
+  mutate(freq=n/sum(n)*100) %>% 
+  ggplot(aes(reorder(Species,-n),freq,fill=outcome))+
+  geom_col(position = 'fill')+
+  geom_text(aes(label = round(freq,1)),position=position_fill(vjust=.5))+ 
+  scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
+  labs(x='Species',y='%',title='Proportion wins, losses and neutral outcomes')+
+  scale_fill_manual(values=c('W'='#4393c3','L'='#d6604d'))+
+  facet_wrap(~role)
+
+ISRS %>% 
+  filter(outcome!="NE") %>% 
+  filter(Species=="Monk parakeet"|Species=="Tanimbar corella"|Species=="Rose-ringed parakeet"|Species=="Red-breasted parakeet"|Species=="Long-tailed parakeet") %>%  
+  group_by(Species,outcome) %>% 
+  summarise(n=sum(n_ints)) %>%
+  mutate(freq=n/sum(n)*100) %>% 
+  ggplot(aes(reorder(Species,-n),freq,fill=outcome))+
+  geom_col(position = 'fill')+
+  geom_text(aes(label = round(freq,1)),position=position_fill(vjust=.5))+ 
+  scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
+  labs(x='Species',y='%',title='Proportion wins, losses and neutral outcomes')+
+  scale_fill_manual(values=c('W'='#4393c3','L'='#d6604d'))
 
 # relative freq (%)
 ISRS %>% 
