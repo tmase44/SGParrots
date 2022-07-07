@@ -2,35 +2,18 @@ library(pacman)
 p_load(kableExtra,Rmisc,rcompanion,brant,ordinal,MASS,DescTools,formattable,knitr,kableExtra,tidyverse,vegan,
        lubridate,gridExtra,circlize,stringr,readxl)
 
-# STATISTICAL TESTS----
-
-##data description: 
-### rating / interaction = ordinal /categorical / likert data; scale 1-4
-### nominal 1: native, non-native
-### nominal 2: species
-
-#example: Cochran-Armitage----
-dose <- matrix(c(10,9,10,7, 0,1,0,3), 
-               byrow=TRUE, nrow=2, 
-               dimnames=list(resp=0:1, dose=0:3))
-Desc(dose)
-CochranArmitageTest(dose)
-
-# non-parametric tests----
-#?????
-
 # Ordinal logistic regression----
 #https://www.r-bloggers.com/2019/06/how-to-perform-ordinal-logistic-regression-in-r/
 # explicit order to categories (rating)
 
 # data prep----
 # ...all initators----
-init.lm<-Interact2 %>% filter(recipsp!="NA")%>% select(initsp,interaction,rating,isout)
-init.lm<-rename(init.lm,species=initsp)  
-init.lm<-rename(init.lm,outcome=isout)
-init.lm$role<-'IS' # identify IS/RS
+model<-Interact_2 %>% filter(recipsp!="NA")%>% select(initsp,interaction,rating,isout)
+model<-rename(init.lm,species=initsp)  
+model<-rename(init.lm,outcome=isout)
+model$role<-'IS' # identify IS/RS
 
-init.lm<-init.lm %>% filter(species=="Monk parakeet"|species=="Tanimbar corella"|species=="Rose ringed parakeet"|
+model<-model %>% filter(species=="Monk parakeet"|species=="Tanimbar corella"|species=="Rose ringed parakeet"|
                         species=="Red-breasted parakeet"|species=="Long-tailed parakeet")
 #edit
 #init.lm<-init.lm %>% filter(species=="Rose ringed parakeet"|species=="Long-tailed parakeet")

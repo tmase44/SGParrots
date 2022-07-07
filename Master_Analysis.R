@@ -32,28 +32,23 @@ p_load(formattable,knitr,kableExtra, # nice tables
 # Transect
 Transect <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                        sheet = "Composition")
-Transect<-Transect %>% filter(Study.Area!='Palawan Beach')
 
 # Composition
 Composition <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                           sheet = "Composition")
-Composition<-Composition %>% filter(Study.Area!='Palawan Beach')
 
 # Interactions
 Interact <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                        sheet = "Interactions")
-Interact <- Interact %>% filter(Study.Area!='Palawan Beach')
 
 # Niche overlap
 NO <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                  sheet = "Composition")
-NO<-NO %>% filter(Study.Area!='Palawan Beach')
 
 # Environment
 
 Enviro <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                      sheet = "Enviro")
-Enviro<-Enviro %>% filter(Study.Area!='Palawan Beach')
 
 # Trees
 
@@ -77,7 +72,7 @@ Transect %>% group_by(Study.Area) %>% summarise(max(Surveyno))
 # Pasir Ris Town Park            12
 # Sengkang Riverside Park        7
 # Springleaf                     10
-# Stirling Road                  8
+# Stirling Road                  9
 
 convunit <- convert_units("meter", "kilometer", "hectare")
 
@@ -188,7 +183,7 @@ SengkangDAB<-SengkangDAB %>%
 #=====================#
 
 Stirling<-Transect %>% filter(Study.Area=='Stirling Road')
-Stirling$Effort<-Stirling$Effort*8
+Stirling$Effort<-Stirling$Effort*9
 Stirling<-Stirling %>% select(Region.Label,Area,Sample.Label,Effort,distance,Species,Surveyno) %>% 
   rename(species=Species) %>% rename(visit=Surveyno)
 Stirling.birds <- ds(data = Stirling,
@@ -228,7 +223,7 @@ mtext("Goodness of fit - Distance models", side = 3, line = -2, outer = TRUE)
 #===============#
 # 3.b. Merge----
 #===============#
-
+rm(Transect_2)
 Transect_2 <- rbind(changiDAB,PasirDAB,SpringleafDAB,StirlingDAB,SengkangDAB)
 Transect_2 <- Transect_2 %>% filter(species!='Total') %>% rename(Species=species)
 #view(Transect_2)
@@ -248,6 +243,7 @@ rm(list = c('Changi','Changi.ests','Pasir','Pasir.ests','Springleaf','Springleaf
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
+rm(Composition_2)
 Composition_2<-merge(Composition,Transect_2,by=c('Study.Area','Species'),all=T)
 Composition_2<-Composition_2 %>% select(-Effort,-Area.x,-Area.y,-Weather,-Comments,
                                         -Pref_hab,-TrophicLevel,-Sci_name,-Sample.Label,
@@ -274,6 +270,7 @@ str(Composition_2)
 rm(cols_comp)
 
 # Factorise Interact
+rm(Interact_2)
 str(Interact)
 cols_int <-c('Region.Label','Study.Area','ampm','initsp','recipsp','interaction',
              'isout','rsout','treeid','treesci','treecom','trim','at_cav')
@@ -563,7 +560,11 @@ ISRS<-ISRS %>% rename(n_ints=n)
 ISRS<-ISRS %>% rename(Species=species)
 #view(ISRS)
 
+x<- Composition_2 %>% select(Study.Area,Species,Avg_size,CavityYN,NestType)
 
+ISRS <- merge(ISRS,x,by=c("Study.Area","Species"),all=T) %>% 
+  distinct(Study.Area, Species,interaction,outcome,role,n_ints,Avg_size,
+           CavityYN, .keep_all = TRUE) %>% filter(interaction!='NA')
 
 #=================#
 # 8.c. Tibbles----
@@ -587,6 +588,14 @@ z<-Composition_2 %>%
   mutate(proportion=max_obs/sum(max_obs)*100)
 
 Ints.Abundance <- merge(Ints.Abundance,z,by=c("Study.Area","Species")) 
+
+z<-Composition %>% 
+  select(Study.Area,Species,Avg_size,CavityYN,Foraginglab)
+
+Ints.Abundance <- merge(Ints.Abundance,z,by=c("Study.Area","Species"))
+
+Ints.Abundance_reduced <- Ints.Abundance %>% 
+  distinct(Study.Area,Species,n_ints,Abundance,max_obs, .keep_all = TRUE)
 
 # Unique species per parrot sp----
 rm((parrot.targets))
@@ -645,7 +654,7 @@ x<-Composition_2 %>%
   summarise(cavnesterprop=sum(n))
 Indices_2<-merge(Indices_2,x,by='Study.Area')
 
-#To ISRS
+### FROM ISRS
 
 # Initiations
 # Use ~IS~ ONLY otherwise 2x count
@@ -710,70 +719,138 @@ levels(Enviro_2$land_prop)
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
-#=========================== 9.0 DATA EXPLORATION ============================
+#============================ 9. DATA EXPLORATION ============================
+##/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
-#/////////////////////////////////////////////////////////////////////////////#
+
+# 5 sites were surveyed. 
+# Each site was surveyed for a total of 15 hours.
+# Equal effort per site and species.
+# Sites were selected based on NSS Parrot Count data to provide 
+#   equal effort to each focal species.
+
+#=========================================#
+# 9.a. Composition / Overall summaries---- 
+#=========================================#
+
+nrow(Composition_2)
+# 3,458 individuals observed in the composition surveys
 
 Composition_2 %>% select(Species) %>% n_distinct()
-# 81 species observed in total [comp surveys]
+# 81 distinct species observed observed in the composition surveys
+  # = 19.9% of all known species in Singapore
+    # https://www.nparks.gov.sg/biodiversity/wildlife-in-singapore/species-list/bird
+      # 407 spp
+
+
+#================================#
+# 9.b. Interaction summaries---- 
+#================================#
 
 Interact_2 %>% count(initsp) %>% summarise(sum(n))
-# 752 total interactions - Sentosa excluded
+# 758 total interactions were observed 
 
-Interact_2 %>% summarise(n_distinct(initsp)) 
-# 30 species observed initiating interactions
+Interact_2 %>% filter(rsout=='NE') %>% count(initsp) %>% summarise(sum(n))
+# of which 598 (78.89% were aggressive)
+  # 160 (21.1% NEUTRAL)
 
-Interact_2 %>% summarise(n_distinct(recipsp)) 
-# 44 species observed receiving interactions
+n_distinct(ISRS$Species)
+# 49 distinct species were observed in interactions
+  # 60.49% of all species observed
+    # 12.03% of all species
 
+Interact_2 %>% summarise(n_distinct(initsp))
+Interact_2 %>% summarise(n_distinct(recipsp))
+# 30 initiating species
+# 45 recipient species
+
+#////////////////////
 # Interaction pairs
+#///////////////////
+
 int_pairs <- Interact_2 %>%
   count(initsp, recipsp) %>%
   complete(initsp, nesting(recipsp), fill = list(n = 0)) %>% 
   filter(n!='0') %>% 
   arrange(desc(n))
 int_pairs %>% print(n=20) # top 10 interaction pairs
-
-## major interactions are limited, primaryy targets of NNP's are
-  # Javan myna, rock dove, LTP, hornbill, starling
+nrow(int_pairs)
+## 160 unique species pair interactions were observed
 
 int_pairs %>% 
   group_by(recipsp) %>% summarise(n=sum(n)) %>% 
   mutate(freq=n/sum(n)*100) %>% arrange(desc(freq)) %>% 
-  print(n=34)
+  filter(recipsp!='Red-breasted parakeet',recipsp!='Rose-ringed parakeet',
+         recipsp!='Monk parakeet',recipsp!='Tanimbar corella') %>% 
+  print(n=30)
+# Parrots excluded~ Top recipients
+  # Javan myna, LTP, house crow, OPH, YCC, AGS, YVBB, Oriole,
+  # Flameback, dollarbird 
 
-#recipsp                      n   freq
-#<fct>                    <int>  <dbl>
-#1 Javan myna                 148 19.7  ****
-#2 Red-breasted parakeet      146 19.4  
-#3 Long-tailed parakeet        56  7.45 ****
-#4 Tanimbar corella            49  6.52 
-#5 House crow                  38  5.05 ****
-#6 Rock dove                   38  5.05 ****
-#7 Monk parakeet               31  4.12 
-#8 Oriental pied hornbill      31  4.12 ****
-#9 Yellow crested cockatoo     29  3.86 
-#10 Rose-ringed parakeet        26  3.46 
-#11 Asian glossy starling       24  3.19 ****
-#12 Yellow vented bulbul        16  2.13 ****
-#13 Black naped oriole          13  1.73 ****
-#14 Common flameback             9  1.20 
-#15 Oriental dollarbird          9  1.20 
-#16 Asian koel                   8  1.06 
-#17 Brown throated sunbird       8  1.06 
-#18 Collared kingfisher          8  1.06 
-#19 Pink necked green pigeon     8  1.06 
+
+#=================================#
+# 9.c. Cavity Nesters in focus----
+#================================#
+
+#  filter(Species!='Red-breasted parakeet',Species!='Rose-ringed parakeet',Species!='Monk parakeet',Species!='Tanimbar corella') %>% 
+  
+ISRS %>% 
+  filter(role=='RS') %>%  filter(NestType=='Cavity') %>% # modify IS/RS
+  summarise(n_distinct(Species))
+# 15 cavity nesting sp. were interaction initiators
+  # == 30% of all interacting sp.
+  # == 50% of all initiators
+
+ISRS %>% 
+    filter(role=='RS') %>% filter(NestType=='Cavity') %>%  
+  summarise(n=sum(n_ints))
+# Cavity nesters (inc. focal sp.) initiated 597 [78.75%] of all interactions
+  # Focal parrots initiated 397 [52.37%] of all interactions
+    # Non-focal cavity nesters initiated 200 [26.38%] of all interactions
+  
+# Cavity nesters (inc. focal parrots) received 559 [73.74%] of all interactions
+#   Non-focal cavity nesters received of 338 [44.59%] of all interactions
+ 
+
+#=============================#
+# 9.c.i. Aggressions only ----
+#=============================#
+
+# 598 aggressions
+
+#  filter(Species!='Red-breasted parakeet',Species!='Rose-ringed parakeet',Species!='Monk parakeet',Species!='Tanimbar corella') %>% 
+
+ISRS %>% 
+  filter(Species!='Red-breasted parakeet',Species!='Rose-ringed parakeet',Species!='Monk parakeet',Species!='Tanimbar corella') %>% 
+    filter(role=='RS') %>% filter(NestType=='Cavity') %>% filter(outcome!='NE') %>%  
+  summarise(n=sum(n_ints))
+# Cavity nesters (inc. focal parrots) initiated 467 (78.09%) of all aggressions
+# Focal parrots initiated 323 (54.01%) of all aggressions
+# Non-focal cavity nesters initiated 144 (24.08%) of all aggressions
+
+# Cavity nesters (inc. focal parrots) received 439 (73.41%) of all aggressions
+# Focal parrots initiated 167 (27.92%) of all aggressions
+# Non-focal cavity nesters received of 272 (45.48%) of all aggressions 
+
+
+
+#================================#
+# 9.d. Tree / Cavity profiles----
+#================================#
 
 Tree %>% group_by(Study.Area) %>% summarise(n_distinct(id)) 
 # Changi Village = 208 trees identified
+# Stirling Road  = 144 trees
 
 Tree %>% group_by(Study.Area) %>% summarise(n_distinct(tree_sp)) 
 # Changi Village = 15 tree species
+# Stirling Road  = 24 tree species
 
 Tree %>% filter(cav=='y') %>% 
   group_by(Study.Area,cav) %>% tally()
 
-# # Changi Village = 236 trees with cavities 
+# Changi Village = 236 trees with cavities 
+# Stirling Road  = 77 trees with cavities
 
 Tree %>% 
   select(Study.Area,id,cav) %>% 
@@ -782,7 +859,7 @@ Tree %>%
   mutate(freq=n/sum(n)*100)
 
 # Changi Village = only 62 (29.8%) cavity bearing
-
+# Stirling Road  = only 31 (21.5%) cavity bearing
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*****
@@ -807,7 +884,11 @@ ISRS$Species2 = str_wrap(ISRS$Species, width = 10)
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
+
+#=========================#
 # i Richness x parrot prop
+#=========================#
+
 richxprop <-Indices_2 %>% 
   ggplot(aes(parrotprop,Richness.max))+
   stat_poly_line(se=F)+
@@ -815,7 +896,7 @@ richxprop <-Indices_2 %>%
   geom_point(size=4)+
   labs(title = 'Parrot proportion in the community positively correlates with overall species Richness',
        y='Species richness',x='Proportion of parrots in the community')
-#R2 = 0.85
+#R2 = 0.83
 ## 85% variation in Richness is attributed to parrot abundance
 y<-lm(Richness.mean~parrotprop,Indices_2)
 #summary(y)
@@ -827,7 +908,7 @@ shannxprop <- Indices_2 %>%
   geom_point(size=4)+
   labs(title = 'Parrot proportion in the community positively correlates with Alpha Biodoversity',
        y='Shannon biodiversity',x='Proportion of parrots in the community')
-#R2 = 0.75
+#R2 = 0.78
 ## 75% variation in biodoversity (shann) is attributed to parrot abundance
 y1<-lm(Shannon.mean~parrotprop,Indices_2)
 #summary(y1)
@@ -837,7 +918,12 @@ grid.arrange(richxprop,shannxprop,ncol=2)
 ## Tanimbar corella may have a negative effect on Richness and BD within an area
 ## Stirling RD & CV are lowest on Rich&BD
 
+
+
+#==========================#
 # ii initiated interactions
+#==========================#
+
 # parrot prop in community != more interactions
 isxprop<-Indices_2 %>% 
   ggplot(aes(parrotprop,allIS))+
@@ -846,7 +932,7 @@ isxprop<-Indices_2 %>%
   geom_point(size=4)+
   labs(title = 'Greater proportion of parrots does not predict greater interaction frequency',
        y='n interactions',x='Proportion of parrots in the community')
-# R2 = 0.06
+# R2 = 0.05
 ## only 6% variation of interaction frequency is explained by parrot abundance
 y<-lm(allIS~parrotprop,Indices_2)
 #summary(y)
@@ -862,7 +948,11 @@ isxrich<-Indices_2 %>%
 # plot
 grid.arrange(isxprop,isxrich,ncol=2)
 
+
+#===================#
 # iii avg aggression
+#===================#
+
 ### Aggregated aggression score increases as site diversity decreases
 shanxagg<-Indices_2 %>% 
   ggplot(aes(avgratingNE,Shannon.max))+
@@ -871,7 +961,7 @@ shanxagg<-Indices_2 %>%
   geom_point(size=4)+
   labs(title = 'On average, more aggressive interactions at less diverse sites',
        x='Average aggression rating',y='Shannon biodiversity')
-# R2 = 0.58
+# R2 = 0.72
 richxagg<-Indices_2 %>% 
   ggplot(aes(avgratingNE,Richness.max))+
   stat_poly_line(se=F)+
@@ -879,7 +969,7 @@ richxagg<-Indices_2 %>%
   geom_point(size=4)+
   labs(title = 'On average, more aggressive interactions at less species rich sites',
        x='Average aggression rating',y='Species richness')
-# R2 = 0.3
+# R2 = 0.45
 propxagg<-Indices_2 %>% 
   ggplot(aes(avgratingNE,parrotprop))+
   stat_poly_line(se=F)+
@@ -887,21 +977,24 @@ propxagg<-Indices_2 %>%
   geom_point(size=4)+
   labs(title = 'Sites with greatest % of parrots have less aggressive interactions',
        x='Average aggression rating',y='Proportion of parrots in the community(%)')
-# R2 = 0.43
+# R2 = 0.54
 ## details of the species at each site may go a way to explain why this is
 
 # plot
 grid.arrange(shanxagg,richxagg,propxagg,ncol=3)
 
 
+#=============#
 # iv Land type
+#=============#
+
 isxcanopy<-Indices_2 %>% 
   ggplot(aes(canopypc,allIS))+
   stat_poly_line(se=F)+
   stat_poly_eq()+
   geom_point(size=4)+labs(title = 'Correlation between Canopy cover and n interactions')
-# R2 = 0.46
-## 46% variation of interaction frequency is explained by % canopy cover
+# R2 = 0.55
+## 55% variation of interaction frequency is explained by % canopy cover
 ## canopy cover associated with cavity-suitable trees
 ### No relationship between urban area,water body area, 
 ### total vegetation area, road area
@@ -918,18 +1011,24 @@ isxsurface<-Indices_2 %>%
 # plot
 grid.arrange(isxcanopy,isxveg,isxbuild,isxsurface,ncol=2,nrow=2)
 
-# v Cavity
+
+#===========================#
+# v Cavity nester proportion
+#===========================#
+
 Indices_2 %>% 
   ggplot(aes(cavnesterprop,avgrating))+
            stat_poly_line(se=F)+
            stat_poly_eq()+
-           geom_point(size=4)+labs(title = 'Cavity nester proportion = higher aggression')
-         
+           geom_point(aes(color=Study.Area),size=4)+labs(title = 'Cavity nester proportion = higher aggression')
+# R2 = 0.66
+## greater proportion of cavity nesters correlates to higher aggression
 
 #===============================#
 # Species level correlations----
 #===============================#
 
+# Relative Abundance
 Ints.Abundance %>% 
   ggplot(aes(Abundance,n_ints,color=Species))+
   geom_point(size=3,alpha=0.8)+
@@ -939,6 +1038,7 @@ Ints.Abundance %>%
                               'Rose-ringed parakeet'='#EE3377', 'Tanimbar corella'='#33BBEE','Long-tailed parakeet'='#009988',
                               'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))
 
+# Abundance
 Ints.Abundance %>% 
   ggplot(aes(max_obs,n_ints,color=Species))+
   geom_point(size=3,alpha=0.8)+
@@ -948,6 +1048,7 @@ Ints.Abundance %>%
                               'Rose-ringed parakeet'='#EE3377', 'Tanimbar corella'='#33BBEE','Long-tailed parakeet'='#009988',
                               'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))
 
+# Proportion of community
 Ints.Abundance %>% 
   ggplot(aes(proportion,n_ints,color=Species))+
   geom_point(size=3,alpha=0.8)+
@@ -957,6 +1058,26 @@ Ints.Abundance %>%
                               'Rose-ringed parakeet'='#EE3377', 'Tanimbar corella'='#33BBEE','Long-tailed parakeet'='#009988',
                               'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))
 
+# Proportion by site
+Ints.Abundance %>% 
+  ggplot(aes(proportion,n_ints,color=Species))+
+  geom_point(size=3,alpha=0.8)+
+  labs(x='Proportion of species in the community',y='total interaction involvement',
+       title = 'Proportion of community / Total times involved in interactions')+
+  scale_color_manual(values=c('Red-breasted parakeet'='#CC3311','Monk parakeet'='#004488',
+                              'Rose-ringed parakeet'='#EE3377', 'Tanimbar corella'='#33BBEE','Long-tailed parakeet'='#009988',
+                              'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))+
+  facet_wrap(~Study.Area)
+
+# Average size
+Ints.Abundance_reduced %>%
+  select(-Study.Area) %>% 
+  group_by(Species) %>% 
+  summarise(n_ints=sum(n_ints),
+            Avg_size=mean(Avg_size),
+            CavityYN=mean(CavityYN)) %>% 
+  ggplot(aes(Avg_size,n_ints,color=Species))+
+  geom_jitter()
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
@@ -966,15 +1087,13 @@ Ints.Abundance %>%
 
 summary(Indices_2)
 
-y<-aov(allIS~canopypc*cavnesterprop,data=Indices_2)
-summary(y)
 
 
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 #======================== 10.3 CHARTS: COMPOSITION ===========================
-#/////////////////////////////////////////////////////////////////////////////#
+##/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
 Composition_2 %>% 
@@ -992,7 +1111,23 @@ Composition_2 %>%
   theme_light()+
   labs(title = 'Max daily counts per site, species',color="Species")#change legend title!!
 
+Composition_2 %>% 
+  filter(Species=="Monk parakeet"|Species=="Tanimbar corella"|Species=="Rose-ringed parakeet"|Species=="Red-breasted parakeet"|Species=="Long-tailed parakeet") %>%  
+  group_by(Study.Area,Species) %>% 
+  select(Study.Area,Species,max.proportion) %>% 
+  summarise(max.proportion=max(max.proportion)) %>% arrange(Study.Area,desc(max.proportion))
+  
+# Changi Vilage = RBP + TC
+# Pasir Ris     = RBP + RRP + MP
+# Sengkang      = RBP + RRP + LTP
+# Springleaf    = RBP + RRP + LTP + BRP
+# Stirling Rd   = RBP + RRP + TC 
 
+## Red-breasted parakeets were seen at 5/5 sites
+## Rose-ringed parakeets were seen in 4/5 sites
+## Tanimbar corella seen at 2/5 
+## MP seen and observed at 1/5 sites
+### Native LTP observed at 2/5 sites
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
@@ -1010,6 +1145,7 @@ ISRS %>%
   geom_text(aes(label = n), vjust = -0.5)+
   scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
   labs(x='Species',y='n',title='Total interactions')
+# 
 
 # n interactions all
 ISRS %>% 
@@ -1105,6 +1241,15 @@ Interact %>%
                               'Rose-ringed parakeet'='#EE3377',
                               'Tanimbar corella'='#33BBEE',
                               'Long-tailed parakeet'='#009988'))
+
+# Size
+ISRS %>% 
+  group_by(Species) %>% 
+  summarise(avg_agg=mean(rating),
+            Avg_size=mean(Avg_size)) %>% 
+  filter(avg_agg>0) %>% 
+  ggplot(aes(Avg_size,avg_agg))+
+  geom_point()
 
 
 #/////////////////////////////////////////////////////////////////////////////#

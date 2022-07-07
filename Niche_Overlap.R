@@ -13,9 +13,7 @@ NO <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertat
 library(Ostats)
 
 # Prepare data----
-dat<-NO %>% 
-  select(Study.Area,Species,Avg_size) %>% filter(Study.Area!='Palawan Beach')
-dat
+dat<-NO 
 dat$log_size<-log10(dat$Avg_size)
 dat
 
