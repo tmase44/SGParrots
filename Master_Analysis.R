@@ -16,7 +16,7 @@ library(Ostats)
 
 p_load(formattable,knitr,kableExtra, # nice tables
        tidyverse,vegan,lubridate,gridExtra,grid,ggrepel,reshape2,ggpmisc,
-       BBmisc,stringr,
+       BBmisc,stringr,ggpubr,
        ggpubr,AICcmodavg, #anova
        circlize, # interaction networks
        Distance, # transect analysis, relative abundance, density
@@ -926,7 +926,7 @@ ISRS %>%
   # incl 6 parrots [4 focal sp.]
     # 19 were recipients
       # 15 were initators
-ISRS %>% filter(NestType=='Cavity') %>% 
+ISRS %>% filter(NestType=='Cavity') %>%
   count(Species,NestType) %>% arrange(desc(n))
 # List of cavity nesters involved in interactions
 
@@ -1056,20 +1056,82 @@ Tree %>%
 # Stirling Road  = only 31 (21.5%) cavity bearing
 
 
+
+#===========================#
+# 9.f. Data distribution----
+#===========================#
+
+ISRS %>% group_by(Study.Area) %>% summarise(n=sum(n_ints)) %>% arrange(desc(n))
+# Different number of samples at each site
+# 1 Changi Village            508
+# 2 Pasir Ris Town Park       344
+# 3 Springleaf                316
+# 4 Stirling Road             218
+# 5 Sengkang Riverside Park   130
+
+ISRS %>% 
+  filter(Species=="Monk parakeet"|Species=="Tanimbar corella"|Species=="Rose-ringed parakeet"|Species=="Red-breasted parakeet"|Species=="Long-tailed parakeet") %>%  
+  group_by(Species) %>% summarise(n=sum(n_ints)) %>% arrange(desc(n))
+# Different sample size each species
+# 1 Red-breasted parakeet   257
+# 2 Tanimbar corella        234
+# 3 Long-tailed parakeet    132
+# 4 Rose-ringed parakeet    127
+# 5 Monk parakeet           118
+
+# check for normality
+ISRS %>% 
+  filter(role=='IS') %>% 
+  mutate(freq=n_ints/sum(n_ints)*100) %>% 
+  ggplot(aes(interaction,freq))+geom_col(width=0.95)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ylim(0,40)
+# data are positively skewed, not normally distributed
+
+ISRS %>% 
+  filter(role=='IS') %>% group_by(Study.Area) %>% mutate(freq=n_ints/sum(n_ints)*100) %>% ggplot(aes(interaction,freq))+geom_col(width=0.95)+ theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ylim(0,40)+
+  facet_wrap(~Study.Area)
+# data can be even more skewed at the site level
+
+ISRS %>% 
+  filter(role=='IS') %>% filter(Species=="Monk parakeet"|Species=="Tanimbar corella"|Species=="Rose-ringed parakeet"|Species=="Red-breasted parakeet"|Species=="Long-tailed parakeet") %>% group_by(Species) %>% mutate(freq=n_ints/sum(n_ints)*100) %>% ggplot(aes(interaction,freq))+geom_col(width=0.95)+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ylim(0,40)+
+  facet_wrap(~Species)
+# and also at the species level = frequency %
+ISRS %>% 
+  filter(role=='IS') %>% filter(Species=="Monk parakeet"|Species=="Tanimbar corella"|Species=="Rose-ringed parakeet"|Species=="Red-breasted parakeet"|Species=="Long-tailed parakeet") %>% group_by(Species) %>% ggplot(aes(interaction,n_ints))+geom_col(width=0.95)+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ylim(0,40)+
+  facet_wrap(~Species)
+# actual n
+
+# data is ordinal from least to most aggressive interaction (Likert scale 1-7)
+
+# "it doesn’t matter which of the two statistical analyses you use to analyze 
+  # your Likert data. If you have two groups and you’re analyzing five-point 
+  # Likert data, both the 2-sample t-test and Mann-Whitney test have nearly 
+  #equivalent type I error rates and power." 
+
+# Try the two test, and if not the same, then it's difference in power!
+# Reference: de Winter, J.C.F. and D. Dodou (2010), Five-Point Likert Items: t test versus Mann-Whitney-Wilcoxon, Practical Assessment, Research and Evaluation, 15(11).
+
+
+
+
+
+
+
 #==========================#
-# 9.f Statstical tests----
+# 9.g Statstical tests----
 #==========================#
 
 # Lakicevic 2012 Introduction to R for Terrestrial Ecology
 
 # nonparametric tests start off with the assumption that the underlying data
-  # do not have a normal distribution (Adler, 2012).
+# do not have a normal distribution (Adler, 2012).
 
 # Nonparametric tests are also referred to as distribution-  free tests, and
-  # they can be particularly useful when the data are measured on a categorical
-  # scale, i.e., when we deal with an ordered data set (Petrie and Sabin, 2005). 
+# they can be particularly useful when the data are measured on a categorical
+# scale, i.e., when we deal with an ordered data set (Petrie and Sabin, 2005). 
 # It should be noted that nonparametric tests are less powerful in comparison to 
-  # equivalent parametric tests (Vuković, 1997).
+# equivalent parametric tests (Vuković, 1997).
+
 
 
 

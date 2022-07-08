@@ -135,3 +135,142 @@ summary(modelt)
 brant(modelt)
 #H0: Parallel Regression Assumption holds - can trust regression results
 summary(modelt)#no pvalues!
+
+
+
+
+
+
+
+
+
+install.packages('orddom')
+
+library(remotes)
+install_version("orddom", "3.1")
+
+# data prep
+x<-Interact_2 %>% select(initsp,rating)
+x<-x %>% filter(initsp=='Tanimbar corella'|
+                  initsp=='Red-breasted parakeet'|
+                  initsp=='Long-tailed parakeet'|  
+                  initsp=='Rose-ringed parakeet'|         
+                  initsp=='Monk parakeet'|
+                  initsp=='Oriental pied hornbill'|
+                  initsp=='Javan myna'|
+                  initsp=='House crow')
+
+
+#// MANN-WHITNEY U TEST//----
+
+# Summary of the data
+
+# loading the package
+group_by(x,initsp) %>%
+  summarise(
+    count = n(),
+    median = median(rating, na.rm = TRUE),
+    IQR = IQR(rating, na.rm = TRUE))
+
+# loading package for boxplot
+library(ggpubr)
+ggboxplot(x, x = "initsp", y = "rating",
+          ylab = "rating", xlab = "initsp")
+
+res <- wilcox.test(rating~ initsp,
+                   data = x,
+                   exact = FALSE)
+res
+
+## not aceptable because this is for only 2 factor levels
+
+## kruskal wallace or non-parametric ANOVA is the way to go
+
+#Kruskal-Wallis test is a nonparametric test, so the normality assumption
+  # is not required. However, the independence assumption still holds.
+
+kruskal.test(rating ~ initsp,
+             data = x)
+
+# The P-Value is .000074. The result is significant at p < .05.
+
+# post hoc test to decide which species is most different----
+## DUNN TEST----
+install.packages('FSA')
+library(FSA)
+
+dunnTest(rating ~ initsp,
+         data = x,
+         method = "bonferroni"
+)
+
+# pairwise wolcoxon ----
+pairwise.wilcox.test(x$rating,x$initsp,
+                     p.adjust.method = "holm")
+
+
+#library(ggstatsplot)
+
+ggbetweenstats(
+  data = x,
+  x = initsp,
+  y = rating,
+  type = "nonparametric", # ANOVA or Kruskal-Wallis
+  plot.type = "box",
+  pairwise.comparisons = TRUE,
+  pairwise.display = "significant",
+  centrality.plotting = FALSE,
+  bf.message = FALSE
+)
+
+
+
+x<-Interact_2 %>% select(Study.Area,rating)
+x<-x %>% filter(initsp=='Tanimbar corella'|
+                  initsp=='Red-breasted parakeet'|
+                  initsp=='Long-tailed parakeet'|  
+                  initsp=='Rose-ringed parakeet'|         
+                  initsp=='Monk parakeet'|
+                  initsp=='Oriental pied hornbill'|
+                  initsp=='Javan myna'|
+                  initsp=='House crow')
+
+kruskal.test(rating ~ Study.Area,
+             data = x)
+
+
+# post hoc test to decide which species is most different----
+## DUNN TEST----
+install.packages('FSA')
+library(FSA)
+
+dunnTest(rating ~ Study.Area,
+         data = x,
+         method = "bonferroni"
+)
+
+# pairwise wolcoxon ----
+pairwise.wilcox.test(x$rating,x$Study.Area,
+                     p.adjust.method = "holm")
+
+
+#library(ggstatsplot)
+
+ggbetweenstats(
+  data = x,
+  x = Study.Area,
+  y = rating,
+  type = "nonparametric", # ANOVA or Kruskal-Wallis
+  plot.type = "violin",
+  pairwise.comparisons = TRUE,
+  pairwise.display = "significant",
+  centrality.plotting = FALSE,
+  bf.message = FALSE
+)
+
+install.packages('dunn.test')
+library(dunn.test)
+
+dunn.test(x$rating, x$Study.Area, kw=TRUE, list=TRUE)
+
+
