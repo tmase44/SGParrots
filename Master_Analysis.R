@@ -15,7 +15,8 @@ library(pacman)
 library(Ostats)
 
 p_load(formattable,knitr,kableExtra, # nice tables
-       tidyverse,vegan,lubridate,gridExtra,ggrepel,reshape2,ggpmisc,BBmisc,stringr,
+       tidyverse,vegan,lubridate,gridExtra,grid,ggrepel,reshape2,ggpmisc,
+       BBmisc,stringr,
        ggpubr,AICcmodavg, #anova
        circlize, # interaction networks
        Distance, # transect analysis, relative abundance, density
@@ -32,29 +33,22 @@ p_load(formattable,knitr,kableExtra, # nice tables
 # Transect
 Transect <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                        sheet = "Composition")
-
 # Composition
 Composition <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                           sheet = "Composition")
-
 # Interactions
 Interact <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                        sheet = "Interactions")
-
 # Niche overlap
-NO <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
-                 sheet = "Composition")
-
+#NO <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", sheet = "Composition")
 # Environment
 
 Enviro <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                      sheet = "Enviro")
-
+Enviro <- Enviro %>%  filter(Study.Area!='Palawan Beach')
 # Trees
-
 Tree <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                      sheet = "TC")
-
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
@@ -353,11 +347,17 @@ Indices.max<-data.frame(Indices.max)
 # plot.all
 plot.indices.max<-Indices.max %>% 
   ggplot(aes(x=Simpson.max,y=Shannon.max,
-             label=row.names(Indices.max))) +
+             )) +
   geom_point(aes(color=Richness.max), size=4)+
-  geom_text(hjust=0.7,vjust=-1.2)+
-  labs(title = 'Alpha biodiversity of each survey site (max obs)')
-
+  ylim(2.6,3.7)+xlim(0.86,0.96)+
+  labs(title = 'Alpha biodiversity indices',
+       x = 'Simpson Index', y='Shannon Index',
+       color='Richness')+
+  theme(legend.direction = 'horizontal',
+        legend.position = 'top')+
+  geom_text_repel(aes(label=row.names(Indices.max)),
+                  nudge_y = 0.04,segment.color = NA)
+plot.indices.max
 
 #===================#
 # 6.b. Count all----
@@ -486,6 +486,117 @@ rm(list = c('Indices.max','Indices.mean','Indices.all',
             'Comp.alpha.row'))
 
 
+#/////////////////////////////////////////////////////////////////////////////#
+#/////////////////////////////////////////////////////////////////////////////#
+#============================ 6.2 BETA BD INDICES ============================= 
+#/////////////////////////////////////////////////////////////////////////////#
+#/////////////////////////////////////////////////////////////////////////////#
+
+#===================#
+# Sorensen index----
+#===================#
+#Calculating Sorensen index
+sorensen<-designdist(Comp.alpha, method="(2∗J)/(A+B)", terms=c("binary"))
+sorensen<-round(sorensen,3)
+sorensen
+
+# Higher values of the Sorensen index indicate greater overlap in species 
+  # composition and vice versa
+
+#Plotting a dendrogram
+plot(hclust(sorensen, method="complete"),
+     main="Sorensen index", col = "#1965B0",
+     col.main = "black", col.lab = "black",
+     col.axis = "black", sub = "")
+
+# Or as a matrix
+#Transforming results into a matrix
+sorensen.complete<-stats:::as.matrix.dist(sorensen)
+sorensen.complete
+
+#Melt function
+sorensen.melted<-melt(sorensen.complete)
+sorensen.melted
+
+#Plotting the results – a base
+sorensen.plot<-sorensen.melted %>% 
+  ggplot(aes(x=Var1, y=Var2, fill = value))+
+  geom_tile(color = "white")+
+  labs(title = 'Sorensen (Beta biodiversity index)')+
+  theme(legend.direction = 'horizontal',
+        legend.position = 'top',
+        legend.title = element_blank())+
+  scale_fill_gradient2(low = "white", high = "black",
+                       mid="grey", midpoint = 0.5, limit = c(0,1),
+                       breaks=c(0,0.5,1),
+                       labels=c('No overlap','0.5','Max. overlap'))+
+  geom_text(aes(label = value), color = "black", size = 4)+ #Adding values of Jaccard distance
+  xlab("")+ylab("") #Removing the labels (x and y axis)
+
+sorensen.plot
+
+# higher value = greatest overlap / similarity 
+
+#===================#
+# Jaccard Distance----
+#===================#
+#Calculating Jaccard distance
+jaccard<-vegdist(Comp.alpha, method="jaccard", binary=T)
+jaccard<-round(jaccard,3)
+jaccard
+
+#Transforming results into a matrix
+jaccard.complete<-stats:::as.matrix.dist(jaccard)
+jaccard.complete
+
+#Melt function
+jaccard.melted<-melt(jaccard.complete)
+jaccard.melted
+
+#Plotting the results – a base
+jaccard.melted %>% 
+  ggplot(aes(x=Var1, y=Var2, fill = value))+
+  geom_tile(color = "white")+
+  labs(title = 'Jaccard Index')+
+  scale_fill_gradient2(low = "white", high = "black",
+                          mid="grey", midpoint = 0.5, limit = c(0,1),
+                          name="Jaccard distance")+
+  geom_text(aes(label = value), color = "black", size = 4)+ #Adding values of Jaccard distance
+  xlab("")+ylab("") #Removing the labels (x and y axis)
+
+#Cut function
+categories.jaccard<-cut(jaccard.melted$value,
+                        breaks=c(-0.01, 0.1, 0.5,1),
+                        labels=c("[0-0.1]", "(0.1-0.5]", "(0.5-1]"))
+#Adding a new column (categories) to the data frame
+jaccard.melted$categories<-categories.jaccard
+jaccard.melted
+
+# re-plot
+jaccard.melted %>% 
+  ggplot(aes(x=Var1, y=Var2, fill = categories))+
+  geom_tile(color = "white")+
+  labs(title = 'Jaccard Index',fill='Jaccard Index')+
+  scale_fill_manual(values = c("white", "#D9CCE3", "#994F88"))+
+  geom_text(aes(label = value), color = "black", size = 4)+ 
+  xlab("")+ylab("")
+
+#====================#
+# Final selection----
+#====================#
+
+grid.arrange(plot.indices.max,sorensen.plot,ncol=2,
+             top=textGrob("Biodiversity indices for survey sites",
+                           gp=gpar(fontsize=20,font=1)))
+
+
+# Changi and QT: least diverse, lowest richness, highest similarity
+  ## //// what features do they have in common? ////
+
+# Springleaf: most diverse and richest & least similarity to other sites
+
+# Sengkang and Pasir Ris: similar 
+  ## //// what features do they have in common? ////
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
@@ -715,7 +826,7 @@ Enviro_2$land_prop <- factor(Enviro_2$land_prop
 levels(Enviro_2$land_prop)
 
 #===========================#
-# OTHER / UNUSED SCRIPT
+# other----
 #===========================#
 
 # Master
@@ -734,7 +845,7 @@ levels(Enviro_2$land_prop)
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 #============================ 9. DATA EXPLORATION ============================
-##/////////////////////////////////////////////////////////////////////////////#
+#/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
 # 5 sites were surveyed. 
@@ -915,6 +1026,8 @@ ISRS %>% group_by(Species,outcome) %>%
 # 8 Yellow crested cockatoo W          14  63.6
 # 9 House crow              W          13  40.6
 #10 Large billed crow       W           9  90  
+
+
 #================================#
 # 9.e. Tree / Cavity profiles----
 #================================#
@@ -943,6 +1056,23 @@ Tree %>%
 # Stirling Road  = only 31 (21.5%) cavity bearing
 
 
+#==========================#
+# 9.f Statstical tests----
+#==========================#
+
+# Lakicevic 2012 Introduction to R for Terrestrial Ecology
+
+# nonparametric tests start off with the assumption that the underlying data
+  # do not have a normal distribution (Adler, 2012).
+
+# Nonparametric tests are also referred to as distribution-  free tests, and
+  # they can be particularly useful when the data are measured on a categorical
+  # scale, i.e., when we deal with an ordered data set (Petrie and Sabin, 2005). 
+# It should be noted that nonparametric tests are less powerful in comparison to 
+  # equivalent parametric tests (Vuković, 1997).
+
+
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*****
 #!!! Species density / overcrowding could be a driver of interactions
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*****
@@ -965,6 +1095,65 @@ ISRS$Species2 = str_wrap(ISRS$Species, width = 10)
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
+
+#=================#
+# i Land type----
+#=================#
+Indices_2 %>% 
+  group_by(Study.Area) %>% 
+  mutate(built_surf=sum(buildpc+surfacepc)) %>% 
+  ggplot(aes(built_surf,Shannon.max))+
+  geom_point()+
+  stat_poly_line(se=F)+
+  stat_poly_eq()+
+  labs(title = 'Biodiversity declines with urban area',
+       x='Proportion urban land cover',y='Shannon')
+# R2 = 0.86
+## 86% of the difference in biodiversity is explained by building / road cover
+
+Indices_2 %>% 
+  ggplot(aes(Vegpc,Shannon.max))+
+  geom_point()+
+  stat_poly_line(se=F)+
+  stat_poly_eq()+
+  labs(title = 'Biodiversity increases with vegetative (non-canopy) cover',
+       x='Proportion vegetative (non-canopy) cover',y='Shannon')
+# R2 = 0.75
+## 75% of the difference in biodiversity is explained by presence of
+## non-canpy vegetation
+
+Indices_2 %>% 
+  ggplot(aes(canopypc,Shannon.max))+
+  geom_point()+
+  stat_poly_line(se=F)+
+  stat_poly_eq()+
+  labs(title = 'Area of canopy cover has no strong affect on site biodiversity',
+       x='Proportion canopy cover',y='Shannon')
+# R2 = 0.04
+## There is not a strong relationship between  canopy cover and biodiversity
+
+isxcanopy<-Indices_2 %>% 
+  ggplot(aes(canopypc,allIS))+
+  stat_poly_line(se=F)+
+  stat_poly_eq()+
+  geom_point()+labs(title = 'Correlation between Canopy cover and n interactions')
+# R2 = 0.55
+## 55% variation of interaction frequency is explained by % canopy cover
+## canopy cover associated with cavity-suitable trees
+### No relationship between urban area,water body area, 
+### total vegetation area, road area
+isxveg<-Indices_2 %>% 
+  ggplot(aes(Vegpc,allIS))+stat_poly_line(se=F)+stat_poly_eq()+
+  geom_point()+labs(title = 'Correlation between vegetation cover and n interactions')
+isxbuild<-Indices_2 %>% 
+  ggplot(aes(buildpc,allIS))+stat_poly_line(se=F)+stat_poly_eq()+
+  geom_point()+labs(title = 'Correlation between building cover and n interactions')
+isxsurface<-Indices_2 %>% 
+  ggplot(aes(surfacepc,allIS))+stat_poly_line(se=F)+stat_poly_eq()+
+  geom_point()+labs(title = 'Correlation between artificial surface cover and n interactions')
+
+# plot
+grid.arrange(isxcanopy,isxveg,isxbuild,isxsurface,ncol=2,nrow=2)
 
 #=========================#
 # i Richness x parrot prop
@@ -1000,9 +1189,9 @@ grid.arrange(richxprop,shannxprop,ncol=2)
 ## Stirling RD & CV are lowest on Rich&BD
 
 
-#===========================#
-# total obs x total ints.----
-#===========================#
+#============================#
+# ii. total obs x total ints.----
+#============================#
 
 # Parrots removed as these are the foccal species and biased
 x1<-Composition_3 %>% 
@@ -1029,10 +1218,9 @@ x1 %>%
 # House crows, not cavity users, but cavity foragers and roost competitors
 
  
-
-#==========================#
-# ii initiated interactions
-#==========================#
+#==============================#
+# iii initiated interactions----
+#==============================#
 
 # parrot prop in community != more interactions
 isxprop<-Indices_2 %>% 
@@ -1059,9 +1247,9 @@ isxrich<-Indices_2 %>%
 grid.arrange(isxprop,isxrich,ncol=2)
 
 
-#===================#
-# iii avg aggression
-#===================#
+#=======================#
+# iv avg aggression----
+#=======================#
 
 ### Aggregated aggression score increases as site diversity decreases
 shanxagg<-Indices_2 %>% 
@@ -1094,36 +1282,8 @@ propxagg<-Indices_2 %>%
 grid.arrange(shanxagg,richxagg,propxagg,ncol=3)
 
 
-#=============#
-# iv Land type
-#=============#
-
-isxcanopy<-Indices_2 %>% 
-  ggplot(aes(canopypc,allIS))+
-  stat_poly_line(se=F)+
-  stat_poly_eq()+
-  geom_point(size=4)+labs(title = 'Correlation between Canopy cover and n interactions')
-# R2 = 0.55
-## 55% variation of interaction frequency is explained by % canopy cover
-## canopy cover associated with cavity-suitable trees
-### No relationship between urban area,water body area, 
-### total vegetation area, road area
-isxveg<-Indices_2 %>% 
-  ggplot(aes(Vegpc,allIS))+stat_poly_line(se=F)+stat_poly_eq()+
-  geom_point(size=4)+labs(title = 'Correlation between vegetation cover and n interactions')
-isxbuild<-Indices_2 %>% 
-  ggplot(aes(buildpc,allIS))+stat_poly_line(se=F)+stat_poly_eq()+
-  geom_point(size=4)+labs(title = 'Correlation between building cover and n interactions')
-isxsurface<-Indices_2 %>% 
-  ggplot(aes(surfacepc,allIS))+stat_poly_line(se=F)+stat_poly_eq()+
-  geom_point(size=4)+labs(title = 'Correlation between artificial surface cover and n interactions')
-
-# plot
-grid.arrange(isxcanopy,isxveg,isxbuild,isxsurface,ncol=2,nrow=2)
-
-
 #===========================#
-# v Cavity nester proportion
+# v Cavity nester proportion----
 #===========================#
 
 Indices_2 %>% 
@@ -1409,3 +1569,4 @@ Enviro_2 %>%
                                'Vegpc_act'='#90c987',
                                'canopypc'='#4eb265',
                                'waterpc'='#7bafde'))
+
