@@ -655,6 +655,24 @@ x<-ISRS %>%
 Composition_3<-merge(Composition_3,x,by=c('Study.Area','Species'),all=T) 
 Composition_3$n_ints<-Composition_3$n_ints %>% replace(is.na(.), 0)
 
+x<-ISRS %>% 
+  group_by(Study.Area,Species) %>% filter(outcome!='NE') %>% summarise(n_ints_xNE=sum(n_ints))
+
+Composition_3<-merge(Composition_3,x,by=c('Study.Area','Species'),all=T) 
+Composition_3$n_ints_xNE<-Composition_3$n_ints_xNE %>% replace(is.na(.), 0)
+Composition_3$total_obs<-Composition_3$total_obs %>%  replace(is.na(.), 0)
+
+x<-ISRS %>% 
+  group_by(Study.Area,Species) %>% filter(outcome!='NE') %>% filter(role=='IS') %>% summarise(inits_xNE=sum(n_ints))
+Composition_3<-merge(Composition_3,x,by=c('Study.Area','Species'),all=T) 
+Composition_3$inits_xNE<-Composition_3$inits_xNE %>% replace(is.na(.), 0)
+
+x<-ISRS %>% 
+  group_by(Study.Area,Species) %>% filter(role=='IS') %>% summarise(inits=sum(n_ints))
+Composition_3<-merge(Composition_3,x,by=c('Study.Area','Species'),all=T) 
+Composition_3$inits<-Composition_3$inits %>% replace(is.na(.), 0)
+
+
 #=============================#
 # 8.b. ISRS Long Transform----
 #=============================#
@@ -889,6 +907,16 @@ Interact_2 %>% summarise(n_distinct(recipsp))
 # 30 initiating species
 # 45 recipient species
 
+Interact_2 %>% group_by(ampm,interaction) %>% count(initsp) 
+# Interactions were more frequent in the morning
+  # 466 AM
+  # 292 PM
+
+Interact_2 %>% group_by(ampm,interaction) %>% count(initsp) %>% 
+  summarise(n=sum(n)) %>% mutate(freq=n/sum(n)*100)
+# But time of day did not clearly influence the type of interactions
+
+
 #////////////////////
 # Interaction pairs
 #///////////////////
@@ -966,9 +994,9 @@ ISRS %>%
 # 9.d. Interaction Detail----
 #============================#
 
-ISRS %>% group_by(interaction) %>%
-  filter(interaction!='Neutral') %>% 
+ISRS %>% group_by(interaction) %>% 
   summarise(n=sum(n_ints)) %>% mutate(freq=n/sum(n)*100)
+## Without NE
 #                  n    %
 # 1 Displace      436  36.6 
 # 2 Threat        340  28.5 
@@ -976,6 +1004,16 @@ ISRS %>% group_by(interaction) %>%
 # 4 Chase          92  7.72
 # 5 Contact        36  3.02
 # 6 Fight          12  1.01
+
+## With NE
+# 1 Neutral       324 21.4  
+# 2 Displace      436 28.8  
+# 3 Threat        340 22.4  
+# 4 Swoop         276 18.2  
+# 5 Chase          92  6.07 
+# 6 Contact        36  2.37 
+# 7 Fight          12  0.792
+## frequency of interactions overall
 
 ISRS %>% group_by(Species) %>%
   filter(interaction!='Neutral') %>% 
@@ -1100,6 +1138,7 @@ ISRS %>%
   filter(role=='IS') %>% filter(Species=="Monk parakeet"|Species=="Tanimbar corella"|Species=="Rose-ringed parakeet"|Species=="Red-breasted parakeet"|Species=="Long-tailed parakeet") %>% group_by(Species) %>% ggplot(aes(interaction,n_ints))+geom_col(width=0.95)+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ylim(0,40)+
   facet_wrap(~Species)
 # actual n
+
 
 # data is ordinal from least to most aggressive interaction (Likert scale 1-7)
 
@@ -1279,7 +1318,36 @@ x1 %>%
 # Rock Doves, highly abundant but placid, little overlap for cavities
 # House crows, not cavity users, but cavity foragers and roost competitors
 
- 
+# Parrots included
+x2<-Composition_3 %>% 
+  group_by(Species) %>% summarise(total_obs=sum(total_obs),
+                                  n_ints=sum(n_ints)) %>% 
+  filter(total_obs>0,n_ints>0)
+x2 %>% 
+  ggplot(aes(total_obs,n_ints))+
+  geom_point()+
+  stat_poly_line(se=F)+
+  stat_poly_eq()+
+  geom_text_repel(data=subset(x2,total_obs>100),(aes(label=Species)))+
+  labs(x = 'Number of individuals', y = ' Numer of interactions') 
+
+# Parrots only
+x3<-Composition_3 %>%
+  group_by(Species) %>% summarise(total_obs=sum(total_obs),
+                                  n_ints=sum(n_ints),
+                                  n_ints_xNE=sum(n_ints_xNE)) %>% 
+  mutate(ints_freq=n_ints/total_obs) %>% 
+  mutate(intsxNE_freq=n_ints_xNE/total_obs)
+
+x3 %>% 
+  ggplot(aes(total_obs,n_ints_xNE))+
+  geom_point()+ coord_trans(x='log10',y='log10')+
+  stat_poly_line(se=F)+
+  stat_poly_eq()+
+  geom_text_repel(data=subset(x3,total_obs>10),(aes(label=Species)))+
+  labs(x = 'Number of individuals', y = ' Numer of interactions')
+
+
 #==============================#
 # iii initiated interactions----
 #==============================#
@@ -1492,6 +1560,46 @@ ISRS %>%
   labs(x='Species',y='total interactions',title='Total interactions')+
   theme(legend.position = 'none')
 
+#============================================================#
+## interaction frequency standardised based on n observations
+#============================================================#
+x3<-Composition_3 %>%
+  group_by(Species) %>% summarise(total_obs=sum(total_obs),
+                                  n_ints=sum(n_ints),
+                                  n_ints_xNE=sum(n_ints_xNE),
+                                  inits=sum(inits),
+                                  inits_xNE=sum(inits_xNE)) %>% 
+  mutate(ints_freq=n_ints/total_obs) %>% 
+  mutate(intsxNE_freq=n_ints_xNE/total_obs) %>% 
+  mutate(inits_freq=inits/total_obs) %>% 
+  mutate(inits_xNE_freq=inits_xNE/total_obs)
+
+# all interactions / total obs all species
+x3 %>% 
+  filter(total_obs>=1&inits>0) %>% 
+  ggplot(aes(reorder(Species,inits_freq),inits_freq))+
+  geom_col()+coord_flip()
+# parrots
+x3 %>% 
+  filter(Species=="Monk parakeet"|Species=='Tanimbar corella'|
+           Species=='Rose-ringed parakeet'|Species=='Red-breasted parakeet'|
+           Species=='Long-tailed parakeet')%>%  
+  ggplot(aes(reorder(Species,inits_freq),inits_freq))+
+  geom_col()+coord_flip()
+
+# initiations - no NE / total obs all species
+x3 %>% 
+  filter(inits_xNE>1) %>% 
+  ggplot(aes(reorder(Species,inits_xNE_freq),inits_xNE_freq))+
+  geom_col()+coord_flip()
+# parrots
+x3 %>% 
+  filter(Species=="Monk parakeet"|Species=='Tanimbar corella'|
+           Species=='Rose-ringed parakeet'|Species=='Red-breasted parakeet'|
+           Species=='Long-tailed parakeet')%>%  
+  ggplot(aes(reorder(Species,inits_xNE_freq),inits_xNE_freq))+
+  geom_col()+coord_flip()
+
 #2. ROLES
 # n IS RS
 ISRS %>%
@@ -1582,6 +1690,15 @@ ISRS %>%
   labs(x='Species',y='%',title='Proportion wins, losses and neutral outcomes')+
   scale_fill_manual(values=c('W'='#4393c3','L'='#d6604d'))
 
+# actual n ints
+ISRS %>% 
+  filter(role=='IS') %>% group_by(Species) %>% 
+  filter(Species=="Monk parakeet"|Species=="Tanimbar corella"|Species=="Rose-ringed parakeet"|Species=="Red-breasted parakeet"|Species=="Long-tailed parakeet") %>%  
+  ggplot(aes(interaction,n_ints))+geom_col(width=0.95)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ylim(0,40)+
+  theme(legend.position = 'none')+labs(y='n_ints',x='interaction',title='Interaction distribution: positively skewed')+
+  facet_wrap(~Species)
+
 # relative freq (%)
 ISRS %>% 
   filter(role=='IS') %>% group_by(Species) %>% 
@@ -1591,6 +1708,25 @@ ISRS %>%
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ylim(0,40)+
   theme(legend.position = 'none')+labs(y='relative frequency',x='interaction',title='Interaction distribution: positively skewed')+
   facet_wrap(~Species)
+
+# Site difference x species----
+ISRS %>% 
+  filter(role=='IS') %>% group_by(Species) %>% 
+  filter(Species=="Monk parakeet"|Species=="Tanimbar corella"|Species=="Rose-ringed parakeet"|Species=="Red-breasted parakeet"|Species=="Long-tailed parakeet") %>%  
+  filter(Study.Area!='Pasir Ris Town Park'|Species!='Red-breasted parakeet') %>% 
+  filter(Study.Area!='Stirling Road'|Species!='Rose-ringed parakeet') %>% 
+  ggplot(aes(Study.Area,fill=interaction,label=n_ints))+
+  geom_bar(position='fill',width=0.9)+
+  facet_grid(~Species,scales='free',space='free')+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  labs(title = 'Species aggressions across sites')
+
+# Tanimbar corella 
+  ## aggression across two separate sites is identical in frequency.
+  ## most frequent contact / fight
+
+# RRP
+  ## also more often than other species to fight / contact 
 
 # distance from nest
 Interact %>% 

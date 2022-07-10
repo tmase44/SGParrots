@@ -261,7 +261,7 @@ ggbetweenstats(
   x = Study.Area,
   y = rating,
   type = "nonparametric", # ANOVA or Kruskal-Wallis
-  plot.type = "violin",
+  plot.type = "box",
   pairwise.comparisons = TRUE,
   pairwise.display = "significant",
   centrality.plotting = FALSE,
