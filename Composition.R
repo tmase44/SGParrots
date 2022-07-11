@@ -5,21 +5,21 @@ p_load(formattable,knitr,kableExtra,tidyverse,vegan,
 
 
 # IMPORT DATA----
-Composition <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
+old_Composition <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                        sheet = "Composition")
-Composition<-Composition %>% filter(Study.Area!='Palawan Beach')
+
 ls(Composition)
 
 
 # factorize
-Composition$Species<-factor(Composition$Species)
-Composition$Region.Label<-factor(Composition$Region.Label)
-Composition$Study.Area<-factor(Composition$Study.Area)
-Composition$ampm<-factor(Composition$ampm)
-levels(Composition$Study.Area)
+old_Composition$Species<-factor(old_Composition$Species)
+old_Composition$Region.Label<-factor(old_Composition$Region.Label)
+old_Composition$Study.Area<-factor(old_Composition$Study.Area)
+old_Composition$ampm<-factor(old_Composition$ampm)
+levels(old_Composition$Study.Area)
 
 # Daily trend---
-Daily.richness<-Composition %>% 
+Daily.richness<-old_Composition %>% 
   select(Study.Area,Surveyno,Species) %>% 
   group_by(Study.Area,Surveyno) %>% 
   mutate(n = n_distinct(Species)) %>% ungroup() %>% select(-Species)
@@ -34,7 +34,7 @@ Daily.richness %>%
 
 
 #histogram line parrots
-Composition %>% 
+old_Composition %>% 
   filter(Species=="Red-breasted parakeet" | Species=="Tanimbar corella"|
            Species=="Rose-ringed parakeet"|Species=="Long-tailed parakeet"|
            Species=="Monk parakeet") %>% 
@@ -47,21 +47,35 @@ unique(Composition$Species) # by name
 n_distinct(Composition$Species) # by qty
 
 #MAX daily counts----
-Comp.max<-Composition %>% 
+Comp.max<-old_Composition %>% 
   group_by(Study.Area,Species,Surveyno) %>% 
   summarise(n=n()) %>% 
   select(-Surveyno) %>% summarise(max_obs = max(n)) %>% 
   arrange(Study.Area,desc(max_obs))
 #view(Comp.max)
 
-comp.all<-Composition %>% 
+comp.all<-old_Composition %>% 
   group_by(Study.Area,Species,Surveyno) %>% 
   summarise(n=n()) %>% 
   select(-Surveyno) %>% summarise(sum=sum(n))
 
 Comp.max %>% 
   ggplot(aes(Study.Area,max_obs))+
-  geom_jitter(aes(color=Species),width=0.12,size=5,alpha=0.6,shape=20)+coord_trans(y='log10')+
+  geom_jitter(aes(color=Species),width=0.12,size=5,alpha=0.6,shape=20)+
+  coord_trans(y='log10')+
+  scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
+                              'Monk parakeet'='#004488',
+                              'Rose-ringed parakeet'='#EE3377',
+                              'Tanimbar corella'='#33BBEE',
+                              'Long-tailed parakeet'='#009988',
+                              'Yellow crested cockatoo'='#DDAA33','Blue rumped parrot'='red'))+
+  theme_light()+
+  labs(title = 'Max daily counts per site, species',color="Species")#change legend title!!
+
+# no log scale
+Comp.max %>% 
+  ggplot(aes(Study.Area,max_obs))+
+  geom_jitter(aes(color=Species),width=0.12,size=5,alpha=0.6,shape=20)+
   scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
                               'Monk parakeet'='#004488',
                               'Rose-ringed parakeet'='#EE3377',
@@ -85,7 +99,7 @@ colnames(richness)<-"Richness"
 #view(richness)
 
 #Shannon index----
-for (Comp.alpha.row in 1:5)
+for (Comp.alpha.row in 1:8)
 {shannon<- matrix(diversity(Comp.alpha[,], index = "shannon"))}
 shannon<-round(shannon,3)
 #Adjusting output names of rows and columns
@@ -94,7 +108,7 @@ colnames(shannon)<-"Shannon"
 #view(shannon)
 
 #Simpson index----
-for (Comp.alpha.row in 1:5)
+for (Comp.alpha.row in 1:8)
 {simpson<- matrix(diversity(Comp.alpha[,], index = "simpson"))}
 simpson<-round(simpson,3)
 #Adjusting the names of rows and columns
