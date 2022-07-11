@@ -734,45 +734,6 @@ Composition_2<-merge(Composition_2,prop.all, by=c('Study.Area','Species'),all = 
 Composition_2<-Composition_2 %>% relocate(1,2,3,21,4,19,5,20,12,13,7,8,9,10,11,15,16,17,14,18,6)
 
 
-#Composition_3<-Composition_2 %>% distinct(Study.Area, Species, .keep_all = TRUE)
-#Composition_3<-Composition_3 %>% select(-total_obs,-total.proportion)
-
-#x<-Composition %>% group_by(Study.Area,Species) %>% tally() %>% rename(total_obs=n) %>% 
-  mutate(total_prop=total_obs/sum(total_obs)*100)
-
-#Composition_3<-merge(Composition_3,x,by=c('Study.Area','Species'),all=T)
-
-#?????????????????????????????????#
-  #?????????????????????????????????#
-  
-  ##~ !!  LOOK AT THIS ----
-  
-  #?????????????????????????????????#
-  #?????????????????????????????????#
-  
-x<-ISRS %>% 
-  group_by(Study.Area,Species) %>% summarise(n_ints=sum(n_ints))
-Composition_3<-Composition_2
-Composition_3<-merge(Composition_3,x,by=c('Study.Area','Species'),all=T) 
-Composition_3$n_ints<-Composition_3$n_ints %>% replace(is.na(.), 0)
-
-x<-ISRS %>% 
-  group_by(Study.Area,Species) %>% filter(outcome!='NE') %>% summarise(n_ints_xNE=sum(n_ints))
-
-Composition_3<-merge(Composition_3,x,by=c('Study.Area','Species'),all=T) 
-Composition_3$n_ints_xNE<-Composition_3$n_ints_xNE %>% replace(is.na(.), 0)
-Composition_3$total_obs<-Composition_3$total_obs %>%  replace(is.na(.), 0)
-
-x<-ISRS %>% 
-  group_by(Study.Area,Species) %>% filter(outcome!='NE') %>% filter(role=='IS') %>% summarise(inits_xNE=sum(n_ints))
-Composition_3<-merge(Composition_3,x,by=c('Study.Area','Species'),all=T) 
-Composition_3$inits_xNE<-Composition_3$inits_xNE %>% replace(is.na(.), 0)
-
-x<-ISRS %>% 
-  group_by(Study.Area,Species) %>% filter(role=='IS') %>% summarise(inits=sum(n_ints))
-Composition_3<-merge(Composition_3,x,by=c('Study.Area','Species'),all=T) 
-Composition_3$inits<-Composition_3$inits %>% replace(is.na(.), 0)
-
 
 #=============================#
 # 8.b. ISRS Long Transform----
@@ -803,16 +764,50 @@ ISRS<-ISRS %>% rename(n_ints=n)
 ISRS<-ISRS %>% rename(Species=species)
 #view(ISRS)
 
-#x<- Composition_2 %>% select(Study.Area,Species,Avg_size,CavityYN,NestType)
 
-#ISRS <- merge(ISRS,x,by=c("Study.Area","Species"),all=T) %>% 
-  distinct(Study.Area, Species,interaction,outcome,role,n_ints,Avg_size,
-           CavityYN, .keep_all = TRUE) %>% filter(interaction!='NA')
+#==================================#
+# MERGE: PART ISRS, COMPOSITION----
+#==================================#
+x<-ISRS %>% 
+  group_by(Study.Area,Species) %>% summarise(n_ints=sum(n_ints))
+Composition_3<-Composition_2
+Composition_3<-merge(Composition_3,x,by=c('Study.Area','Species'),all=T) 
+Composition_3$n_ints<-Composition_3$n_ints %>% replace(is.na(.), 0)
+
+x<-ISRS %>% 
+  group_by(Study.Area,Species) %>% filter(outcome!='NE') %>% summarise(n_ints_xNE=sum(n_ints))
+
+Composition_3<-merge(Composition_3,x,by=c('Study.Area','Species'),all=T) 
+Composition_3$n_ints_xNE<-Composition_3$n_ints_xNE %>% replace(is.na(.), 0)
+Composition_3$total_obs<-Composition_3$total_obs %>%  replace(is.na(.), 0)
+
+x<-ISRS %>% 
+  group_by(Study.Area,Species) %>% filter(outcome!='NE') %>% filter(role=='IS') %>% summarise(inits_xNE=sum(n_ints))
+Composition_3<-merge(Composition_3,x,by=c('Study.Area','Species'),all=T) 
+Composition_3$inits_xNE<-Composition_3$inits_xNE %>% replace(is.na(.), 0)
+
+x<-ISRS %>% 
+  group_by(Study.Area,Species) %>% filter(role=='IS') %>% summarise(inits=sum(n_ints))
+Composition_3<-merge(Composition_3,x,by=c('Study.Area','Species'),all=T) 
+Composition_3$inits<-Composition_3$inits %>% replace(is.na(.), 0)
+
+# wrangle cats
+x<-Composition_3 %>% 
+  filter(Species=='Cat'|Species=='Otter'|
+           Species=='Squirrel'|Species=='Long-tailed macaque') %>%
+  group_by(Species) %>% 
+  fill(everything(), .direction = "updown") %>% 
+  distinct() %>% filter(n_ints!=0)
+
+Composition_3<-Composition_3 %>% filter(Species!='Cat'&Species!='Otter'&
+                                          Species!='Squirrel'&Species!='Long-tailed macaque')
+Composition_3<-rbind(Composition_3,x)
+
+
 
 #=================#
 # 8.c. Tibbles----
 #=================#
-
 # Abundance, pop, ints----
 rm(Ints.Abundance)
 x<-ISRS %>% group_by(Study.Area,Species) %>% summarise(n_ints=sum(n_ints))
