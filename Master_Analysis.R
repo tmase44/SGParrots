@@ -13,7 +13,6 @@
 
 library(pacman)
 library(Ostats)
-
 p_load(formattable,knitr,kableExtra, # nice tables
        tidyverse,vegan,lubridate,gridExtra,grid,ggrepel,reshape2,ggpmisc,
        BBmisc,stringr,ggpubr,
@@ -49,6 +48,10 @@ Enviro <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Disse
 # Trees
 Tree <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                      sheet = "TC")
+
+# NSS data
+NSS <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/NSS/data/NSS_parrot_data_long.xlsx", 
+                  sheet = "data")
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
@@ -678,6 +681,13 @@ Tree<-Tree %>% mutate_at(cols_tree,factor)
 str(Tree)  
 rm(cols_tree)
 
+# Factorise NSS
+NSS$Site<-as.factor(NSS$Site)
+NSS$Site2<-as.factor(NSS$Site2)
+NSS$Species<-as.factor(NSS$Species)
+  # remove na
+NSS$Count<-NSS$Count %>% replace(is.na(.), 0)
+
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
@@ -992,6 +1002,29 @@ levels(Enviro_2$land_prop)
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
+#=============================== x. NSS DATA  ================================
+#/////////////////////////////////////////////////////////////////////////////#
+#/////////////////////////////////////////////////////////////////////////////#
+
+# pop trends
+NSS %>% 
+  group_by(Year,Species) %>% 
+  summarise(n=sum(Count)) %>% 
+  ggplot(aes(Year,n,color=Species))+
+  geom_point()+
+  geom_smooth(se=F)+
+  facet_wrap(~Species)+
+  labs(x='Year',y='Observations',title = 'NSS Parrot count')+
+  theme(legend.position = 'none')
+
+## MP not documented at all
+## RBP continuous growth but populations may be reaching capacity
+## RRP growth is high, potential to explode
+## TC signifcant growth but fairly stable for several years
+
+
+#/////////////////////////////////////////////////////////////////////////////#
+#/////////////////////////////////////////////////////////////////////////////#
 #============================ 9. DATA EXPLORATION ============================
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
@@ -1073,7 +1106,7 @@ int_pairs %>%
 #  filter(Species!='Red-breasted parakeet',Species!='Rose-ringed parakeet',Species!='Monk parakeet',Species!='Tanimbar corella') %>% 
   
 ISRS %>% 
-  filter(role=='IS') %>%  filter(NestType=='Cavity') %>% # modify IS/RS
+  filter(role=='RS') %>%  filter(NestType=='Cavity') %>% # modify IS/RS
   summarise(n_distinct(Species))
 # 21 cavity nesters involved in interactions
   # incl 6 parrots [4 focal sp.]
@@ -1204,10 +1237,10 @@ Tree %>% group_by(Study.Area) %>% summarise(n_distinct(tree_sp))
 # Stirling Road  = 24 tree species
 
 Tree %>% filter(cav=='y') %>% 
-  group_by(Study.Area,cav) %>% tally()
+  group_by(Study.Area) %>% count(cav)
 
-# Changi Village = 236 trees with cavities 
-# Stirling Road  = 77 trees with cavities
+# Changi Village = 236 cavities 
+# Stirling Road  = 77 cavities
 
 Tree %>% 
   select(Study.Area,id,cav) %>% 
@@ -1447,8 +1480,7 @@ x2<-Composition_3 %>%
 x2 %>% 
   ggplot(aes(all_obs,n_ints))+
   geom_point()+ 
-  stat_poly_line(se=F)+
-  stat_poly_eq()+
+  stat_smooth()
   geom_text_repel(data=subset(x2,all_obs>10),(aes(label=Species)))+
   labs(x = 'Number of individuals', y = ' Numer of interactions',
        title = 'Non-focal species')
@@ -1555,13 +1587,16 @@ grid.arrange(shanxagg,richxagg,propxagg,ncol=3)
 #===========================#
 
 Indices_2 %>% 
-  ggplot(aes(cavnesterprop,avgrating))+
+  ggplot(aes(cav.sp.freq,ints_HR))+
            stat_poly_line(se=F)+
            stat_poly_eq()+
            geom_point(aes(color=Study.Area),size=4)+labs(title = 'Cavity nester proportion = higher aggression')
 # R2 = 0.66
 ## greater proportion of cavity nesters correlates to higher aggression
 
+x<-lm(inits~cav.sp.freq,
+      data=Indices_2)
+summary(x)
 #===============================#
 # Species level correlations----
 #===============================#
@@ -1737,8 +1772,8 @@ Composition_2 %>%
 Composition_2 %>% 
   filter(Species=="Monk parakeet"|Species=="Tanimbar corella"|Species=="Rose-ringed parakeet"|Species=="Red-breasted parakeet"|Species=="Long-tailed parakeet") %>%  
   group_by(Study.Area,Species) %>% 
-  select(Study.Area,Species,max.proportion) %>% 
-  summarise(max.proportion=max(max.proportion)) %>% arrange(Study.Area,desc(max.proportion))
+  select(Study.Area,Species,max.freq) %>% 
+  summarise(max.freq=max(max.freq)) %>% arrange(Study.Area,desc(max.freq))
   
 # Changi Vilage = RBP + TC
 # Pasir Ris     = RBP + RRP + MP
@@ -1783,19 +1818,19 @@ ISRS %>%
 ## interaction frequency standardised based on n observations
 #============================================================#
 x3<-Composition_3 %>%
-  group_by(Species) %>% summarise(total_obs=sum(total_obs),
+  group_by(Species) %>% summarise(all_obs=sum(all_obs),
                                   n_ints=sum(n_ints),
                                   n_ints_xNE=sum(n_ints_xNE),
                                   inits=sum(inits),
                                   inits_xNE=sum(inits_xNE)) %>% 
-  mutate(ints_freq=n_ints/total_obs) %>% 
-  mutate(intsxNE_freq=n_ints_xNE/total_obs) %>% 
-  mutate(inits_freq=inits/total_obs) %>% 
-  mutate(inits_xNE_freq=inits_xNE/total_obs)
+  mutate(ints_freq=n_ints/all_obs) %>% 
+  mutate(intsxNE_freq=n_ints_xNE/all_obs) %>% 
+  mutate(inits_freq=inits/all_obs) %>% 
+  mutate(inits_xNE_freq=inits_xNE/all_obs)
 
 # all interactions / total obs all species
 x3 %>% 
-  filter(total_obs>=1&inits>0) %>% 
+  filter(all_obs>=1&inits>0) %>% 
   ggplot(aes(reorder(Species,inits_freq),inits_freq))+
   geom_col()+coord_flip()
 # parrots
@@ -1818,6 +1853,65 @@ x3 %>%
            Species=='Long-tailed parakeet')%>%  
   ggplot(aes(reorder(Species,inits_xNE_freq),inits_xNE_freq))+
   geom_col()+coord_flip()
+
+#/////////////#
+# inits relative to max pop per survey site
+x4<-Composition_3 %>%
+  group_by(Study.Area,Species) %>% summarise(max_obs=mean(max_obs),
+                                  n_ints=sum(n_ints),
+                                  n_ints_xNE=sum(n_ints_xNE),
+                                  inits=sum(inits),
+                                  inits_xNE=sum(inits_xNE)) %>% 
+  mutate(ints_freq=n_ints/max_obs) %>% 
+  mutate(intsxNE_freq=n_ints_xNE/max_obs) %>% 
+  mutate(inits_freq=inits/max_obs) %>% 
+  mutate(inits_xNE_freq=inits_xNE/max_obs)
+
+# parrots
+x4 %>% 
+  filter(Species=="Monk parakeet"|Species=='Tanimbar corella'|
+           Species=='Rose-ringed parakeet'|Species=='Red-breasted parakeet'|
+           Species=='Long-tailed parakeet')%>%  
+  ggplot(aes(reorder(Study.Area,ints_freq),ints_freq))+
+  geom_col()+coord_flip()+
+  facet_wrap(~Species)
+
+## !! ADD COMPOSTION_4 FOR INTERACTION TYPE AND STACKED BAR INTERACTION TO THIS
+
+## by study site, the number of interactions standardised by abundance in
+## that area. total obs per site / abundance per site
+
+#=== LTP ===#
+## high competition with RBP in Springleaf, RRP there too.
+  # check NSS data
+## actually quite aggressive in defense of their homes, but largely unsuccessful.
+
+#=== MP ===#
+## most aggressions in defense of the nest - crows, mynas.
+## other interactions are less aggressive and clearing resource trees.
+  ## immediately in the nest vicinity.
+
+#=== RBP ===#
+## faces cavity competition from TC & JM @ CV
+## cavity competition with LTP at springleaf
+## Springleaf, less competition, fewer JM, MP in stick nest, RRP neutral
+
+#=== RRP ===#
+## quite aggressive over all sites.
+## not big populations, not many cavities seen.
+## highly aggressive over food resources in a way not seen among RBP/MP.
+## will even chase birds not competing for the same resources, but just happen 
+  ## to be in the vicinity.
+
+#=== TC ===#
+## in general quite aggressive.
+## seen clearing their roosting and nesting area through frequent swooping.
+## not unusual to see them swoop large mammals / contact small mammals.
+## highly territorial.
+## presence of crows & larger birds exacerbates aggression.
+
+
+##########
 
 #2. ROLES
 # n IS RS
