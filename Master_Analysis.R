@@ -15,12 +15,11 @@ library(pacman)
 library(Ostats)
 p_load(formattable,knitr,kableExtra, # nice tables
        tidyverse,vegan,lubridate,gridExtra,grid,ggrepel,reshape2,ggpmisc,
-       BBmisc,stringr,ggpubr,
+       BBmisc,Rmisc,stringr,ggpubr,
        ggpubr,AICcmodavg, #anova
        circlize, # interaction networks
        Distance, # transect analysis, relative abundance, density
-       readxl,writexl)
-
+       readxl,writexl,gam)
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
@@ -971,6 +970,7 @@ x<-x %>% rename(RS.NestType=NestType,
 all.targets<-merge(all.targets,x,by.x='recipsp',by.y='Species')
 
 all.targets<-all.targets %>% relocate(3,2,1,4,5,6,7,8,12,9,13,10,14,11,15)
+all.targets<-all.targets %>% mutate(wt_diff=IS.size-RS.size)
 
 #============================#
 # INDICES_2----
@@ -1541,7 +1541,7 @@ x2<-Composition_3 %>%
 x2 %>% 
   ggplot(aes(all_obs,n_ints))+
   geom_point()+ 
-  stat_smooth(method ='lm')+
+  stat_smooth(method ='gam')+
   geom_text_repel(data=subset(x2,all_obs>10),(aes(label=Species)))+
   labs(x = 'Number of individuals', y = ' Numer of interactions',
        title = 'Non-focal species')
@@ -1686,6 +1686,16 @@ Composition_3 %>% filter(n_ints>5) %>%
 
 
 # Parrot targets----
+all.targets %>% 
+  filter(initsp=="Monk parakeet"|initsp=='Tanimbar corella'|
+           initsp=='Rose-ringed parakeet'|initsp=='Red-breasted parakeet'|
+           initsp=='Long-tailed parakeet') %>% 
+  group_by(initsp) %>% 
+  summarise(n=n_distinct(recipsp)) %>% 
+  ggplot(aes(reorder(initsp,-n),n))+
+  geom_col()+
+  labs(x='Species',y='n unique species interacted with')
+
 # body size
 parrot.targets %>% filter(RS.size<150) %>% 
   ggplot(aes(initsp,RS.size))+
@@ -1714,6 +1724,7 @@ parrot.targets %>% filter(RS.size<150) %>% filter(n_NE==0) %>%
 all.targets %>% filter(RS.size<200) %>% 
   ggplot(aes(IS.size,RS.size))+
   geom_jitter(width=1.5,height = 1.5,alpha=.4)
+
 
 # boxplots with a few species
 all.targets %>% filter(RS.size<150) %>% filter(n_NE==0) %>% 
@@ -1767,8 +1778,48 @@ all.targets %>% filter(RS.size<150) %>% filter(n_NE==0) %>%
 #======================= 10.2 TOP-LINE REGRESSIONS ===========================
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
+## andrews
+# Generalized additive models were used because of the humpshaped
+# relationship between the total number of interactions and the
+# difference in body size (Zuur et al., 2011). 
+  ## zuur p
+# ## The data exploration did not show any clear linear patterns between roadkills and
+# the explanatory variables; so we need to move on to using a GAM. Furthermore,
+# an initial GLM with a Poisson distribution and logarithmic link function gave an
+# overdispersion of 5, and we therefore proceed with a GAM with a negative bino-
+#   mial distribution and logarithmic link function
+ISRS %>% 
+  ggplot(aes(Avg_size,n_ints))+
+  geom_smooth()
+Composition_3 %>% 
+  ggplot(aes(Avg_size,inits))+
+  geom_smooth()
+Composition_3 %>% 
+  ggplot(aes(Avg_size,inits_xNE))+
+  geom_smooth()
 
-summary(Indices_2)
+# For all analysis of interspecies
+# interactions, we summed interactions across all surveys for each
+# site and included site and the species pair as categorical fixed effects.
+# We examined the relationship between traits and interactions for two groups: 
+# (a) all observed birds and 
+# (b) cavity-breeding species. 
+# Response variables included ‘total interactions’ (summed interactions between 
+# species pairs), and ‘outcome’ which was the total number of wins for each species
+# (e.g. the number of times rainbow lorikeet won vs. the common myna). 
+
+x<-gam(n_Agg~s(RS.size)+Study.Area,data=all.targets)
+summary(x)
+plot(x)
+?gam
+# For all models, explanatory variables included ‘difference in
+# mean body size’, ‘site’, ‘species ID’. We used absolute body size difference
+# as an explanatory variables for the models for total interactions
+# while relative body size difference was used in the models of outcome.
+
+ISRS %>% 
+  ggplot(aes(Avg_size,n_ints))+
+  geom_smooth()
 
 
 
@@ -1972,6 +2023,7 @@ x4 %>%
 ## presence of crows & larger birds exacerbates aggression.
 
 
+
 ##########
 
 #2. ROLES
@@ -2115,14 +2167,17 @@ Interact %>%
                               'Tanimbar corella'='#33BBEE',
                               'Long-tailed parakeet'='#009988'))
 
-# Size
-ISRS %>% 
-  group_by(Species) %>% 
-  summarise(avg_agg=mean(rating),
-            Avg_size=mean(Avg_size)) %>% 
-  filter(avg_agg>0) %>% 
-  ggplot(aes(Avg_size,avg_agg))+
-  geom_point()
+# SUMMARY-SE 
+x<-ISRS %>% 
+  filter(role=='IS') %>% 
+  select(Species,interaction,rating)
+x$rating<-as.numeric(x$rating)
+
+parrotmeans <- summarySE(x, measurevar =  "rating",
+                         groupvar = c("Species", "interaction"),
+                         na.rm = TRUE)
+parrotmeans
+
 
 
 #/////////////////////////////////////////////////////////////////////////////#
