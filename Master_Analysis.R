@@ -15,12 +15,13 @@ library(pacman)
 library(Ostats)
 p_load(formattable,knitr,kableExtra, # nice tables
        tidyverse,vegan,lubridate,gridExtra,grid,ggrepel,reshape2,ggpmisc,
-       BBmisc,stringr,ggpubr,
+       BBmisc,stringr,
        ggpubr,AICcmodavg, #anova
        circlize, # interaction networks
        Distance, # transect analysis, relative abundance, density
        readxl,writexl)
 library(gam)
+library(psych)
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
@@ -1474,8 +1475,8 @@ x1<-Composition_3 %>%
 x1 %>% 
   ggplot(aes(n_ints,all_obs))+
   geom_point()+
-  stat_smooth(method = 'lm')+
-  stat_poly_eq()+
+  stat_cor(method = 'spearman')+
+  stat_poly_line()+
   geom_text_repel(data=subset(x1,n_ints>30),(aes(label=Species)))+
   labs(x = 'Number of interactions', y = ' Numer of individuals',
        title = 'All species')
@@ -1513,16 +1514,16 @@ x2<-Composition_3 %>%
                                   n_ints=sum(n_ints)) %>% 
   filter(all_obs>0,n_ints>0)
 x2 %>% 
-  ggplot(aes(all_obs,n_ints))+
+  ggplot(aes(n_ints,all_obs))+
   geom_point()+ 
-  stat_poly_line(se=F)+
+  stat_smooth(method = 'lm')+
   stat_poly_eq()+
-  geom_text_repel(data=subset(x2,all_obs>10),(aes(label=Species)))+
-  labs(x = 'Number of individuals', y = ' Numer of interactions',
-       title = 'Non-focal species')
-# R2 = 0.69
-# generally, generally greater total abundance correlated with greater n_ints
-# Javan myna, by far the most abundant, competing for cavities and space 
+  geom_text_repel(data=subset(x2,n_ints>20),(aes(label=Species)))+
+  labs(x = 'Number of interactions', y = ' Numer of individuals',
+       title = 'All species')
+# looking at non-focal species only
+  # only a handful of species directly initate interactions with parrots
+    # mostly larger cavity competitors / predators
 
 #//////// Outliers//////// 
 # OPH were rarely observed but highly successful in displacing
@@ -1802,8 +1803,23 @@ ISRS %>%
   ggplot(aes(Avg_size,n_ints))+
   geom_smooth()
 
+#http://www.sthda.com/english/wiki/correlation-test-between-two-variables-in-r#spearman-rank-correlation-coefficient
+# Kendall tau and Spearman rho, which are rank-based correlation coefficients (non-parametric)
+
+x<-ggscatter(Composition_4,'n_ints','max.freq',
+          add = 'reg.line',
+          add.params = list(color = "blue", fill = "lightgray"),
+          conf.int = TRUE)
+x+stat_cor(method = 'spearman', label.x = 3, label.y = 30)
 
 
+x<-cor.test(Composition_4$n_ints,
+             Composition_4$max.freq,
+             method='spearman',
+             exact = F)
+x
+# spearmans rho shows a positive association between
+  # n interactions and population density in a community
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
@@ -1831,6 +1847,7 @@ Composition_2 %>%
   group_by(Study.Area,Species) %>% 
   select(Study.Area,Species,max.freq) %>% 
   summarise(max.freq=max(max.freq)) %>% arrange(Study.Area,desc(max.freq))
+
   
 # Changi Vilage = RBP + TC
 # Pasir Ris     = RBP + RRP + MP
@@ -1844,6 +1861,55 @@ Composition_2 %>%
 ## MP seen and observed at 1/5 sites
 ### Native LTP observed at 2/5 sites
 
+# RA curve
+x<-Composition_3 %>% 
+  select(Study.Area,Species,max_obs,max.freq) %>% 
+  group_by(Study.Area) %>% 
+  mutate(rank=dense_rank(desc(max.freq))) %>% 
+  arrange(Study.Area,rank) %>% 
+  group_by(Study.Area) %>%
+  mutate(id = row_number())
+x$rank<-as.factor(x$rank)
+
+x %>% filter(Study.Area!='Changi Airport') %>% 
+  ggplot(aes(id,max.freq,color=Study.Area))+
+  geom_line(alpha=0.8)+
+  geom_point(shape=1)+
+  scale_x_continuous(breaks=c(1,10,20,54),
+                 labels=c('1','5','10','18'))+
+  facet_wrap(~Study.Area)+
+  labs(title = 'Relative abundance curve',
+       x='Abundance rank',y='Abundance')
+y<-Composition_3 %>%
+  select(Study.Area,Species,max.freq,SG_status) %>% 
+  group_by(Study.Area,Species) %>% 
+  arrange(Study.Area,desc(max.freq)) %>% 
+  filter(max.freq>5)
+view(y)
+# Non-natives account for the majority of the community in every site
+  # house crows, parrots, javan mynas
+
+x<-Composition_3 %>% 
+  drop_na(SG_status) %>% 
+  select(Study.Area,Species,max.freq,SG_status) %>% 
+  mutate(Status=case_when(SG_status=='I'~'Non-native',
+                          SG_status=='R'~'Resident',
+                          SG_status=='M'~'Migratory',
+                          SG_status=='N'~'Migratory',
+                          SG_status=='V'~'Migratory')) %>% 
+  group_by(Study.Area,Status) %>% 
+  summarise(n=sum(max.freq)) %>% 
+  arrange(Study.Area,desc(n)) 
+x$Status<-factor(x$Status,levels = c('Migratory','Resident','Non-native'))
+x %>% 
+  ggplot(aes(Study.Area,n,fill=Status))+
+  geom_col(position = 'fill') +
+  scale_fill_discrete(name = "Status")+
+  labs(y='Proportion of community',
+         title = 'Proportion of resident / non-native / migratory species')+
+  theme(axis.title.x = element_blank())
+# non native / introduced species are most prevalent in low biodiversity areas
+    
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 #======================== 10.4 CHARTS: INTERACTIONS ===========================
