@@ -29,9 +29,6 @@ library(psych)
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
-# Transect
-Transect <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
-                       sheet = "Composition")
 # Composition
 Composition <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                           sheet = "Composition")
@@ -56,257 +53,19 @@ NSS <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Disserta
                   sheet = "data")
 
 # plot time data
-# Pilot <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
+ Pilot <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                     sheet = "pilottime")
 
-# #/////////////////////////////////////////////////////////////////////////////#
-# #/////////////////////////////////////////////////////////////////////////////#
-# #============================ 3. TRANSECT ANALYSIS ============================ 
-# #/////////////////////////////////////////////////////////////////////////////#
-# #/////////////////////////////////////////////////////////////////////////////#
-#   
-# # CALCULATIONS FOR ~~RELATIVE ABUNDANCE~~
-# # EVERY SITE AND SPECIES
-# # HALF NORMAL (HN) DETECTION MODEL WORKS BEST OVERALL
-# 
-# # check effort per site
-# Transect %>% group_by(Study.Area) %>% summarise(max(Surveyno))
-# # 1 Changi Airport                        2
-# # 2 Changi Village                       10
-# # 3 Palawan Beach                         5
-# # 4 Pasir Ris Town Park                  12
-# # 5 Sengkang Riverside Park               8
-# # 6 Springleaf                           10
-# # 7 Stirling Road                         9
-# 
-# convunit <- convert_units("meter", "kilometer", "hectare")
-# 
-# 
-# #========#
-# # Changi
-# #========#
-# 
-# Changi<-Transect %>% filter(Study.Area=='Changi Village')
-# Changi$Effort<-Changi$Effort*10
-# Changi<-Changi %>% select(Region.Label,Area,Sample.Label,Effort,distance,Species,Surveyno) %>% 
-#   rename(species=Species) %>% rename(visit=Surveyno)
-# Changi.birds <- ds(data = Changi,
-#                    key="hn", convert_units = convunit,
-#                    formula=~species, truncation = 70)
-# Changi.ests <- dht2(ddf=Changi.birds, flatfile=Changi,
-#                     strat_formula = ~species, convert_units = convunit,
-#                     stratification = "object") 
-# changiDAB<-Changi.ests %>% 
-#   select(Area,df_var,species,n,p_var,p_average,ER,Abundance,Abundance_se,Abundance_CV,bigC,LCI,UCI) %>% 
-#   arrange(desc(Abundance)) %>% 
-#   mutate(Study.Area='Changi Village',.before=1)
-# # generate density results https://rdrr.io/cran/Distance/src/R/dht2.R
-# changiDAB<-changiDAB %>% 
-#   mutate(Density = Abundance/Area,
-#          df_var2 = df_var/Area^2) %>%
-#   mutate(Density_se = sqrt(Abundance_se^2/Area^2)) %>%
-#   mutate(Density_CV = Density_se/Density)
-# 
-# 
-# #===========#
-# # Pasir Ris
-# #===========#
-# Pasir<-Transect %>% filter(Study.Area=='Pasir Ris Town Park')
-# Pasir$Effort<-Pasir$Effort*12
-# Pasir<-Pasir %>% select(Region.Label,Area,Sample.Label,Effort,distance,Species,Surveyno) %>% 
-#   rename(species=Species) %>% rename(visit=Surveyno)
-# Pasir.birds <- ds(data = Pasir,
-#                        key="hn", convert_units = convunit,
-#                        formula=~species)
-# Pasir.ests <- dht2(ddf=Pasir.birds, flatfile=Pasir,
-#                         strat_formula = ~species, convert_units = convunit,
-#                         stratification = "object") 
-# PasirDAB<-Pasir.ests %>% 
-#   select(Area,df_var,species,n,p_var,p_average,ER,Abundance,Abundance_se,Abundance_CV,bigC,LCI,UCI) %>% 
-#   arrange(desc(Abundance)) %>% 
-#   mutate(Study.Area='Pasir Ris Town Park',.before=1)
-# PasirDAB<-PasirDAB %>% 
-#   mutate(Density = Abundance/Area,
-#          df_var2 = df_var/Area^2) %>%
-#   mutate(Density_se = sqrt(Abundance_se^2/Area^2)) %>%
-#   mutate(Density_CV = Density_se/Density)
-# 
-# 
-# #============#
-# # Springleaf
-# #============#
-# 
-# Springleaf<-Transect %>% filter(Study.Area=='Springleaf')
-# Springleaf$Effort<-Springleaf$Effort*10
-# Springleaf<-Springleaf %>% select(Region.Label,Area,Sample.Label,Effort,distance,Species,Surveyno) %>% 
-#   rename(species=Species) %>% rename(visit=Surveyno)
-# Springleaf.birds <- ds(data = Springleaf,
-#                        key="hn", convert_units = convunit,
-#                        formula=~species, truncation = 70)
-# Springleaf.ests <- dht2(ddf=Springleaf.birds, flatfile=Springleaf,
-#                         strat_formula = ~species, convert_units = convunit,
-#                         stratification = "object") 
-# SpringleafDAB<-Springleaf.ests %>% 
-#   select(Area,df_var,species,n,p_var,p_average,ER,Abundance,Abundance_se,Abundance_CV,bigC,LCI,UCI) %>% 
-#   arrange(desc(Abundance)) %>% 
-#   mutate(Study.Area='Springleaf',.before=1)
-# SpringleafDAB<-SpringleafDAB %>% 
-#   mutate(Density = Abundance/Area,
-#          df_var2 = df_var/Area^2) %>%
-#   mutate(Density_se = sqrt(Abundance_se^2/Area^2)) %>%
-#   mutate(Density_CV = Density_se/Density)
-# 
-# 
-# #==========#
-# # Sengkang
-# #==========#
-# 
-# Sengkang<-Transect %>% filter(Study.Area=='Sengkang Riverside Park')
-# Sengkang$Effort<-Sengkang$Effort*8
-# Sengkang<-Sengkang %>% select(Region.Label,Area,Sample.Label,Effort,distance,Species,Surveyno) %>% 
-#   rename(species=Species) %>% rename(visit=Surveyno)
-# Sengkang.birds <- ds(data = Sengkang,
-#                      key="hn", convert_units = convunit,
-#                      formula=~species, truncation = 70)
-# Sengkang.ests <- dht2(ddf=Sengkang.birds, flatfile=Sengkang,
-#                       strat_formula = ~species, convert_units = convunit,
-#                       stratification = "object") 
-# SengkangDAB<-Sengkang.ests %>% 
-#   select(Area,df_var,species,n,p_var,p_average,ER,Abundance,Abundance_se,Abundance_CV,bigC,LCI,UCI) %>% 
-#   arrange(desc(Abundance)) %>% 
-#   mutate(Study.Area='Sengkang Riverside Park',.before=1)
-# SengkangDAB<-SengkangDAB %>% 
-#   mutate(Density = Abundance/Area,
-#          df_var2 = df_var/Area^2) %>%
-#   mutate(Density_se = sqrt(Abundance_se^2/Area^2)) %>%
-#   mutate(Density_CV = Density_se/Density)
-# 
-# 
-# #=====================#
-# # Stirling/Queenstown
-# #=====================#
-# 
-# Stirling<-Transect %>% filter(Study.Area=='Stirling Road')
-# Stirling$Effort<-Stirling$Effort*9
-# Stirling<-Stirling %>% select(Region.Label,Area,Sample.Label,Effort,distance,Species,Surveyno) %>% 
-#   rename(species=Species) %>% rename(visit=Surveyno)
-# Stirling.birds <- ds(data = Stirling,
-#                      key="hn", convert_units = convunit,
-#                      formula=~species, truncation = 70)
-# Stirling.ests <- dht2(ddf=Stirling.birds, flatfile=Stirling,
-#                       strat_formula = ~species, convert_units = convunit,
-#                       stratification = "object") 
-# StirlingDAB<-Stirling.ests %>% 
-#   select(Area,df_var,species,n,p_var,p_average,ER,Abundance,Abundance_se,Abundance_CV,bigC,LCI,UCI) %>% 
-#   arrange(desc(Abundance)) %>% 
-#   mutate(Study.Area='Stirling Road',.before=1)
-# StirlingDAB<-StirlingDAB %>% 
-#   mutate(Density = Abundance/Area,
-#          df_var2 = df_var/Area^2) %>%
-#   mutate(Density_se = sqrt(Abundance_se^2/Area^2)) %>%
-#   mutate(Density_CV = Density_se/Density)
-# 
-# 
-# #=====================#
-# # Palawan Beach
-# #=====================#
-# 
-# Palawan<-Transect %>% filter(Study.Area=='Palawan Beach')
-# Palawan$Effort<-Palawan$Effort*5
-# Palawan<-Palawan %>% select(Region.Label,Area,Sample.Label,Effort,distance,Species,Surveyno) %>% 
-#   rename(species=Species) %>% rename(visit=Surveyno)
-# Palawan.birds <- ds(data = Palawan,
-#                      key="hn", convert_units = convunit,
-#                      formula=~species, truncation = 70)
-# Palawan.ests <- dht2(ddf=Palawan.birds, flatfile=Palawan,
-#                       strat_formula = ~species, convert_units = convunit,
-#                       stratification = "object") 
-# PalawanDAB<-Palawan.ests %>% 
-#   select(Area,df_var,species,n,p_var,p_average,ER,Abundance,Abundance_se,Abundance_CV,bigC,LCI,UCI) %>% 
-#   arrange(desc(Abundance)) %>% 
-#   mutate(Study.Area='Palawan Beach',.before=1)
-# PalawanDAB<-PalawanDAB %>% 
-#   mutate(Density = Abundance/Area,
-#          df_var2 = df_var/Area^2) %>%
-#   mutate(Density_se = sqrt(Abundance_se^2/Area^2)) %>%
-#   mutate(Density_CV = Density_se/Density)
-# 
-# #=====================#
-# # Changi Airport
-# #=====================#
-# ChangiAir<-Transect %>% filter(Study.Area=='Changi Airport')
-# ChangiAir$Effort<-ChangiAir$Effort*2
-# ChangiAir<-ChangiAir %>% select(Region.Label,Area,Sample.Label,Effort,distance,Species,Surveyno) %>% 
-#   rename(species=Species) %>% rename(visit=Surveyno)
-# ChangiAir.birds <- ds(data = ChangiAir,
-#                     key="hn", convert_units = convunit,
-#                     formula=~species, truncation = 70)
-# ChangiAir.ests <- dht2(ddf=ChangiAir.birds, flatfile=ChangiAir,
-#                      strat_formula = ~species, convert_units = convunit,
-#                      stratification = "object") 
-# ChangiAirDAB<-ChangiAir.ests %>% 
-#   select(Area,df_var,species,n,p_var,p_average,ER,Abundance,Abundance_se,Abundance_CV,bigC,LCI,UCI) %>% 
-#   arrange(desc(Abundance)) %>% 
-#   mutate(Study.Area='Changi Airport',.before=1)
-# ChangiAirDAB<-ChangiAirDAB %>% 
-#   mutate(Density = Abundance/Area,
-#          df_var2 = df_var/Area^2) %>%
-#   mutate(Density_se = sqrt(Abundance_se^2/Area^2)) %>%
-#   mutate(Density_CV = Density_se/Density)
-# 
-# #===================#
-# # 3.a. GOF plots----
-# #===================#
-# 
-# par(mfrow=c(2,4))
-# gof_ds(Changi.birds)
-# title(main = "GOF CHANGI")
-# gof_ds(Pasir.birds)
-# title(main = "GOF PASIR RIS")
-# gof_ds(Springleaf.birds)
-# title(main = "GOF SPRINGLEAF")
-# gof_ds(Sengkang.birds)
-# title(main = "GOF SENGKANG")
-# gof_ds(Stirling.birds)
-# title(main = "GOF STIRLING RD")
-# gof_ds(Palawan.birds)
-# title(main = "GOF PALAWAN BEACH")
-# gof_ds(ChangiAir.birds)
-# title(main = "GOF CHANGI AIRPORT")
-# mtext("Goodness of fit - Distance models", side = 3, line = -2, outer = TRUE)
-# 
-# #===============#
-# # 3.b. Merge----
-# #===============#
-# rm(Transect_2)
-# Transect_2 <- rbind(changiDAB,PasirDAB,SpringleafDAB,StirlingDAB,SengkangDAB,
-#                     PalawanDAB,ChangiAir)
-# Transect_2 <- Transect_2 %>% filter(species!='Total') %>% rename(Species=species)
-# #rank
-# Transect_2 <- group_by(Study.Area) %>% mutate(rank=rank(Abundance))
-# #view(Transect_2)
-# 
-# #==================#
-# # 3.c. Clean up----
-# #==================#
-# # leave .birds objects in the environment because they take a while to re-run
-# rm(list = c('Changi','Changi.ests','Pasir','Pasir.ests','Springleaf',
-#             'Springleaf.ests','Stirling','Stirling.ests','Sengkang',
-#             'Sengkang.ests','ChangiAir','ChangiAir.ests'))
-# 
-
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
-#============================ 6. ALPHA BD INDICES ============================= 
+#============================ ALPHA BD INDICES ============================= 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
-# Testing 3 possibilities~
-
-#===================#
-# 6.a. Count max----
-#===================#
+#========================================#
+# Simpson, Shannon, Richness == MAX----
+#========================================#
 Comp.max<-Composition %>% 
   group_by(Study.Area,Species,Surveyno) %>% 
   summarise(n=n()) %>% 
@@ -315,15 +74,17 @@ Comp.max<-Composition %>%
   arrange(Study.Area,desc(max_obs))
 
 # spread/gather
-Comp.alpha<-Comp.max %>% spread(key=Species,value = max_obs) %>% 
-  replace(is.na(.), 0) %>% remove_rownames %>% 
+Comp.alpha<-Comp.max %>% 
+  spread(key=Species,value = max_obs) %>% 
+  replace(is.na(.), 0) %>% 
+  remove_rownames %>% 
   column_to_rownames(var="Study.Area")
 
 # Richness.max
 fun.1<-function(x){sum(x>0)}
 richness<-apply(Comp.alpha, 1, FUN=fun.1)
 richness<-data.frame(richness)
-colnames(richness)<-"Richness.max"
+colnames(richness)<-"Richness"
 
 # Shannon.max
 for (Comp.alpha.row in 1:6)
@@ -331,7 +92,7 @@ for (Comp.alpha.row in 1:6)
 shannon<-round(shannon,3)
 #Adjusting output names of rows and columns
 row.names(shannon)<-row.names(Comp.alpha)
-colnames(shannon)<-"Shannon.max"
+colnames(shannon)<-"Shannon"
 
 # Simpson.max
 for (Comp.alpha.row in 1:6)
@@ -339,292 +100,124 @@ for (Comp.alpha.row in 1:6)
 simpson<-round(simpson,3)
 #Adjusting the names of rows and columns
 row.names(simpson)<-row.names(Comp.alpha)
-colnames(simpson)<-"Simpson.max"
+colnames(simpson)<-"Simpson"
 
 # Putting together all indices.max
-Indices.max<-cbind(richness, shannon, simpson)
-Indices.max<-data.frame(Indices.max)
+Indices<-cbind(richness, shannon, simpson)
+Indices<-data.frame(Indices.max)
+Indices <- rownames_to_column(Indices, "Study.Area")
 
-# plot.all
-plot.indices.max<-Indices.max %>% 
-  ggplot(aes(x=Simpson.max,y=Shannon.max,
-  )) +
-  geom_point(aes(color=Richness.max), size=4)+
+
+# plot
+Indices %>% 
+  ggplot(aes(x=Simpson,y=Shannon)) +
+  geom_point(aes(color=Richness), size=4)+
   labs(title = 'Alpha biodiversity indices',
        x = 'Simpson Index', y='Shannon Index',
        color='Richness')+
-  theme(legend.direction = 'horizontal',
-        legend.position = 'top')+
-  geom_text_repel(aes(label=row.names(Indices.max)),
+  geom_text_repel(aes(label=Study.Area),
+                  nudge_y = 0.04,segment.color = NA)
+# without Airport
+Indices %>% 
+  filter(Study.Area!='Changi Airport') %>% 
+  ggplot(aes(x=Simpson,y=Shannon)) +
+  geom_point(aes(color=Richness), size=4)+
+  labs(title = 'Alpha biodiversity indices',
+       x = 'Simpson Index', y='Shannon Index',
+       color='Richness')+
+  geom_text_repel(aes(label=Study.Area),
                   nudge_y = 0.04,segment.color = NA)
 
-#===================#
-# 6.b. Count all----
-#===================#
-
-Comp.all<-Composition %>% 
-  group_by(Study.Area,Species,Surveyno) %>% 
-  summarise(n=n()) %>% 
-  select(-Surveyno) %>% 
-  summarise(all_obs=sum(n))
-
-# spread/gather
-Comp.alpha<-Comp.all %>% spread(key=Species,value = all_obs) %>% 
-  replace(is.na(.), 0) %>% remove_rownames %>% 
-  column_to_rownames(var="Study.Area")
-
-# Richness.all
-fun.1<-function(x){sum(x>0)}
-richness<-apply(Comp.alpha, 1, FUN=fun.1)
-richness<-data.frame(richness)
-colnames(richness)<-"Richness.all"
-
-# Shannon.all
-for (Comp.alpha.row in 1:8)
-{shannon<- matrix(diversity(Comp.alpha[,], index = "shannon"))}
-shannon<-round(shannon,3)
-#Adjusting output names of rows and columns
-row.names(shannon)<-row.names(Comp.alpha)
-colnames(shannon)<-"Shannon.all"
-
-# Simpson.all
-for (Comp.alpha.row in 1:8)
-{simpson<- matrix(diversity(Comp.alpha[,], index = "simpson"))}
-simpson<-round(simpson,3)
-#Adjusting the names of rows and columns
-row.names(simpson)<-row.names(Comp.alpha)
-colnames(simpson)<-"Simpson.all"
-
-# Putting together all indices.all
-Indices.all<-cbind(richness, shannon, simpson)
-Indices.all<-data.frame(Indices.all)
-
-# plot.all
-plot.indices.all<-Indices.all %>% 
-  ggplot(aes(x=Simpson.all,y=Shannon.all,
-             label=row.names(Indices.all))) +
-  geom_point(aes(color=Richness.all), size=4)+
-  theme(legend.direction = 'horizontal',
-        legend.position = 'top')+
-  geom_text(hjust=0.7,vjust=-1.2)+
-  labs(title = 'Alpha biodiversity of each survey site (all obs)')
-
-
-#====================#
-# 6.c. Count mean----
-#====================#
-
-Comp.mean<-Composition %>% 
-  group_by(Study.Area,Species,Surveyno) %>% 
-  summarise(n=n()) %>% 
-  select(-Surveyno) %>% 
-  summarise(mean_obs=mean(n))
-
-# spread/gather
-Comp.alpha<-Comp.mean %>% spread(key=Species,value = mean_obs) %>% 
-  replace(is.na(.), 0) %>% remove_rownames %>% 
-  column_to_rownames(var="Study.Area")
-
-# Richness.mean
-fun.1<-function(x){sum(x>0)}
-richness<-apply(Comp.alpha, 1, FUN=fun.1)
-richness<-data.frame(richness)
-colnames(richness)<-"Richness.mean"
-
-# Shannon.mean
-for (Comp.alpha.row in 1:8)
-{shannon<- matrix(diversity(Comp.alpha[,], index = "shannon"))}
-shannon<-round(shannon,3)
-#Adjusting output names of rows and columns
-row.names(shannon)<-row.names(Comp.alpha)
-colnames(shannon)<-"Shannon.mean"
-
-# Simpson.mean
-for (Comp.alpha.row in 1:8)
-{simpson<- matrix(diversity(Comp.alpha[,], index = "simpson"))}
-simpson<-round(simpson,3)
-#Adjusting the names of rows and columns
-row.names(simpson)<-row.names(Comp.alpha)
-colnames(simpson)<-"Simpson.mean"
-
-# Putting together all indices.mean
-Indices.mean<-cbind(richness, shannon, simpson)
-Indices.mean<-data.frame(Indices.mean)
-
-#plot.mean
-plot.indices.mean<-Indices.mean %>% 
-  ggplot(aes(x=Simpson.mean,y=Shannon.mean,
-             label=row.names(Indices.mean))) +
-  geom_point(aes(color=Richness.mean), size=4)+
-  theme(legend.direction = 'horizontal',
-        legend.position = 'top')+
-  geom_text(hjust=0.7,vjust=-1.2)+
-  labs(title = 'Alpha biodiversity of each survey site (mean obs)')
-
-
-#==============================#
-# 6.d. Merge all variations----
-#==============================#
-
-Indices<-cbind(Indices.all, Indices.mean, Indices.max)
-Indices <- rownames_to_column(Indices, "Study.Area")
-
-#=================#
-# 6.e. Plot indices----
-#=================#
-
-grid.arrange(plot.indices.all,plot.indices.max,plot.indices.mean,ncol=3)
 # table
 formattable(Indices) 
 
+## Changi and Stirling/QT have the lowest BD and richness scoring
+  ## highly urbanised areas 
 
-#=============#
-# Clean up----
-#=============#
+## Springleaf, old plantation and secondary forest with canal
+  ## some urbanisation surrounding but also close to central catchment NR
 
-#rm(list = c('Indices.max','Indices.mean','Indices.all',
- #           'Comp.max','Comp.mean','Comp.all','Comp.alpha','simpson','shannon',
-  #          'Comp.alpha.row'))
+## Palawan beach is quite busy but low urbanisation. Surrounding area rich in
+  ## dense secondary forest with old trees and little or no maintenance
+
+## Sengkang / PRTP are managed urban parks but quite rich in vegatation. 
+  ## food resources are plentiful
 
 
 # #/////////////////////////////////////////////////////////////////////////////#
 # #/////////////////////////////////////////////////////////////////////////////#
-# #============================ 6.2 BETA BD INDICES ============================= 
+# #============================= BETA BD INDICES ============================= 
 # #/////////////////////////////////////////////////////////////////////////////#
 # #/////////////////////////////////////////////////////////////////////////////#
 # 
-# #===================#
-# # Sorensen index----
-# #===================#
-# #Calculating Sorensen index
-# sorensen<-designdist(Comp.alpha, method="(2∗J)/(A+B)", terms=c("binary"))
-# sorensen<-round(sorensen,3)
-# sorensen
-# 
-# # Higher values of the Sorensen index indicate greater overlap in species 
-# # composition and vice versa
-# 
-# #Plotting a dendrogram
-# plot(hclust(sorensen, method="complete"),
-#      main="Sorensen index", col = "#1965B0",
-#      col.main = "black", col.lab = "black",
-#      col.axis = "black", sub = "")
-# 
-# # Or as a matrix
-# #Transforming results into a matrix
-# sorensen.complete<-stats:::as.matrix.dist(sorensen)
-# sorensen.complete
-# 
-# #Melt function
-# sorensen.melted<-melt(sorensen.complete)
-# sorensen.melted
-# 
-# #Plotting the results – a base
-# sorensen.plot<-sorensen.melted %>% 
-#   ggplot(aes(x=Var1, y=Var2, fill = value))+
-#   geom_tile(color = "white")+
-#   labs(title = 'Sorensen (Beta biodiversity index)')+
-#   theme(legend.direction = 'horizontal',
-#         legend.position = 'top',
-#         legend.title = element_blank())+
-#   scale_fill_gradient2(low = "white", high = "black",
-#                        mid="grey", midpoint = 0.5, limit = c(0,1),
-#                        breaks=c(0,0.5,1),
-#                        labels=c('No overlap','0.5','Max. overlap'))+
-#   geom_text(aes(label = value), color = "black", size = 4)+ #Adding values of Jaccard distance
-#   xlab("")+ylab("") #Removing the labels (x and y axis)
-# 
-# sorensen.plot
-# 
-# # higher value = greatest overlap / similarity 
-# 
-# #===================#
-# # Jaccard Distance----
-# #===================#
-# #Calculating Jaccard distance
-# jaccard<-vegdist(Comp.alpha, method="jaccard", binary=T)
-# jaccard<-round(jaccard,3)
-# jaccard
-# 
-# #Transforming results into a matrix
-# jaccard.complete<-stats:::as.matrix.dist(jaccard)
-# jaccard.complete
-# 
-# #Melt function
-# jaccard.melted<-melt(jaccard.complete)
-# jaccard.melted
-# 
-# #Plotting the results – a base
-# jaccard.melted %>% 
-#   ggplot(aes(x=Var1, y=Var2, fill = value))+
-#   geom_tile(color = "white")+
-#   labs(title = 'Jaccard Index')+
-#   scale_fill_gradient2(low = "white", high = "black",
-#                        mid="grey", midpoint = 0.5, limit = c(0,1),
-#                        name="Jaccard distance")+
-#   geom_text(aes(label = value), color = "black", size = 4)+ #Adding values of Jaccard distance
-#   xlab("")+ylab("") #Removing the labels (x and y axis)
-# 
-# #Cut function
-# categories.jaccard<-cut(jaccard.melted$value,
-#                         breaks=c(-0.01, 0.1, 0.5,1),
-#                         labels=c("[0-0.1]", "(0.1-0.5]", "(0.5-1]"))
-# #Adding a new column (categories) to the data frame
-# jaccard.melted$categories<-categories.jaccard
-# jaccard.melted
-# 
-# # re-plot
-# jaccard.melted %>% 
-#   ggplot(aes(x=Var1, y=Var2, fill = categories))+
-#   geom_tile(color = "white")+
-#   labs(title = 'Jaccard Index',fill='Jaccard Index')+
-#   scale_fill_manual(values = c("white", "#D9CCE3", "#994F88"))+
-#   geom_text(aes(label = value), color = "black", size = 4)+ 
-#   xlab("")+ylab("")
-# 
-# #====================#
-# # Final selection----
-# #====================#
-# 
-# grid.arrange(plot.indices.max,sorensen.plot,ncol=2,
-#              top=textGrob("Biodiversity indices for survey sites",
-#                           gp=gpar(fontsize=20,font=1)))
-# 
-# 
-# # Changi and QT: least diverse, lowest richness, highest similarity
-# ## //// what features do they have in common? ////
-# 
-# # Springleaf: most diverse and richest & least similarity to other sites
-# 
-# # Sengkang and Pasir Ris: similar 
-# ## //// what features do they have in common? ////
-# 
-# 
-# #/////////////////////////////////////////////////////////////////////////////#
-# #/////////////////////////////////////////////////////////////////////////////#
-# #================= 4. MERGE TRANSECT, PROFILE, COMPOSITION ==================
-# #/////////////////////////////////////////////////////////////////////////////#
-# #/////////////////////////////////////////////////////////////////////////////#
+#===================#
+# Sorensen index----
+#===================#
+#Calculating Sorensen index
+sorensen<-designdist(Comp.alpha, method="(2∗J)/(A+B)", terms=c("binary"))
+sorensen<-round(sorensen,3)
+sorensen
 
-rm(Composition_2)
-#y<-Transect_2 %>% select(Study.Area,Species,Abundance) %>% 
-#  arrange(Study.Area,Species)
+# Higher values of the Sorensen index indicate greater overlap in species
+# composition and vice versa
 
-rm(x)
-x<-merge(Comp.all,Comp.mean, by=c("Study.Area","Species"),all=T)
-Composition_2<-merge(x,Comp.max, by=c("Study.Area","Species"),all=T)
-#Composition_2<-merge(x,y, by=c("Study.Area","Species"),all=T) 
+#Plotting a dendrogram
+plot(hclust(sorensen, method="complete"),
+     main="Sorensen index", col = "#1965B0",
+     col.main = "black", col.lab = "black",
+     col.axis = "black", sub = "")
 
-Composition_2<-merge(Composition_2,Prof, by='Species',all=T)
+# Or as a matrix
+#Transforming results into a matrix
+sorensen.complete<-stats:::as.matrix.dist(sorensen)
+sorensen.complete
 
+#Melt function
+sorensen.melted<-melt(sorensen.complete)
+sorensen.melted
 
-# Transect & Transect_2 are not needed in analysis from this point on
+#Plotting the results – a base
+sorensen.plot<-sorensen.melted %>%
+  ggplot(aes(x=Var1, y=Var2, fill = value))+
+  geom_tile(color = "white")+
+  labs(title = 'Sorensen (Beta biodiversity index)')+
+  theme(legend.title = element_blank())+
+  scale_fill_gradient2(low = "white", high = "black",
+                       mid="grey", midpoint = 0.5, limit = c(0,1),
+                       breaks=c(0,0.5,1),
+                       labels=c('No overlap','0.5','Max. overlap'))+
+  geom_text(aes(label = value), color = "black", size = 4)+ #Adding values of Jaccard distance
+  xlab("")+ylab("") #Removing the labels (x and y axis)
+
+sorensen.plot
+
+# higher value = greatest overlap / similarity
+## Changi and stirling high similarity, PRTP not too dissimilar
+## Airport has low overlap
+
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
-#=========================== 5. BASIC DATA PREP ==============================
+#======================== FIRST DATA TRANSFORMATION ===========================
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
+
+# Merge Indices (BD, max counts) + profiles
+rm(Composition_2) 
+Composition_2<-merge(Comp.max,Prof, by='Species',all=T)
+
+  # add percent abundance 
+x<-Composition %>% 
+  group_by(Study.Area,Species,Surveyno) %>% 
+  summarise(n=n()) %>% 
+  select(-Surveyno) %>% 
+  summarise(max_obs = max(n)) %>% 
+  mutate(max.freq=max_obs/sum(max_obs)*100) %>% select(-max_obs)
+  # merge
+Composition_2<-merge(Composition_2,x, by=c('Study.Area','Species'),all = T)
+  # rearrange cols
+Composition_2<-Composition_2 %>% relocate(1,2,5,3,17,10,11,8,9,4,6,7,12,13,14,15,16)
+
 
 # Factorise Composition_2
 str(Composition_2)
@@ -635,8 +228,7 @@ Composition_2<-Composition_2 %>% mutate_at(cols_comp, factor)
 str(Composition_2)
 rm(cols_comp)
 
-# Factorise Interact
-rm(Interact_2)
+# Factorise Interactions
 str(Interact)
 cols_int <-c('Region.Label','Study.Area','ampm','initsp','recipsp','interaction',
              'isout','rsout','treeid','treesci','treecom','trim','at_cav')
@@ -644,7 +236,7 @@ Interact_2<-Interact %>% mutate_at(cols_int,factor)
 str(Interact_2)  
 rm(cols_int)
 
-# Interaction ratings
+  # Add interaction ratings
 Interact_2<-Interact_2 %>% 
   mutate(rating=case_when(
     interaction=="Neutral"~"0", # no aggression
@@ -666,7 +258,7 @@ Tree<-Tree %>% mutate_at(cols_tree,factor)
 str(Tree)  
 rm(cols_tree)
 
-# Factorise NSS
+# Factorise NSS data
 NSS$Site<-as.factor(NSS$Site)
 NSS$Site2<-as.factor(NSS$Site2)
 NSS$Species<-as.factor(NSS$Species)
@@ -674,54 +266,16 @@ NSS$Species<-as.factor(NSS$Species)
 NSS$Count<-NSS$Count %>% replace(is.na(.), 0)
 
 
-
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
-#========================= 8. DATA TRANSFORMATION ============================
+#========================= SECOND DATA TRANSFORMATION =========================
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
-
-#===========================================#
-# 8.a. Transformations of: COMPOSITION_2----
-#===========================================#
-
-# add proportions to mean, max and total spp. counts
-## mean
-prop.mean<-Composition %>% 
-  group_by(Study.Area,Species,Surveyno) %>% 
-  summarise(n=n()) %>% 
-  select(-Surveyno) %>% 
-  summarise(mean_obs=mean(n)) %>% 
-  mutate(mean.freq=mean_obs/sum(mean_obs)*100) %>% select(-mean_obs)
-
-Composition_2<-merge(Composition_2,prop.mean, by=c('Study.Area','Species'),all = T)
-
-## max
-prop.max<-Composition %>% 
-  group_by(Study.Area,Species,Surveyno) %>% 
-  summarise(n=n()) %>% 
-  select(-Surveyno) %>% 
-  summarise(max_obs = max(n)) %>% 
-  mutate(max.freq=max_obs/sum(max_obs)*100) %>% select(-max_obs)
-
-Composition_2<-merge(Composition_2,prop.max, by=c('Study.Area','Species'),all = T)
-
-# all
-prop.all<-Composition %>% 
-  group_by(Study.Area,Species,Surveyno) %>% 
-  summarise(n=n()) %>% 
-  select(-Surveyno) %>% 
-  summarise(all_obs=sum(n)) %>% 
-  mutate(all.freq=all_obs/sum(all_obs)*100) %>% select(-all_obs)
-
-Composition_2<-merge(Composition_2,prop.all, by=c('Study.Area','Species'),all = T)
-
-Composition_2<-Composition_2 %>% relocate(1,2,3,21,4,19,5,20,12,13,7,8,9,10,11,15,16,17,14,18,6)
 
 #=============================#
-# 8.b. ISRS Long Transform----
+# ISRS: Interact long-transform----
 #=============================#
-
+rm(ISRS)
 # IS
 IS<-Interact_2 %>% 
   filter(recipsp!="NA") %>% 
@@ -740,213 +294,117 @@ RS<-rename(RS,species=recipsp)
 RS<-rename(RS,outcome=rsout)
 RS$role<-'RS' # identify IS/RS
 
-# Combine
+# Combine IS+RS
 ISRS<-rbind(IS,RS)
 ISRS<-ISRS %>% relocate(1,2,3,4,5,7,6) 
 ISRS<-ISRS %>% rename(n_ints=n)
 ISRS<-ISRS %>% rename(Species=species)
-#view(ISRS)
 
-x<-Prof %>% select(Species,NestType,sp_lab,Avg_size,Avg_Weight)
-ISRS<-merge(ISRS,x,by='Species')
+  # merge with Composition_2
+ISRS<-merge(ISRS,Composition_2,by=c('Study.Area','Species'),all=T)
 
+# ISRS: add other calculated columns
 
-#==================================#
-# MERGE: PART ISRS, COMPOSITION----
-#==================================#
-rm(Composition_3)
+  # n_ints - excluding Neutral
 x<-ISRS %>% 
-  group_by(Study.Area,Species) %>% summarise(n_ints=sum(n_ints))
-Composition_3<-Composition_2
-Composition_3<-merge(Composition_3,x,by=c('Study.Area','Species'),all=T) 
-Composition_3$n_ints<-Composition_3$n_ints %>% replace(is.na(.), 0)
-
+  group_by(Study.Area,Species) %>% filter(outcome!='NE') %>% 
+  summarise(n_ints_xNE=sum(n_ints))
+ISRS<-merge(ISRS,x,by=c('Study.Area','Species'),all=T) 
+ISRS$n_ints_xNE<-ISRS$n_ints_xNE %>% replace(is.na(.), 0)
+ISRS$max_obs<-ISRS$max_obs %>%  replace(is.na(.), 0)
+  # N_initiatations - excluding Neutral
 x<-ISRS %>% 
-  group_by(Study.Area,Species) %>% filter(outcome!='NE') %>% summarise(n_ints_xNE=sum(n_ints))
-
-Composition_3<-merge(Composition_3,x,by=c('Study.Area','Species'),all=T) 
-Composition_3$n_ints_xNE<-Composition_3$n_ints_xNE %>% replace(is.na(.), 0)
-Composition_3$total_obs<-Composition_3$total_obs %>%  replace(is.na(.), 0)
-
+  group_by(Study.Area,Species) %>% filter(outcome!='NE') %>% filter(role=='IS') %>% 
+  summarise(inits_xNE=sum(n_ints))
+ISRS<-merge(ISRS,x,by=c('Study.Area','Species'),all=T) 
+ISRS$inits_xNE<-ISRS$inits_xNE %>% replace(is.na(.), 0)
+  # n_intiations - incl Neutral
 x<-ISRS %>% 
-  group_by(Study.Area,Species) %>% filter(outcome!='NE') %>% filter(role=='IS') %>% summarise(inits_xNE=sum(n_ints))
-Composition_3<-merge(Composition_3,x,by=c('Study.Area','Species'),all=T) 
-Composition_3$inits_xNE<-Composition_3$inits_xNE %>% replace(is.na(.), 0)
-
-x<-ISRS %>% 
-  group_by(Study.Area,Species) %>% filter(role=='IS') %>% summarise(inits=sum(n_ints))
-Composition_3<-merge(Composition_3,x,by=c('Study.Area','Species'),all=T) 
-Composition_3$inits<-Composition_3$inits %>% replace(is.na(.), 0)
+  group_by(Study.Area,Species) %>% filter(role=='IS') %>% 
+  summarise(inits=sum(n_ints))
+ISRS<-merge(ISRS,x,by=c('Study.Area','Species'),all=T) 
+ISRS$inits<-ISRS$inits %>% replace(is.na(.), 0)
 
 # wrangle cats
-x<-Composition_3 %>% 
+x<-ISRS %>% 
   filter(Species=='Cat'|Species=='Otter'|
            Species=='Squirrel'|Species=='Long-tailed macaque') %>%
   group_by(Species) %>% 
   fill(everything(), .direction = "updown") %>% 
-  distinct() %>% filter(n_ints!=0)
+  distinct() %>% filter(n_ints==2)
 
-Composition_3<-Composition_3 %>% filter(Species!='Cat'&Species!='Otter'&
+ISRS<-ISRS %>% filter(Species!='Cat'&Species!='Otter'&
                                           Species!='Squirrel'&Species!='Long-tailed macaque')
-Composition_3<-rbind(Composition_3,x)
+ISRS<-rbind(ISRS,x)
 
 # add visit weight
-x<-Composition %>% group_by(Study.Area) %>% summarise(effort=max(Surveyno))
-Composition_3<-merge(Composition_3,x,by='Study.Area',all=T)
+x<-Composition %>% group_by(Study.Area) %>% 
+  summarise(effort=max(Surveyno))
+ISRS<-merge(ISRS,x,by='Study.Area',all=T)
 
-# n interactions / obs hours
-x<-Composition_3 %>%
+# Interactions / hour standardized by obs time
+  # all ints, all ints without NE
+  # all inits, all inits without NE
+ISRS<-ISRS %>%
   group_by(Study.Area,Species) %>% 
   mutate(ints_HR=n_ints/effort) %>% 
   mutate(ints_xNE_HR=n_ints_xNE/effort) %>% 
-  select(Study.Area,Species,ints_HR,ints_xNE_HR)
-Composition_3<-merge(Composition_3,x,by=c('Study.Area','Species'),all=T)
+  mutate(inits_HR=inits/effort) %>% 
+  mutate(inits_xNE_HR=inits_xNE/effort)
 
-#==================================#
-# COMPOSITION_4 WITH INTS----
-#==================================#
-rm(Composition_4)
-x<-ISRS %>% 
-  group_by(Study.Area,Species,interaction) %>% summarise(n_ints=sum(n_ints))
-Composition_4<-Composition_2
-Composition_4<-merge(x,Composition_4,by=c('Study.Area','Species'),all=T) 
-Composition_4$n_ints<-Composition_4$n_ints %>% replace(is.na(.), 0)
-
-x<-ISRS %>% 
-  group_by(Study.Area,Species,interaction) %>% filter(outcome!='NE') %>% summarise(n_ints_xNE=sum(n_ints))
-
-Composition_4<-merge(Composition_4,x,by=c('Study.Area','Species','interaction'),all=T) 
-Composition_4$n_ints_xNE<-Composition_4$n_ints_xNE %>% replace(is.na(.), 0)
-Composition_4$total_obs<-Composition_4$all_obs %>%  replace(is.na(.), 0)
-Composition_4$interaction<-as.character(Composition_4$interaction)
-Composition_4$interaction<-Composition_4$interaction %>%  replace(is.na(.), 0)
-Composition_4$interaction<-as.factor(Composition_4$interaction)
-
-
-x<-ISRS %>% 
-  group_by(Study.Area,Species) %>% filter(outcome!='NE') %>% filter(role=='IS') %>% summarise(inits_xNE=sum(n_ints))
-Composition_4<-merge(Composition_4,x,by=c('Study.Area','Species'),all=T) 
-Composition_4$inits_xNE<-Composition_4$inits_xNE %>% replace(is.na(.), 0)
-
-x<-ISRS %>% 
-  group_by(Study.Area,Species) %>% filter(role=='IS') %>% summarise(inits=sum(n_ints))
-Composition_4<-merge(Composition_4,x,by=c('Study.Area','Species'),all=T) 
-Composition_4$inits<-Composition_4$inits %>% replace(is.na(.), 0)
-
-# wrangle cats
-x<-Composition_4 %>% 
-  filter(Species=='Cat'|Species=='Otter'|
-           Species=='Squirrel'|Species=='Long-tailed macaque') %>%
-  group_by(Species) %>% 
-  fill(everything(), .direction = "updown") %>% 
-  distinct() %>% filter(n_ints!=0)
-
-Composition_4<-Composition_4 %>% filter(Species!='Cat'&Species!='Otter'&
-                                          Species!='Squirrel'&Species!='Long-tailed macaque')
-Composition_4<-rbind(Composition_4,x)
-
-# add visit weight
-x<-Composition %>% group_by(Study.Area) %>% summarise(effort=max(Surveyno))
-Composition_4<-merge(Composition_4,x,by='Study.Area',all=T)
-
-# n interactions / obs hours
-x<-Composition_4 %>%
-  group_by(Study.Area,Species,interaction) %>% 
-  mutate(ints_HR=n_ints/effort) %>% 
-  mutate(ints_xNE_HR=n_ints_xNE/effort) %>% 
-  select(Study.Area,Species,ints_HR,ints_xNE_HR)
-Composition_4<-merge(Composition_4,x,by=c('Study.Area','Species','interaction'),all=T)
-
-
-#=======================#
-# 8.c. Species Pairs----
-#=======================#
-
-# Unique species per parrot sp----
-rm((parrot.targets))
-parrot.targets <- Interact_2 %>% 
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
-  select(initsp,recipsp,rating) %>% 
-  group_by(initsp,recipsp) %>% 
-  count(recipsp) %>% 
-  arrange(initsp,desc(n)) %>% rename(n_ints=n)
-# Neutral only
-x<-Interact_2 %>% 
-  filter(rating=='0') %>% filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
-  select(initsp,recipsp,rating) %>% 
-  group_by(initsp,recipsp) %>% 
-  count(recipsp) %>% arrange(initsp,desc(n)) %>% rename(n_NE=n)
-# Merge 1
-parrot.targets<-merge(parrot.targets,x,by=c('initsp','recipsp'),all = TRUE) %>% replace(is.na(.), 0) 
-# Aggressions, no NE
-y<-Interact_2 %>% 
-  filter(rating>=1) %>% filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
-  select(initsp,recipsp,rating) %>%
-  group_by(initsp,recipsp) %>% count(recipsp) %>% 
-  arrange(initsp,desc(n)) %>% rename(n_Agg=n)
-# Merge 2
-parrot.targets<-merge(parrot.targets,y,by=c('initsp','recipsp'),all = TRUE) %>% replace(is.na(.), 0)
-parrot.targets<- parrot.targets%>% arrange(initsp,desc(n_Agg))
-## merge species traits for IS
-x<-Prof %>% select(Species,NestType,sp_lab,Avg_size,Avg_Weight)
-x<-x %>% rename(IS.NestType=NestType,
-                IS.sp_lap=sp_lab,
-                IS.size=Avg_size,
-                IS.wt=Avg_Weight) 
-parrot.targets<-merge(parrot.targets,x,by.x='initsp',by.y='Species')
-## merge species traits for RS
-x<-Prof %>% select(Species,NestType,sp_lab,Avg_size,Avg_Weight)
-x<-x %>% rename(RS.NestType=NestType,
-                RS.sp_lap=sp_lab,
-                RS.size=Avg_size,
-                RS.wt=Avg_Weight) 
-parrot.targets<-merge(parrot.targets,x,by.x='recipsp',by.y='Species')
-
-parrot.targets<-parrot.targets %>% relocate(2,1,3,4,5,6,10,7,11,8,12,9,13)
+ISRS<-ISRS %>% relocate(1,2,8,3,4,6,5,9,10,7,23,24,25,11,12,13,14,15,16,17,18,
+                        19,20,21,22,26)
+ISRS<-ISRS %>% arrange(Study.Area,desc(n_ints))
 
 #=============================#
-# 8.d. Species Pairs EXTRA----
+# Species Pairs----
 #=============================#
-
-# this version of ~parrot.targets~ includes study area and aggression type
-# Unique species per parrot sp----
-rm(all.targets)
-all.targets <- Interact_2 %>% 
+rm(sp.pairs)
+# pairs for all interactions
+sp.pairs <- Interact_2 %>% 
   select(Study.Area,initsp,recipsp,interaction) %>% 
   group_by(Study.Area,initsp,recipsp,interaction) %>% 
-  count(recipsp) %>% rename(n_ints=n)
-# Neutral only
+  count(recipsp) %>% rename(all_pair_ints=n)
+  # Neutral only
 x<-Interact_2 %>% filter(rating=='0') %>%
   select(Study.Area,initsp,recipsp,interaction) %>% 
   group_by(Study.Area,initsp,recipsp,interaction) %>% 
-  count(recipsp) %>% rename(n_NE=n)
-# Merge 1
-all.targets<-merge(all.targets,x,by=c('Study.Area','initsp','recipsp','interaction'),all = TRUE) %>% replace(is.na(.), 0) 
-# Aggressions, no NE
-y<-Interact_2 %>% filter(rating!='0') %>%
+  count(recipsp) %>% rename(NE_pair_ints=n)
+  # Merge 
+sp.pairs<-merge(sp.pairs,x,by=c('Study.Area','initsp','recipsp','interaction'),all = TRUE) %>% replace(is.na(.), 0) 
+  # Aggressive only
+x<-Interact_2 %>% filter(rating!='0') %>%
   select(Study.Area,initsp,recipsp,interaction) %>% 
   group_by(Study.Area,initsp,recipsp,interaction) %>% 
-  count(recipsp) %>% rename(n_Agg=n)
-# Merge 2
-all.targets<-merge(all.targets,y,by=c('Study.Area','initsp','recipsp','interaction'),all = TRUE) %>% replace(is.na(.), 0)
-all.targets<- all.targets%>% arrange(Study.Area,initsp,recipsp,desc(n_Agg))
+  count(recipsp) %>% rename(Agg_pair_ints=n)
+  # Merge 
+sp.pairs<-merge(sp.pairs,x,by=c('Study.Area','initsp','recipsp','interaction'),all = TRUE) %>% replace(is.na(.), 0)
+
 ## merge species traits for IS
 x<-Prof %>% select(Species,NestType,sp_lab,Avg_size,Avg_Weight)
 x<-x %>% rename(IS.NestType=NestType,
-                IS.sp_lap=sp_lab,
+                IS.sp_lab=sp_lab,
                 IS.size=Avg_size,
                 IS.wt=Avg_Weight) 
-all.targets<-merge(all.targets,x,by.x='initsp',by.y='Species')
+sp.pairs<-merge(sp.pairs,x,by.x='initsp',by.y='Species')
 ## merge species traits for RS
 x<-Prof %>% select(Species,NestType,sp_lab,Avg_size,Avg_Weight)
 x<-x %>% rename(RS.NestType=NestType,
-                RS.sp_lap=sp_lab,
+                RS.sp_lab=sp_lab,
                 RS.size=Avg_size,
                 RS.wt=Avg_Weight) 
-all.targets<-merge(all.targets,x,by.x='recipsp',by.y='Species')
+sp.pairs<-merge(sp.pairs,x,by.x='recipsp',by.y='Species')
 
-all.targets<-all.targets %>% relocate(3,2,1,4,5,6,7,8,12,9,13,10,14,11,15)
-all.targets<-all.targets %>% mutate(wt_diff=IS.size-RS.size)
+sp.pairs<-sp.pairs %>% relocate(3,2,1,4,5,6,7,8,12,9,13,10,14,11,15)
+sp.pairs<-sp.pairs %>% mutate(size_diff=IS.size-RS.size)
+
+# Parrots only for quick reference
+sp.pairs.parrots<-sp.pairs %>% 
+  filter(initsp=="Monk parakeet"|
+           initsp=="Tanimbar corella"|
+           initsp=="Rose-ringed parakeet"|
+           initsp=="Red-breasted parakeet")
+  
 
 #============================#
 # INDICES_2----
@@ -954,28 +412,29 @@ all.targets<-all.targets %>% mutate(wt_diff=IS.size-RS.size)
 rm(Indices_2)
 # Environment
 envpc<-Enviro %>% 
-  select(Study.Area,canopypc,Vegpc,buildpc,artsurfacepc,waterpc,natsurfacepc,mangrovepc)
+  select(Study.Area,areaHa,
+         canopypc,Vegpc,buildpc,artsurfacepc,waterpc,natsurfacepc,mangrovepc,
+         n_cavity)
 Indices_2<-merge(Indices,envpc,by='Study.Area')
 
-# Non-native Parrot proportion
-x<-Composition_3 %>% 
-  filter(Species=="Monk parakeet"|Species=="Red-breasted parakeet"|Species=="Tanimbar corella"|
-           Species=="Long-tailed parakeet"|Species=="Rose-ringed parakeet") %>% 
+# Total non-native "I" species proportion
+x<-Composition_2 %>% 
+  filter(SG_status=='I') %>% 
   group_by(Study.Area,Species) %>% 
   summarise(freq=mean(max.freq)) %>% 
   group_by(Study.Area) %>% 
-  summarise(freq.nnparr=sum(freq))
+  summarise(freq.I=sum(freq))
 Indices_2<-merge(Indices_2,x,by='Study.Area')
 
-# all Parrot proportion
-x<-Composition_3 %>% 
+# Parrot proportion
+x<-Composition_2 %>% 
   filter(Species=="Monk parakeet"|Species=="Red-breasted parakeet"|Species=="Tanimbar corella"|
            Species=="Long-tailed parakeet"|Species=="Rose-ringed parakeet"|
            Species=='Yellow crested cockatoo'|Species=='Sulphur crested cockatoo') %>% 
   group_by(Study.Area,Species) %>% 
   summarise(freq=mean(max.freq)) %>% 
   group_by(Study.Area) %>% 
-  summarise(freq.parr=sum(freq))
+  summarise(freq.parrots=sum(freq))
 Indices_2<-merge(Indices_2,x,by='Study.Area')
 
 # Explicit Cavity nester proportion
@@ -1583,12 +1042,14 @@ Indices_2 %>%
 # plot
 grid.arrange(isxprop,isxrich,ncol=2)
 
-
+Composition_3 %>% 
+  ggplot(aes(Study.Area,ints_HR))+
+  geom_col()
 
 #===========================#
 # v Cavity nester proportion----
 #===========================#
-
+# THIS----
 Indices_2 %>% filter(Study.Area!='Sengkang Riverside Park') %>% 
   ggplot(aes(cav.sp.freq,ints_HR))+
            stat_poly_line(se=F)+
@@ -1602,7 +1063,8 @@ Indices_2 %>% filter(Study.Area!='Sengkang Riverside Park') %>%
   stat_poly_eq()+
   geom_point(aes(color=Study.Area))+
   labs(title = 'Cavity nester proportion = higher aggression')
-# greater aggression levels where the number of obligate cavity nesters is high
+
+# how about aggression level
 
 
 #===============================#
@@ -1668,8 +1130,7 @@ Composition_3 %>% filter(n_ints>5) %>%
 # Parrot targets----
 all.targets %>% 
   filter(initsp=="Monk parakeet"|initsp=='Tanimbar corella'|
-           initsp=='Rose-ringed parakeet'|initsp=='Red-breasted parakeet'|
-           initsp=='Long-tailed parakeet') %>% 
+           initsp=='Rose-ringed parakeet'|initsp=='Red-breasted parakeet')%>% 
   group_by(initsp) %>% 
   summarise(n=n_distinct(recipsp)) %>% 
   ggplot(aes(reorder(initsp,-n),n))+
@@ -1693,7 +1154,9 @@ parrot.targets %>% filter(RS.size<150) %>% filter(n_NE==0) %>%
        title = 'Body size distribution of aggression recipients')
   
 # removing NE & mean highlight
-parrot.targets %>% filter(RS.size<150) %>% filter(n_NE==0) %>% 
+parrot.targets %>% #
+  filter(RS.size<150) %>% 
+  filter(n_NE==0) %>% 
   ggplot(aes(initsp,RS.size))+
   geom_boxplot(outlier.shape = 1)+
   stat_summary(fun='mean',color='red',shape=15)+
@@ -1726,17 +1189,6 @@ all.targets %>% filter(RS.size<150) %>% filter(n_NE==0) %>%
   labs(x='Species',y='Body length (cm)',
        title = 'Body size distribution of aggression recipients')+
   facet_wrap(~initsp)
-
-# interaction type / RS.size ~ species
-all.targets %>% filter(RS.size<150) %>% filter(n_NE==0) %>% 
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"| initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|
-           initsp=="Long-tailed parakeet") %>% 
-  ggplot(aes(interaction,n_Agg))+
-  geom_boxplot(outlier.shape = 1)+
-  stat_summary(fun='mean',color='red',shape=15)+
-  labs(x='Species',y='Body length (cm)',
-       title = 'Body size distribution of aggression recipients')+
-  facet_wrap(~Study.Area)
 
 # study.area / RS.size ~ species
 all.targets %>% filter(RS.size<150) %>% filter(n_NE==0) %>% 
@@ -2012,17 +1464,21 @@ x4<-Composition_3 %>%
   mutate(intsxNE_freq=n_ints_xNE/max_obs) %>% 
   mutate(inits_freq=inits/max_obs) %>% 
   mutate(inits_xNE_freq=inits_xNE/max_obs)
+levels(x4$interaction)
+x4$interaction<-factor(x4$interaction,
+                       levels = c('Neutral','Displace','Threat','Swoop','Chase','Contact','Fight'))
 
 # parrots
 x4 %>% 
   filter(Species=="Monk parakeet"|Species=='Tanimbar corella'|
            Species=='Rose-ringed parakeet'|Species=='Red-breasted parakeet'|
-           Species=='Long-tailed parakeet')%>%  
-  ggplot(aes(reorder(Study.Area,ints_freq),ints_freq))+
-  geom_col()+coord_flip()+
-  facet_wrap(~Species)+
+           Species=='Long-tailed parakeet')%>%
+  ggplot(aes(reorder(Species,ints_freq),ints_freq))+
+  geom_col()+
+  coord_flip()+
   labs(y= 'n initated interactions / n observations',
-       x= 'Study Area')
+       title = 'Frequency of intiated interactions')+
+  theme(axis.title.y = element_blank())
 
 
 x4<-Composition_4 %>%
@@ -2041,12 +1497,12 @@ x4 %>%
            Species=='Rose-ringed parakeet'|Species=='Red-breasted parakeet'|
            Species=='Long-tailed parakeet')%>%  
   filter(interaction!=0) %>% 
-  ggplot(aes(reorder(Study.Area,ints_freq),ints_freq))+
-  geom_col(aes(fill=interaction))+
+  ggplot(aes(reorder(Species,ints_freq),ints_freq))+
+  geom_col(aes(fill=interaction),position='fill')+
   coord_flip()+
-  facet_wrap(~Species)+
   labs(y= 'n initated interactions / n observations',
-       x= 'Study Area')
+       title = 'Frequency of intiated interactions by type')+
+  theme(axis.title.y = element_blank())
 
 ## !! ADD COMPOSTION_4 FOR INTERACTION TYPE AND STACKED BAR INTERACTION TO THIS
 
