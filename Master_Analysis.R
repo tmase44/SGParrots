@@ -45,8 +45,8 @@ Prof <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissert
 Enviro <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                      sheet = "Enviro")
 # Trees
-Tree <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
-                     sheet = "TC")
+#Tree <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
+                     #sheet = "TC")
 
 # NSS data
 NSS <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/NSS/data/NSS_parrot_data_long.xlsx", 
@@ -352,7 +352,8 @@ ISRS<-ISRS %>%
   mutate(inits_HR=inits/effort) %>% 
   mutate(inits_xNE_HR=inits_xNE/effort)
 
-ISRS<-ISRS %>% relocate(1,2,8,3,4,6,5,9,10,7,23,24,25,11,12,13,14,15,16,17,18,
+ISRS<-ISRS %>% relocate(1,2,8,3,4,6,5,9,10,7,27,28,29,30,23,24,25,11,12,13,
+                        14,15,16,17,18,
                         19,20,21,22,26)
 ISRS<-ISRS %>% arrange(Study.Area,desc(n_ints))
 
@@ -409,12 +410,13 @@ sp.pairs.parrots<-sp.pairs %>%
 #============================#
 # INDICES_2----
 #============================#
+
 rm(Indices_2)
-# Environment
+# Environment data
 envpc<-Enviro %>% 
   select(Study.Area,areaHa,
          canopypc,Vegpc,buildpc,artsurfacepc,waterpc,natsurfacepc,mangrovepc,
-         n_cavity)
+         n_cavity,cavs_canopy_sqm)
 Indices_2<-merge(Indices,envpc,by='Study.Area')
 
 # Total non-native "I" species proportion
@@ -438,7 +440,7 @@ x<-Composition_2 %>%
 Indices_2<-merge(Indices_2,x,by='Study.Area')
 
 # Explicit Cavity nester proportion
-x<-Composition_3 %>% 
+x<-Composition_2 %>% 
   filter(NestType=='Cavity') %>% 
   group_by(Study.Area,Species) %>% 
   summarise(max.freq=mean(max.freq)) %>% 
@@ -446,42 +448,12 @@ x<-Composition_3 %>%
   summarise(cav.sp.freq=sum(max.freq))
 Indices_2<-merge(Indices_2,x,by='Study.Area')
 
-# All poss Cavity nester proportion
-x<-Composition_3 %>% 
-  filter(NestType=='Cavity-optional'|NestType=='Cavity') %>% 
-  group_by(Study.Area,Species) %>% 
-  summarise(freq=mean(max.freq)) %>% 
-  group_by(Study.Area) %>% 
-  summarise(cav.sp.freq2=sum(freq))
-Indices_2<-merge(Indices_2,x,by='Study.Area')
-
-### FROM ISRS
-
-# Initiations
-### Use ~IS~ ONLY otherwise 2x count
-x<-Composition_3 %>% select(1,2,22:28) %>% 
-  group_by(Study.Area) %>% 
-  summarise(n_ints=sum(n_ints),
-            n_ints_xNE=sum(n_ints_xNE),
-            inits=sum(inits),
-            inits_xNE=sum(inits_xNE),
-            ints_HR=sum(ints_HR),
-            ints_xNE_HR=sum(ints_xNE_HR))
-Indices_2 <- merge(Indices_2,x,by='Study.Area')
-
-
-#============================#
-# 8.d. Tree & Cavity data----
-#============================#
-
-###
-
 
 #===============================#
-# 8.e. Enviro Long Transform----
+# Enviro Long Transform----
 #===============================#
 
-# add properly summed Vegetation cover (less canopy cover)
+# just for charting
 
 Enviro_2 <- Enviro %>% 
   select(Study.Area,canopypc,Vegpc,buildpc,artsurfacepc,waterpc,natsurfacepc,mangrovepc) %>% 
@@ -492,26 +464,10 @@ Enviro_2$land_prop <- factor(Enviro_2$land_prop
                                          'Vegpc','canopypc','waterpc','mangrovepc'))
 levels(Enviro_2$land_prop)
 
-#===========================#
-# other----
-#===========================#
-
-# Master
-# + abundance, max count, max prop, total count, total prop
-#x<-Composition_2 %>% select(Study.Area,Species,max_obs,max.proportion,
-#                            total_obs,total.proportion,sp_lab,Avg_size,NestType,
- #                           CavityYN,Abundance,Richness.all,Richness.max,Shannon.all,
- #                           Shannon.max,Simpson.all,Simpson.max) 
-#Master<-merge(ISRS,x,by=c('Study.Area','Species'),all=T)
-#dim(Master)
-#Master<-Master %>% distinct(Study.Area,Species,interaction,outcome,
-  #                         role,n_ints, .keep_all = TRUE)
-
-
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
-#=============================== x. NSS DATA  ================================
+#=============================== NSS DATA  ================================
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
@@ -519,10 +475,11 @@ levels(Enviro_2$land_prop)
 NSS %>% 
   group_by(Year,Species) %>% 
   summarise(n=sum(Count)) %>% 
+  filter(Species!='Monk parakeet') %>% 
   ggplot(aes(Year,n,color=Species))+
   geom_point()+
   geom_smooth(se=F)+
-  facet_wrap(~Species,scale='free')+
+  facet_wrap(~Species,scale='free',ncol = 1,nrow = 3)+
   labs(x='Year',y='Observations',title = 'NSS Parrot count')+
   theme(legend.position = 'none')
 
@@ -530,6 +487,34 @@ NSS %>%
 ## RBP continuous growth but populations may be reaching capacity
 ## RRP growth is high, potential to explode
 ## TC signifcant growth but fairly stable for several years
+
+# Site by site comparison
+
+x<-Composition_2 %>% 
+  select(Study.Area,Species,max_obs) %>% 
+  filter(Species=="Monk parakeet"|Species=="Red-breasted parakeet"|Species=="Tanimbar corella"|
+           Species=="Long-tailed parakeet"|Species=="Rose-ringed parakeet"|
+           Species=='Yellow crested cockatoo'|Species=='Sulphur crested cockatoo')
+x<-x %>% mutate(source='Study 2022')
+  
+y<-NSS %>% 
+  filter(Year=='2019') %>% 
+  select(Study.Area,Species,Count) %>% 
+  rename(max_obs=Count) %>% 
+  filter(Study.Area=='Sengkang Riverside Park'|Study.Area=='Springleaf'|
+           Study.Area=='Changi Village'|
+           Study.Area=='Palawan Beach') %>% 
+  mutate(source='NSS 2019')
+rm(z)
+z<-merge(x,y,by=c('Study.Area','Species','max_obs','source'),all=T)
+
+z %>% 
+  filter(Study.Area!='Changi Airport') %>% 
+  ggplot(aes(source,max_obs,fill=Species))+
+  geom_col()+
+  facet_wrap(~Study.Area)+
+  labs(y='number of individuals',x='Survey & Year',
+       title = 'Parrot population comparison 2019-2022')
 
 
 #/////////////////////////////////////////////////////////////////////////////#
