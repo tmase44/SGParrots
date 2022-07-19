@@ -1,43 +1,14 @@
 library(pacman)
-p_load(kableExtra,Rmisc,rcompanion,brant,ordinal,MASS,DescTools,formattable,knitr,kableExtra,tidyverse,vegan,
+p_load(kableExtra,Rmisc,rcompanion,brant,ordinal,MASS,DescTools,formattable,
+       knitr,kableExtra,tidyverse,vegan,
        lubridate,gridExtra,circlize,stringr,readxl)
 
 # Ordinal logistic regression----
 #https://www.r-bloggers.com/2019/06/how-to-perform-ordinal-logistic-regression-in-r/
 # explicit order to categories (rating)
 
-# data prep----
-# ...all initators----
-model<-Interact_2 %>% filter(recipsp!="NA")%>% select(initsp,interaction,rating,isout)
-model<-rename(init.lm,species=initsp)  
-model<-rename(init.lm,outcome=isout)
-model$role<-'IS' # identify IS/RS
-
-model<-model %>% filter(species=="Monk parakeet"|species=="Tanimbar corella"|species=="Rose ringed parakeet"|
-                        species=="Red-breasted parakeet"|species=="Long-tailed parakeet")
-#edit
-#init.lm<-init.lm %>% filter(species=="Rose ringed parakeet"|species=="Long-tailed parakeet")
 
 
-init.lm$species<-init.lm$species %>% factor(levels=c("Long-tailed parakeet","Rose ringed parakeet","Tanimbar corella","Red-breasted parakeet",
-                  "Monk parakeet"))
-  
-
-init.lm<-init.lm %>% 
-  select(interaction,rating,species,outcome) %>% 
-    mutate(status=factor(case_when(
-    species=="Red-breasted parakeet"~"0",
-    species=="Tanimbar corella"~"0",
-    species=="Rose ringed parakeet"~"0",
-    species=="Monk parakeet"~"0",
-    species=="Long-tailed parakeet"~"1"))) 
-
-init.lm$rating<-as.factor(init.lm$rating)
-levels(init.lm$rating)
-levels(init.lm$interaction)
-levels(init.lm$outcome)
-levels(init.lm$status)
-levels(init.lm$species)
 # status 0 = non native, 1 = native LTP
 # WL 0 = loss, 1 = W
 
@@ -47,14 +18,15 @@ levels(init.lm$species)
 #### https://www.youtube.com/watch?v=rrRrI9gElYA !!!!! WATCH
 
 # Interaction type ~ species----
+levels(sp.pairs_2$interaction)
 ## Null model----
-modelnull<-clm(as.factor(init.lm$interaction)~1,
-               data=init.lm,
+modelnull<-clm(as.factor(sp.pairs_2$interaction)~1,
+               data=sp.pairs_2,
                link='loglog')
 
 ## Actual model----
-model1<-clm(as.factor(init.lm$interaction)~species,
-               data=init.lm,
+model1<-clm(as.factor(sp.pairs_2$interaction)~size_diff,
+               data=sp.pairs_2,
                link='loglog')
 
 anova(modelnull,model1)

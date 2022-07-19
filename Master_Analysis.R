@@ -6,14 +6,14 @@
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
-#============================= 1. LOAD PACKS ==================================  
+#============================= LOAD PACKS ==================================  
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 library(pacman)
 library(Ostats)
 p_load(formattable,knitr,kableExtra, # nice tables
        tidyverse,vegan,lubridate,gridExtra,grid,ggrepel,reshape2,ggpmisc,
-       BBmisc,stringr,Hmisc,
+       BBmisc,stringr,Hmisc,moments,
        ggpubr,AICcmodavg, #anova
        circlize, # interaction networks
        Distance, # transect analysis, relative abundance, density
@@ -25,7 +25,7 @@ library(psych)
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
-#============================== 2. IMPORT DATA ================================  
+#============================== IMPORT DATA ================================  
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 # Composition
@@ -60,7 +60,7 @@ NSS <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Disserta
 #/////////////////////////////////////////////////////////////////////////////#
 
 #========================================#
-# Simpson, Shannon, Richness == MAX----
+# Simpson, Shannon, Richness----
 #========================================#
 Comp.max<-Composition %>% 
   group_by(Study.Area,Species,Surveyno) %>% 
@@ -104,48 +104,12 @@ Indices<-data.frame(Indices.max)
 Indices <- rownames_to_column(Indices, "Study.Area")
 
 
-# plot
-Indices %>% 
-  ggplot(aes(x=Simpson,y=Shannon)) +
-  geom_point(aes(color=Richness), size=4)+
-  labs(title = 'Alpha biodiversity indices',
-       x = 'Simpson Index', y='Shannon Index',
-       color='Richness')+
-  geom_text_repel(aes(label=Study.Area),
-                  nudge_y = 0.04,segment.color = NA)
-# without Airport
-Indices %>% 
-  filter(Study.Area!='Changi Airport') %>% 
-  ggplot(aes(x=Simpson,y=Shannon)) +
-  geom_point(aes(color=Richness), size=4)+
-  labs(title = 'Alpha biodiversity indices',
-       x = 'Simpson Index', y='Shannon Index',
-       color='Richness')+
-  geom_text_repel(aes(label=Study.Area),
-                  nudge_y = 0.04,segment.color = NA)
+#/////////////////////////////////////////////////////////////////////////////
+#/////////////////////////////////////////////////////////////////////////////
+#============================= BETA BD INDICES ============================= 
+#/////////////////////////////////////////////////////////////////////////////
+#/////////////////////////////////////////////////////////////////////////////
 
-# table
-formattable(Indices) 
-
-## Changi and Stirling/QT have the lowest BD and richness scoring
-  ## highly urbanised areas 
-
-## Springleaf, old plantation and secondary forest with canal
-  ## some urbanisation surrounding but also close to central catchment NR
-
-## Palawan beach is quite busy but low urbanisation. Surrounding area rich in
-  ## dense secondary forest with old trees and little or no maintenance
-
-## Sengkang / PRTP are managed urban parks but quite rich in vegatation. 
-  ## food resources are plentiful
-
-
-# #/////////////////////////////////////////////////////////////////////////////#
-# #/////////////////////////////////////////////////////////////////////////////#
-# #============================= BETA BD INDICES ============================= 
-# #/////////////////////////////////////////////////////////////////////////////#
-# #/////////////////////////////////////////////////////////////////////////////#
-# 
 #===================#
 # Sorensen index----
 #===================#
@@ -192,11 +156,11 @@ sorensen.plot
 ## Airport has low overlap
 
 
-#/////////////////////////////////////////////////////////////////////////////#
-#/////////////////////////////////////////////////////////////////////////////#
-#======================== FIRST DATA TRANSFORMATION ===========================
-#/////////////////////////////////////////////////////////////////////////////#
-#/////////////////////////////////////////////////////////////////////////////#
+#/////////////////////////////////////////////////////////////////////////////
+#/////////////////////////////////////////////////////////////////////////////
+#======================== DATA TRANSFORMATION ===========================
+#/////////////////////////////////////////////////////////////////////////////
+#/////////////////////////////////////////////////////////////////////////////
 
 # Merge Indices (BD, max counts) + profiles
 rm(Composition_2) 
@@ -262,14 +226,8 @@ NSS$Species<-as.factor(NSS$Species)
 NSS$Count<-NSS$Count %>% replace(is.na(.), 0)
 
 
-#/////////////////////////////////////////////////////////////////////////////#
-#/////////////////////////////////////////////////////////////////////////////#
-#========================= SECOND DATA TRANSFORMATION =========================
-#/////////////////////////////////////////////////////////////////////////////#
-#/////////////////////////////////////////////////////////////////////////////#
-
 #=============================#
-# ISRS: Interact long-transform----
+# ISRS: Interact long-transform
 #=============================#
 rm(ISRS)
 # IS
@@ -356,7 +314,7 @@ ISRS$n_ints<-ISRS$n_ints%>% replace(is.na(.), 0)
 ISRS$ints_HR<-ISRS$ints_HR%>% replace(is.na(.), 0)
 
 #=============================#
-# Species Pairs----
+# Species Pairs
 #=============================#
 rm(sp.pairs)
 # pairs for all interactions
@@ -406,7 +364,7 @@ sp.pairs.parrots<-sp.pairs %>%
   
 
 #============================#
-# INDICES_2----
+# Indices_2
 #============================#
 
 rm(Indices_2)
@@ -446,6 +404,25 @@ x<-Composition_2 %>%
   summarise(cav.sp.freq=sum(max.freq))
 Indices_2<-merge(Indices_2,x,by='Study.Area')
 
+# total interactions per site
+x<-ISRS %>% 
+  filter(role=='IS') %>% 
+  group_by(Study.Area) %>% 
+  summarise(n_ints=sum(n_ints))
+Indices_2<-merge(Indices_2,x,by='Study.Area')
+
+x<-ISRS %>% 
+  ungroup() %>% 
+  filter(role=='IS') %>% 
+  select(Study.Area,interaction,n_ints) %>% 
+  group_by(Study.Area,interaction) %>% 
+  summarise(n_ints=sum(n_ints)) %>% 
+  ungroup() %>% 
+  spread(key=interaction,value = n_ints) %>% 
+  replace(is.na(.), 0)
+Indices_2<-merge(Indices_2,x,by='Study.Area')
+
+
 #===============================#
 # ISRS 2 adding Indices data
 #===============================#
@@ -453,7 +430,7 @@ rm(sp.pairs_2)
 sp.pairs_2<-merge(sp.pairs,Indices_2,by='Study.Area',all=T)
 
 #===============================#
-# Enviro Long Transform----
+# Enviro Long Transform
 #===============================#
 
 # just for charting
@@ -468,11 +445,11 @@ Enviro_2$land_prop <- factor(Enviro_2$land_prop
 levels(Enviro_2$land_prop)
 
 
-#/////////////////////////////////////////////////////////////////////////////#
-#/////////////////////////////////////////////////////////////////////////////#
+#/////////////////////////////////////////////////////////////////////////////
+#/////////////////////////////////////////////////////////////////////////////
 #=============================== NSS DATA  ================================
-#/////////////////////////////////////////////////////////////////////////////#
-#/////////////////////////////////////////////////////////////////////////////#
+#/////////////////////////////////////////////////////////////////////////////
+#/////////////////////////////////////////////////////////////////////////////
 
 # pop trends
 NSS %>% 
@@ -519,11 +496,11 @@ z %>%
        title = 'Parrot population comparison 2019-2022')
 
 
-#/////////////////////////////////////////////////////////////////////////////#
-#/////////////////////////////////////////////////////////////////////////////#
-#============================= DATA EXPLORATION =============================
-#/////////////////////////////////////////////////////////////////////////////#
-#/////////////////////////////////////////////////////////////////////////////#
+#/////////////////////////////////////////////////////////////////////////////
+#/////////////////////////////////////////////////////////////////////////////
+#============================= DATA SUMMARIES =============================
+#/////////////////////////////////////////////////////////////////////////////
+#/////////////////////////////////////////////////////////////////////////////
 
 x<-Composition %>% select(Study.Area) %>% n_distinct()
 y<-Composition %>% group_by(Study.Area) %>% summarise(n=max(Surveyno)) %>% 
@@ -642,15 +619,52 @@ ISRS %>% group_by(Species,outcome) %>%
   summarise(n=sum(n_ints)) %>% mutate(freq=n/sum(n)*100)%>% 
   filter(outcome=='W') %>% arrange(desc(n))
 
-
+#/////////////////////////
 # Test for normality----
 
-plot(sp.pairs_2)
+# Shapiro-wilk for small samples
+## less than alpha 0.05 = not normal
+## not less than alpha 0.05 = normal
+shapiro.test(Indices_2$n_ints) # normal
+shapiro.test(Indices_2$Neutral) # normal
+shapiro.test(Indices_2$Swoop) # normal
+shapiro.test(Indices_2$Displace) # normal
+shapiro.test(Indices_2$Threat) # normal
+shapiro.test(Indices_2$Richness) # normal
+shapiro.test(Indices_2$Shannon) # normal
+shapiro.test(Indices_2$canopypc) # normal
+shapiro.test(Indices_2$cavs_canopy_sqm) # normal
+skewness(Indices_2$canopypc)
+kurtosis(Indices_2$canopypc)
+skewness(Indices_2$Richness)
+kurtosis(Indices_2$Richness)
+# indices and survey site data are normally distributed
 
-# spearmans rank correlation might be good choice because:
-  # richness / biodiversity is ordinal
+shapiro.test(ISRS$rating) # not normal
+shapiro.test(ISRS$ints_HR) # not normal
+shapiro.test(sp.pairs$all_pair_ints) # not-normal
+x<-Composition %>% sample_n(100)
+shapiro.test(x$distance)  # not-normal
+x<-Comp.max %>% filter(Study.Area!='Changi Airport')
+ggplot(x,aes(max_obs))+geom_histogram() # not normal
+x<-sp.pairs %>% ungroup() %>% 
+  group_by(initsp,recipsp) %>% summarise(n=sum(all_pair_ints))
+ggplot(x,aes(n))+geom_histogram() # not normal
 
-z<-ggscatter(x,'n_ints','freq.I',
+
+ggplot(Interact_2,aes(rating))+geom_histogram()
+skewness(Interact_2$rating)
+kurtosis(Interact_2$rating)
+skewness(x$n)
+kurtosis(x$n)
+
+# interaction data are measured ordinally
+  # right skew
+    # ///use: Spearmans-Rank correlation 
+
+# Survey site data are normally distributed and can
+x<-sp.pairs_2 %>% group_by()
+z<-ggscatter(sp.pairs_2,'all_pair_ints','freq.I',
              add = 'reg.line',
              add.params = list(color = "blue", fill = "lightgray"),
              conf.int = TRUE)
@@ -666,7 +680,7 @@ z
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
-#=============================== 10.0 CHARTS =================================
+#=============================== CHARTS =================================
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
@@ -674,11 +688,106 @@ z
 # clean wrapped labels!!!!
 ISRS$Species2 = str_wrap(ISRS$Species, width = 10)
 
+#/////////////////////////////////////////////////////////////////////////////#
+#/////////////////////////////////////////////////////////////////////////////#
+#======================== SURVEY SITES ===========================
+#/////////////////////////////////////////////////////////////////////////////#
+#/////////////////////////////////////////////////////////////////////////////#
 
+# Shannon / Simpson / Richness
+Indices %>% 
+  ggplot(aes(x=Simpson,y=Shannon)) +
+  geom_point(aes(color=Richness), size=4)+
+  labs(title = 'Alpha biodiversity indices',
+       x = 'Simpson Index', y='Shannon Index',
+       color='Richness')+
+  geom_text_repel(aes(label=Study.Area),
+                  nudge_y = 0.04,segment.color = NA)
+  # without Changi Airport
+Indices %>% 
+  filter(Study.Area!='Changi Airport') %>% 
+  ggplot(aes(x=Simpson,y=Shannon)) +
+  geom_point(aes(color=Richness), size=4)+
+  labs(title = 'Alpha biodiversity indices',
+       x = 'Simpson Index', y='Shannon Index',
+       color='Richness')+
+  geom_text_repel(aes(label=Study.Area),
+                  nudge_y = 0.04,segment.color = NA)
+
+  # Table form
+formattable(Indices) 
+
+## Changi and Stirling/QT have the lowest BD and richness scoring
+## highly urbanised areas 
+
+## Springleaf, old plantation and secondary forest with canal
+## some urbanisation surrounding but also close to central catchment NR
+
+## Palawan beach is quite busy but low urbanisation. Surrounding area rich in
+## dense secondary forest with old trees and little or no maintenance
+
+## Sengkang / PRTP are managed urban parks but quite rich in vegatation. 
+## food resources are plentiful
+
+# RA curve
+x<-Composition_2 %>% 
+  select(Study.Area,Species,max_obs,max.freq) %>% 
+  group_by(Study.Area) %>% 
+  mutate(rank=dense_rank(desc(max.freq))) %>% 
+  arrange(Study.Area,rank) %>% 
+  group_by(Study.Area) %>%
+  mutate(id = row_number())
+x$rank<-as.character(x$rank)
+
+x %>% filter(Study.Area!='Changi Airport') %>% 
+  ggplot(aes(id,max.freq))+
+  geom_point(shape=1,alpha=0.6)+
+  geom_line(alpha=0.6,position = position_dodge(width=0.1))+
+  facet_wrap(~Study.Area)+
+  labs(title = 'Rank abundance curves',
+       x='Rank',y='Abundance (percent)')+
+  scale_x_continuous(limits = c(1, 54), 
+                     breaks = c(1,5,10,15,20,25,30,35,40,45,50,54))+
+  theme_pubclean()+
+  theme(legend.position = 'none')
+
+
+y<-Composition_2 %>%
+  select(Study.Area,Species,max.freq,SG_status) %>% 
+  group_by(Study.Area,Species) %>% 
+  arrange(Study.Area,desc(max.freq)) %>% 
+  filter(max.freq>5)
+view(y)
+# Non-natives account for the majority of the community in every site
+# house crows, parrots, javan mynas
+
+x<-Composition_2 %>% 
+  drop_na(SG_status) %>% 
+  select(Study.Area,Species,max.freq,SG_status) %>% 
+  mutate(Status=case_when(SG_status=='I'~'Non-native',
+                          SG_status=='R'~'Resident',
+                          SG_status=='M'~'Migratory',
+                          SG_status=='N'~'Migratory',
+                          SG_status=='V'~'Migratory')) %>% 
+  group_by(Study.Area,Status) %>% 
+  summarise(n=sum(max.freq)) %>% 
+  arrange(Study.Area,desc(n)) 
+x$Status<-factor(x$Status,levels = c('Migratory','Resident','Non-native'))
+x %>% 
+  ggplot(aes(Study.Area,n,fill=Status))+
+  geom_col(position = 'fill') +
+  scale_fill_discrete(name = "Status")+
+  labs(y='Proportion of community',
+       title = 'Proportion of resident / non-native / migratory species')+
+  theme(axis.title.x = element_blank())
+# non native / introduced species are most prevalent in low biodiversity areas
+
+# Profile table of the sites
+formattable(indice)
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
-#======================== 10.1 TOP-LINE CORRELATIONS =========================
+#======================== TOP-LINE CORRELATIONS =========================
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
@@ -709,81 +818,16 @@ Indices_2 %>%
 ## canopy cover and vegetation alone have minimal correlation, but 
   # together have a multiplicative effect
 
-
+Indices_2 %>% 
+  filter(Study.Area!='Changi Airport') %>% 
+  ggplot(aes(n_ints,freq.I))+
+  geom_point(aes(color=Study.Area))+
+  stat_poly_line(se=F)+
+  stat_poly_eq()
+   
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
-#======================== COMPOSITION ===========================
-##/////////////////////////////////////////////////////////////////////////////#
-#/////////////////////////////////////////////////////////////////////////////#
-
-Composition_2 %>% 
-  group_by(Study.Area,Species) %>% 
-  select(Study.Area,Species,max_obs) %>% 
-  summarise(max_obs=max(max_obs)) %>% 
-  ggplot(aes(Study.Area,max_obs))+
-  geom_jitter(aes(color=Species),width=0.12,size=2,alpha=0.6)+coord_trans(y='log10')+
-  scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
-                              'Monk parakeet'='#004488',
-                              'Rose-ringed parakeet'='#EE3377',
-                              'Tanimbar corella'='#33BBEE',
-                              'Long-tailed parakeet'='#009988',
-                              'Yellow crested cockatoo'='#DDAA33',
-                              'Blue rumped parrot'='red',
-                              'Sulphur crested cockatoo'='purple'))+
-  labs(title = 'Max daily counts per site, species',color="Species")#change legend title!!
-
-# RA curve
-x<-Composition_2 %>% 
-  select(Study.Area,Species,max_obs,max.freq) %>% 
-  group_by(Study.Area) %>% 
-  mutate(rank=dense_rank(desc(max.freq))) %>% 
-  arrange(Study.Area,rank) %>% 
-  group_by(Study.Area) %>%
-  mutate(id = row_number())
-x$rank<-as.factor(x$rank)
-
-x %>% filter(Study.Area!='Changi Airport') %>% 
-  ggplot(aes(id,max.freq,color=Study.Area))+
-  geom_line(alpha=0.8)+
-  geom_point(shape=1)+
-  scale_x_continuous(breaks=c(1,10,20,54),
-                 labels=c('1','5','10','18'))+
-  facet_wrap(~Study.Area)+
-  labs(title = 'Relative abundance curve',
-       x='Abundance rank',y='Abundance')
-y<-Composition_3 %>%
-  select(Study.Area,Species,max.freq,SG_status) %>% 
-  group_by(Study.Area,Species) %>% 
-  arrange(Study.Area,desc(max.freq)) %>% 
-  filter(max.freq>5)
-view(y)
-# Non-natives account for the majority of the community in every site
-  # house crows, parrots, javan mynas
-
-x<-Composition_3 %>% 
-  drop_na(SG_status) %>% 
-  select(Study.Area,Species,max.freq,SG_status) %>% 
-  mutate(Status=case_when(SG_status=='I'~'Non-native',
-                          SG_status=='R'~'Resident',
-                          SG_status=='M'~'Migratory',
-                          SG_status=='N'~'Migratory',
-                          SG_status=='V'~'Migratory')) %>% 
-  group_by(Study.Area,Status) %>% 
-  summarise(n=sum(max.freq)) %>% 
-  arrange(Study.Area,desc(n)) 
-x$Status<-factor(x$Status,levels = c('Migratory','Resident','Non-native'))
-x %>% 
-  ggplot(aes(Study.Area,n,fill=Status))+
-  geom_col(position = 'fill') +
-  scale_fill_discrete(name = "Status")+
-  labs(y='Proportion of community',
-         title = 'Proportion of resident / non-native / migratory species')+
-  theme(axis.title.x = element_blank())
-# non native / introduced species are most prevalent in low biodiversity areas
-    
-#/////////////////////////////////////////////////////////////////////////////#
-#/////////////////////////////////////////////////////////////////////////////#
-#======================== 10.4 CHARTS: INTERACTIONS ===========================
+#======================== INTERACTIONS ===========================
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
@@ -794,7 +838,7 @@ Pilot %>%
   geom_col()+
   labs(x='Time of day',y='Interaction frequency',
        title = 'Pilot study observations: Half-hourly interaction frequency')+
-  theme_minimal()+
+  theme_pubclean()+
   theme(axis.text.x = element_text(size=25,angle = 90, vjust = 0.5, hjust=1),
         axis.text.y = element_text(size = 25),
       plot.title = element_text(size=40),
