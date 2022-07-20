@@ -19,6 +19,7 @@ p_load(formattable,knitr,kableExtra, # nice tables
        Distance, # transect analysis, relative abundance, density
        readxl,writexl)
 library(gam)
+
 library(psych)
 
 
@@ -31,24 +32,19 @@ library(psych)
 # Composition
 Composition <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                           sheet = "Composition")
-
 # Interactions
 Interact <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                        sheet = "Interactions")
-
 # Profile / Niche
 Prof <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                        sheet = "Profile2")
-
 # Enviro
 Enviro <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                      sheet = "Enviro")
-
 # NSS data
 NSS <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/NSS/data/NSS_parrot_data_long.xlsx", 
                   sheet = "data")
-
-# plot time data
+# pilot time data
  Pilot <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                     sheet = "pilottime")
 
@@ -135,25 +131,6 @@ sorensen.complete
 #Melt function
 sorensen.melted<-melt(sorensen.complete)
 sorensen.melted
-
-#Plotting the results – a base
-sorensen.plot<-sorensen.melted %>%
-  ggplot(aes(x=Var1, y=Var2, fill = value))+
-  geom_tile(color = "white")+
-  labs(title = 'Sorensen (Beta biodiversity index)')+
-  theme(legend.title = element_blank())+
-  scale_fill_gradient2(low = "white", high = "black",
-                       mid="grey", midpoint = 0.5, limit = c(0,1),
-                       breaks=c(0,0.5,1),
-                       labels=c('No overlap','0.5','Max. overlap'))+
-  geom_text(aes(label = value), color = "black", size = 4)+ #Adding values of Jaccard distance
-  xlab("")+ylab("") #Removing the labels (x and y axis)
-
-sorensen.plot
-
-# higher value = greatest overlap / similarity
-## Changi and stirling high similarity, PRTP not too dissimilar
-## Airport has low overlap
 
 
 #/////////////////////////////////////////////////////////////////////////////
@@ -370,7 +347,9 @@ sp.pairs.parrots<-sp.pairs %>%
 rm(Indices_2)
 # Environment data
 envpc<-Enviro %>% 
-  select(Study.Area,areaHa,
+  select(Study.Area,
+         `Site habitat types`,`Surrounding habitat types`,
+         areaHa,
          canopypc,Vegpc,buildpc,artsurfacepc,waterpc,natsurfacepc,mangrovepc,
          n_cavity,cavs_canopy_sqm)
 Indices_2<-merge(Indices,envpc,by='Study.Area')
@@ -443,58 +422,6 @@ Enviro_2$land_prop <- factor(Enviro_2$land_prop
                              ,levels = c('buildpc','artsurfacepc','natsurfacepc',
                                          'Vegpc','canopypc','waterpc','mangrovepc'))
 levels(Enviro_2$land_prop)
-
-
-#/////////////////////////////////////////////////////////////////////////////
-#/////////////////////////////////////////////////////////////////////////////
-#=============================== NSS DATA  ================================
-#/////////////////////////////////////////////////////////////////////////////
-#/////////////////////////////////////////////////////////////////////////////
-
-# pop trends
-NSS %>% 
-  group_by(Year,Species) %>% 
-  summarise(n=sum(Count)) %>% 
-  ggplot(aes(Year,n,color=Species))+
-  geom_point()+
-  geom_smooth(se=F)+
-  facet_wrap(~Species,scale='free')+
-  labs(x='Year',y='Observations',title = 'NSS Parrot count')+
-  theme(legend.position = 'none')
-
-## MP not documented at all
-## RBP continuous growth but populations may be reaching capacity
-## RRP growth is high, potential to explode
-## TC signifcant growth but fairly stable for several years
-
-# Site by site comparison
-
-x<-Composition_2 %>% 
-  select(Study.Area,Species,max_obs) %>% 
-  filter(Species=="Monk parakeet"|Species=="Red-breasted parakeet"|Species=="Tanimbar corella"|
-           Species=="Long-tailed parakeet"|Species=="Rose-ringed parakeet"|
-           Species=='Yellow crested cockatoo'|Species=='Sulphur crested cockatoo')
-x<-x %>% mutate(source='Study 2022')
-  
-y<-NSS %>% 
-  filter(Year=='2019') %>% 
-  select(Study.Area,Species,Count) %>% 
-  rename(max_obs=Count) %>% 
-  filter(Study.Area=='Sengkang Riverside Park'|Study.Area=='Springleaf'|
-           Study.Area=='Changi Village'|
-           Study.Area=='Palawan Beach') %>% 
-  mutate(source='NSS 2019')
-rm(z)
-z<-merge(x,y,by=c('Study.Area','Species','max_obs','source'),all=T)
-
-z %>% 
-  filter(Study.Area!='Changi Airport') %>% 
-  ggplot(aes(source,max_obs,fill=Species))+
-  geom_col()+
-  facet_wrap(~Study.Area)+
-  labs(y='number of individuals',x='Survey & Year',
-       title = 'Parrot population comparison 2019-2022')
-
 
 #/////////////////////////////////////////////////////////////////////////////
 #/////////////////////////////////////////////////////////////////////////////
@@ -683,10 +610,9 @@ z
 #=============================== CHARTS =================================
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
-
-
 # clean wrapped labels!!!!
 ISRS$Species2 = str_wrap(ISRS$Species, width = 10)
+Enviro_2$Study.Area2 = str_wrap(Enviro_2$Study.Area, width = 10)
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
@@ -694,6 +620,7 @@ ISRS$Species2 = str_wrap(ISRS$Species, width = 10)
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
+## Alpha ----
 # Shannon / Simpson / Richness
 Indices %>% 
   ggplot(aes(x=Simpson,y=Shannon)) +
@@ -729,7 +656,34 @@ formattable(Indices)
 ## Sengkang / PRTP are managed urban parks but quite rich in vegatation. 
 ## food resources are plentiful
 
-# RA curve
+
+## Beta----
+# Sorensen index
+sorensen.plot<-sorensen.melted %>%
+  ggplot(aes(x=Var1, y=Var2, fill = value))+
+  geom_tile(color = "white")+
+  labs(title = 'Sorensen (Beta biodiversity index)')+
+  theme(legend.title = element_blank())+
+  scale_fill_gradient2(low = "white", high = "black",
+                       mid="grey", midpoint = 0.5, limit = c(0,1),
+                       breaks=c(0,0.5,1),
+                       labels=c('No overlap','0.5','Max. overlap'))+
+  geom_text(aes(label = value), color = "black", size = 4)+ #Adding values of Jaccard distance
+  xlab("")+ylab("") #Removing the labels (x and y axis)
+sorensen.plot
+
+# higher value = greatest overlap / similarity
+## Changi and stirling high similarity, PRTP not too dissimilar
+## Airport has low overlap
+
+## Land-use types----
+Enviro_2 %>% 
+  ggplot(aes(Study.Area,proportion,fill=land_prop))+
+  geom_col(position='fill')+
+  scale_x_discrete(labels = function(Study.Area2) str_wrap(Study.Area2, width = 10))+
+  labs(y='Proportion of land cover',x='Study Area',title = 'Land type per study site')
+
+## RA curve----
 x<-Composition_2 %>% 
   select(Study.Area,Species,max_obs,max.freq) %>% 
   group_by(Study.Area) %>% 
@@ -751,7 +705,7 @@ x %>% filter(Study.Area!='Changi Airport') %>%
   theme_pubclean()+
   theme(legend.position = 'none')
 
-
+## Species status----
 y<-Composition_2 %>%
   select(Study.Area,Species,max.freq,SG_status) %>% 
   group_by(Study.Area,Species) %>% 
@@ -782,14 +736,85 @@ x %>%
   theme(axis.title.x = element_blank())
 # non native / introduced species are most prevalent in low biodiversity areas
 
-# Profile table of the sites
-formattable(indice)
+## Profile table----
+Indices_2 %>% 
+  group_by(Study.Area) %>% 
+  mutate('Built area'=sum(buildpc+artsurfacepc), #28
+         'Natural area'=sum(canopypc+Vegpc+natsurfacepc), #29
+         'Water area'=sum(waterpc+mangrovepc)) %>% #30
+  select(1,5,6,3,28,29,30,
+         17,19,18,16,20) %>% 
+  mutate(across(where(is.numeric), round, 2)) %>% 
+  rename(Site=Study.Area,
+         '% non-native spp.'=freq.I,
+         '% cavity-nester spp.'=cav.sp.freq,
+         '% parrot-spp.'=freq.parrots,
+         'Cavities/sqm'=cavs_canopy_sqm,
+         'Interspecific interactions'=n_ints
+         ) %>% 
+  kable(align = 'lllccccccccc') %>% 
+  add_header_above(header=c(" "=4,
+                            "Land-use"=3,
+                            "Occupying species"=3,
+                            " "=2)) %>% 
+  kable_styling()
 
-#/////////////////////////////////////////////////////////////////////////////#
-#/////////////////////////////////////////////////////////////////////////////#
+#/////////////////////////////////////////////////////////////////////////////
+#/////////////////////////////////////////////////////////////////////////////
+#=============================== NSS DATA  ================================
+#/////////////////////////////////////////////////////////////////////////////
+#/////////////////////////////////////////////////////////////////////////////
+
+# Pop trend----
+NSS %>% 
+  group_by(Year,Species) %>% 
+  summarise(n=sum(Count)) %>% 
+  ggplot(aes(Year,n,color=Species))+
+  geom_point()+
+  geom_smooth(se=F)+
+  facet_wrap(~Species,scale='free')+
+  labs(x='Year',y='Observations',title = 'NSS Parrot count')+
+  theme(legend.position = 'none')
+
+## MP not documented at all
+## RBP continuous growth but populations may be reaching capacity
+## RRP growth is high, potential to explode
+## TC signifcant growth but fairly stable for several years
+
+# PC / Study compare----
+
+x<-Composition_2 %>% 
+  select(Study.Area,Species,max_obs) %>% 
+  filter(Species=="Monk parakeet"|Species=="Red-breasted parakeet"|Species=="Tanimbar corella"|
+           Species=="Long-tailed parakeet"|Species=="Rose-ringed parakeet"|
+           Species=='Yellow crested cockatoo'|Species=='Sulphur crested cockatoo')
+x<-x %>% mutate(source='Study 2022')
+
+y<-NSS %>% 
+  filter(Year=='2019') %>% 
+  select(Study.Area,Species,Count) %>% 
+  rename(max_obs=Count) %>% 
+  filter(Study.Area=='Sengkang Riverside Park'|Study.Area=='Springleaf'|
+           Study.Area=='Changi Village'|
+           Study.Area=='Palawan Beach') %>% 
+  mutate(source='NSS 2019')
+rm(z)
+z<-merge(x,y,by=c('Study.Area','Species','max_obs','source'),all=T)
+
+z %>% 
+  filter(Study.Area!='Changi Airport') %>% 
+  ggplot(aes(source,max_obs,fill=Species))+
+  geom_col()+
+  facet_wrap(~Study.Area)+
+  labs(y='number of individuals',x='Survey & Year',
+       title = 'Parrot population comparison 2019-2022')
+
+
+#/////////////////////////////////////////////////////////////////////////////
+#/////////////////////////////////////////////////////////////////////////////
 #======================== TOP-LINE CORRELATIONS =========================
-#/////////////////////////////////////////////////////////////////////////////#
-#/////////////////////////////////////////////////////////////////////////////#
+#/////////////////////////////////////////////////////////////////////////////
+#/////////////////////////////////////////////////////////////////////////////
 
 
 #========================#
@@ -1158,21 +1183,4 @@ parrotmeans <- summarySE(x, measurevar =  "rating",
 parrotmeans
 
 
-
-#/////////////////////////////////////////////////////////////////////////////#
-#/////////////////////////////////////////////////////////////////////////////#
-#======================= 10.5 CHARTS: ENVIRONMENTAL ==========================
-#/////////////////////////////////////////////////////////////////////////////#
-#/////////////////////////////////////////////////////////////////////////////#
-
-Enviro_2 %>% 
-  filter(land_prop!='Vegpc') %>% 
-  ggplot(aes(Study.Area,proportion,fill=land_prop))+
-  geom_col(position='fill')+
-  labs(y='proportion of land cover type',x='Study Area',title = 'Land type per study site')+
-  scale_fill_manual(values = c('buildpc'='#f6c141',
-                               'surfacepc'='#f1932d',
-                               'Vegpc_act'='#90c987',
-                               'canopypc'='#4eb265',
-                               'waterpc'='#7bafde'))
 
