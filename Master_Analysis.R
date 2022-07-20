@@ -710,8 +710,9 @@ y<-Composition_2 %>%
   select(Study.Area,Species,max.freq,SG_status) %>% 
   group_by(Study.Area,Species) %>% 
   arrange(Study.Area,desc(max.freq)) %>% 
-  filter(max.freq>5)
-view(y)
+  group_by(Study.Area) %>% 
+  top_n(n=5, wt=max.freq)  
+y<-y[-c(31,32,38),]
 # Non-natives account for the majority of the community in every site
 # house crows, parrots, javan mynas
 
@@ -736,24 +737,34 @@ x %>%
   theme(axis.title.x = element_blank())
 # non native / introduced species are most prevalent in low biodiversity areas
 
+## Species table----
+y %>% 
+  mutate(across(where(is.numeric), round, 2)) %>% 
+  kable(align = 'llcc') %>% 
+  kable_styling()
+
 ## Profile table----
 Indices_2 %>% 
   group_by(Study.Area) %>% 
   mutate('Built area'=sum(buildpc+artsurfacepc), #28
          'Natural area'=sum(canopypc+Vegpc+natsurfacepc), #29
          'Water area'=sum(waterpc+mangrovepc)) %>% #30
-  select(1,5,6,3,28,29,30,
+  select(1,3,5,6,28,29,30,
          17,19,18,16,20) %>% 
   mutate(across(where(is.numeric), round, 2)) %>% 
-  rename(Site=Study.Area,
+  rename(" "=Study.Area,
+         'Survey area'='Site habitat types',
+         'Surrounding area'='Surrounding habitat types',
          '% non-native spp.'=freq.I,
          '% cavity-nester spp.'=cav.sp.freq,
          '% parrot-spp.'=freq.parrots,
          'Cavities/sqm'=cavs_canopy_sqm,
          'Interspecific interactions'=n_ints
          ) %>% 
-  kable(align = 'lllccccccccc') %>% 
-  add_header_above(header=c(" "=4,
+  arrange(desc(Shannon)) %>% 
+  kable(align = 'lcllcccccccc') %>% 
+  add_header_above(header=c(" "=2,
+                            "Habitat description"=2,
                             "Land-use"=3,
                             "Occupying species"=3,
                             " "=2)) %>% 
@@ -818,7 +829,7 @@ z %>%
 
 
 #========================#
-# SITE DESCRIPTIONS----
+# SITE----
 #========================#
 Indices_2 %>% 
   filter(Study.Area!='Changi Airport') %>% 
@@ -829,6 +840,13 @@ Indices_2 %>%
   stat_poly_line(se=F)+
   stat_poly_eq()+
   labs(x='Proportion urban land cover',y='Shannon')
+# glm
+x<-Indices_2 %>% 
+  filter(Study.Area!='Changi Airport') %>% 
+  group_by(Study.Area) %>% 
+  mutate(built_surf=sum(buildpc+artsurfacepc))
+y<-glm(Richness~built_surf,x)
+summary(y)
 ## BD and Richness declines with building and road cover
 Indices_2 %>% 
   filter(Study.Area!='Changi Airport') %>% 
@@ -1171,16 +1189,85 @@ Interact %>%
                               'Tanimbar corella'='#33BBEE',
                               'Long-tailed parakeet'='#009988'))
 
-# SUMMARY-SE 
-x<-ISRS %>% 
-  filter(role=='IS') %>% 
-  select(Species,interaction,rating)
-x$rating<-as.numeric(x$rating)
+# GLM ----
 
-parrotmeans <- summarySE(x, measurevar =  "rating",
-                         groupvar = c("Species", "interaction"),
-                         na.rm = TRUE)
-parrotmeans
+#https://www.guru99.com/r-generalized-linear-model.html
+# dev.off()
 
+# select continuous variables
+continuous <-select_if(sp.pairs_2, is.numeric)
+summary(continuous)
+# remove major outliers
+top_one_RS.size <- quantile(sp.pairs_2$RS.size, .99)
+top_one_IS.size <- quantile(sp.pairs_2$IS.size, .99)
 
+GLMdata <-sp.pairs_2 %>%
+  filter(RS.size<top_one_RS.size) %>% 
+  filter(IS.size<top_one_IS.size)
+
+# standardize continuous variables
+
+GLMdata_scale <- GLMdata %>% 
+  mutate_if(is.numeric, funs(as.numeric(scale(.))))
+head(GLMdata_scale)
+# gave an error but still worked
+
+# adjust ratings
+GLMdata_scale<-GLMdata_scale %>% 
+  mutate(interaction=case_when(
+    interaction=="Neutral"~"Neutral", # no aggression
+    interaction=="Displace"~"Displace", # remove from perch by landing
+    interaction=="Threat"~"Threat", # vocal or flaring threats
+    interaction=="Swoop"~"Swoop", # fly within 60cm at species but not landing
+    interaction=="Chase"~"Chase", # in-flight pursuit may or may not displace
+    interaction=="Contact"~"Contact", # physical contact
+    interaction=="Fight"~"Contact")) # multiple physical contact
+GLMdata_scale$interaction<-factor(GLMdata_scale$interaction,
+                               levels = c("Neutral","Displace","Threat","Swoop","Chase","Contact"))
+levels(Interact_2$interaction)
+
+# factorise
+GLMdata_scale$IS.NestType<-factor(GLMdata_scale$IS.NestType)
+GLMdata_scale$RS.NestType<-factor(GLMdata_scale$RS.NestType)
+GLMdata_scale$IS.sp_lab<-factor(GLMdata_scale$IS.sp_lab)
+GLMdata_scale$RS.sp_lab<-factor(GLMdata_scale$RS.sp_lab)
+# how many factor cols
+factor <- data.frame(select_if(GLMdata_scale, is.factor))
+ncol(factor)
+# = 8
+# Create graph for each column
+graph <- lapply(names(factor),
+                function(x) 
+                  ggplot(factor, aes(get(x))) +
+                  geom_bar() +
+                  theme(axis.text.x = element_text(angle = 90)))
+graph
+
+# plots
+GLMdata_scale %>% 
+  filter(IS.sp_lab=='NNP') %>% 
+  filter(interaction!='Neutral') %>% 
+  ggplot(aes(initsp,fill=interaction))+
+  geom_bar(position = 'fill')
+
+GLMdata_scale %>% 
+  filter(IS.sp_lab=='NNP') %>% 
+  filter(interaction!='Neutral') %>% 
+  ggplot(aes(initsp,RS.size))+
+  geom_boxplot()+
+  stat_summary(fun='mean',color='red',shape=15)
+  
+GLMdata_scale %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
+  ggplot(aes(RS.size)) +
+  geom_density(aes(color = initsp), alpha = 0.5) +
+  theme_classic()
+
+x<-GLMdata_scale %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet")
+
+anova <- aov(RS.size~initsp, x)
+summary(anova)
+
+# no strong correlation here!
 
