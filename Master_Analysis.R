@@ -1181,46 +1181,53 @@ Interact %>%
 # dev.off()
 
 # select continuous variables
-continuous <-select_if(sp.pairs_2, is.numeric)
+continuous <-select_if(sp.pairs, is.numeric)
 summary(continuous)
-# remove major outliers
-top_one_RS.size <- quantile(sp.pairs_2$RS.size, .99)
-top_one_IS.size <- quantile(sp.pairs_2$IS.size, .99)
+# remove major outliers from size (mammals)
+top_one_RS.size <- quantile(sp.pairs$RS.size, .99)
+top_one_IS.size <- quantile(sp.pairs$IS.size, .99)
 
-GLMdata <-sp.pairs_2 %>%
+GLMdata <-sp.pairs %>%
   filter(RS.size<top_one_RS.size) %>% 
   filter(IS.size<top_one_IS.size)
+rm(top_one_IS.size)
+rm(top_one_RS.size)
+#ranking for the normalization
+GLMdata<-GLMdata %>% 
+  mutate(rating=case_when(
+  interaction=="Neutral"~"0", # no aggression
+  interaction=="Displace"~"1", # remove from perch by landing
+  interaction=="Threat"~"2", # vocal or flaring threats
+  interaction=="Swoop"~"3", # fly within 60cm at species but not landing
+  interaction=="Chase"~"4", # in-flight pursuit may or may not displace
+  interaction=="Contact"~"5", # physical contact
+  interaction=="Fight"~"5"))# multiple physical contact
+GLMdata$rating<-as.numeric(GLMdata$rating)
+GLMdata<-GLMdata %>% relocate(rating,.after = interaction)
 
-# standardize continuous variables
+# NORMALIZE - dont need this, its the same as standardizaion
+#GLMdata_norm <- GLMdata %>% 
+  #mutate_if(is.numeric, funs(as.numeric(normalize(.))))
 
+# STANDARDIZE
 GLMdata_scale <- GLMdata %>% 
   mutate_if(is.numeric, funs(as.numeric(scale(.))))
-head(GLMdata_scale)
 # gave an error but still worked
 
-# adjust ratings
-GLMdata_scale<-GLMdata_scale %>% 
-  mutate(interaction=case_when(
-    interaction=="Neutral"~"Neutral", # no aggression
-    interaction=="Displace"~"Displace", # remove from perch by landing
-    interaction=="Threat"~"Threat", # vocal or flaring threats
-    interaction=="Swoop"~"Swoop", # fly within 60cm at species but not landing
-    interaction=="Chase"~"Chase", # in-flight pursuit may or may not displace
-    interaction=="Contact"~"Contact", # physical contact
-    interaction=="Fight"~"Contact")) # multiple physical contact
-GLMdata_scale$interaction<-factor(GLMdata_scale$interaction,
-                               levels = c("Neutral","Displace","Threat","Swoop","Chase","Contact"))
-levels(Interact_2$interaction)
+str(GLMdata_scale)
 
 # factorise
 GLMdata_scale$IS.NestType<-factor(GLMdata_scale$IS.NestType)
 GLMdata_scale$RS.NestType<-factor(GLMdata_scale$RS.NestType)
 GLMdata_scale$IS.sp_lab<-factor(GLMdata_scale$IS.sp_lab)
 GLMdata_scale$RS.sp_lab<-factor(GLMdata_scale$RS.sp_lab)
+GLMdata_scale$IS.status<-factor(GLMdata_scale$IS.status)
+GLMdata_scale$RS.status<-factor(GLMdata_scale$RS.status)
+
 # how many factor cols
 factor <- data.frame(select_if(GLMdata_scale, is.factor))
 ncol(factor)
-# = 8
+# = 12
 # Create graph for each column
 graph <- lapply(names(factor),
                 function(x) 
@@ -1228,6 +1235,10 @@ graph <- lapply(names(factor),
                   geom_bar() +
                   theme(axis.text.x = element_text(angle = 90)))
 graph
+
+# remove NA's
+GLMdata_scale<-GLMdata_scale %>% filter(!is.na(RS.status))
+#run again from factor to check
 
 # plots
 GLMdata_scale %>% 
@@ -1242,20 +1253,63 @@ GLMdata_scale %>%
   ggplot(aes(initsp,RS.size))+
   geom_boxplot()+
   stat_summary(fun='mean',color='red',shape=15)
-  
+
+# Recipient target species
+  # first mean parrot sizes
+highlight<-GLMdata_scale %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%
+ group_by(initsp) %>% 
+   summarise(RS.size=mean(IS.size))
+highlight
+  # now look at target species distribution by size
 GLMdata_scale %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
   ggplot(aes(RS.size)) +
-  geom_density(aes(color = initsp), alpha = 0.5) +
-  theme_classic()
+  geom_density()+
+  geom_vline(data=highlight,aes(xintercept=RS.size,color=initsp))+
+  theme_pubclean()+
+  theme(legend.position = 'none')+
+  facet_wrap(~initsp)
+## line shows the mean size of the intiator
+  # -2 is the smallest birds 
+  # +4 is the largest, herons, eagles
+  # OPH is around 3 - can see the bump
+
+# looking at size diff in initiated interactions
+GLMdata_scale %>% 
+  #filter(isout!='NE') %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
+  ggplot(aes(size_diff)) +
+  geom_density(aes(color=isout))+
+  theme_pubclean()+
+  facet_wrap(~initsp)
+# here -4 indicates that the recipient is bigger
+# + 2 indicates a parrot attacking a smaller bird
+# it seems to make a difference. More losses against bigger birds, primarily OPH
+## LTP & RBP have high n W/L against similar size = each other!
+
+# test with ANOVA
 
 x<-GLMdata_scale %>% 
+  #filter(isout!='NE') %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet")
-
-anova <- aov(RS.size~initsp, x)
+anova <- aov(RS.size~isout, x)
 summary(anova)
 
-# no strong correlation here!
+# ANOVA confirms there is a large difference 
+
+# can explore some combination of variances with this
+GLMdata_scale %>% 
+  #filter(isout!='NE') %>% 
+    ggplot(aes(x = n_cavity, y = size_diff)) +
+  geom_point(aes(color = isout),
+             size = 0.5) +
+  stat_smooth(method = 'lm',
+              formula = y~poly(x, 2),
+              se = TRUE,
+              aes(color = isout)) +
+  theme_classic()
+
 
 # Looking at the link between parrot population density and environment
 GLMdata_scale %>% 
@@ -1263,7 +1317,8 @@ GLMdata_scale %>%
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
   ggplot(aes(Shannon)) +
   geom_density(aes(color = initsp), alpha = 0.5) +
-  theme_classic()
+  theme_pubclean()+
+  facet_wrap(~initsp)
 # TC more often found is low BD areas,
 # RBP have a wide distribution
 # LTP is higher BD areas
@@ -1288,3 +1343,23 @@ GLMdata_scale %>%
 # this also shows no strong preference amongst RBP, MP or RRP
 # TC seem toprefer more built areas, perhaps this is the niche they can best 
   # exploit, there is little competition from birds of a similar size
+
+install.packages('GGally')
+library(GGally)
+# Convert data to numeric
+corr <- data.frame(lapply(GLMdata_scale, as.integer))
+corr<-corr %>% select(-IS.wt,-RS.wt,-Site.habitat.types,-Surrounding.habitat.types)
+# Plot 
+ggcorr(corr,
+method = c("pairwise", "spearman"),
+nbreaks = 6,
+hjust = 0.8,
+label = TRUE,
+label_size = 3,
+color = "grey50")
+
+## BLUE = NEGATIVE CORR.
+## RED == POSITIVE CORR
+## WHITE = NO CORR
+
+
