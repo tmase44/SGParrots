@@ -186,16 +186,9 @@ Interact_2<-Interact_2 %>%
 Interact_2$interaction<-factor(Interact_2$interaction,
                                   levels = c("Neutral","Displace","Threat","Swoop","Chase","Contact"))
 
-# Factorise Tree data
-str(Tree)
-cols_tree <- c('Study.Area','tree_sp','id','cav','food')
-Tree<-Tree %>% mutate_at(cols_tree,factor)  
-str(Tree)  
-rm(cols_tree)
-
 # Factorise NSS data
 NSS$Site<-as.factor(NSS$Site)
-NSS$Site2<-as.factor(NSS$Site2)
+NSS$Study.Area<-as.factor(NSS$Study.Area)
 NSS$Species<-as.factor(NSS$Species)
   # remove na
 NSS$Count<-NSS$Count %>% replace(is.na(.), 0)
@@ -208,7 +201,7 @@ rm(ISRS)
 # IS
 IS<-Interact_2 %>% 
   filter(recipsp!="NA") %>% 
-  group_by(Study.Area,initsp,interaction,rating,isout,) %>% 
+  group_by(Study.Area,initsp,interaction,isout,) %>% 
   tally()
 IS<-rename(IS,species=initsp)  
 IS<-rename(IS,outcome=isout)
@@ -217,7 +210,7 @@ IS$role<-'IS' # identify IS/RS
 # RS
 RS<-Interact_2 %>% 
   filter(recipsp!="NA") %>% 
-  group_by(Study.Area,recipsp,interaction,rating,rsout) %>% 
+  group_by(Study.Area,recipsp,interaction,rsout) %>% 
   tally()
 RS<-rename(RS,species=recipsp)  
 RS<-rename(RS,outcome=rsout)
@@ -225,7 +218,7 @@ RS$role<-'RS' # identify IS/RS
 
 # Combine IS+RS
 ISRS<-rbind(IS,RS)
-ISRS<-ISRS %>% relocate(1,2,3,4,5,7,6) 
+ISRS<-ISRS %>% relocate(1,2,6,3,4,5) 
 ISRS<-ISRS %>% rename(n_ints=n)
 ISRS<-ISRS %>% rename(Species=species)
 
@@ -281,9 +274,9 @@ ISRS<-ISRS %>%
   mutate(inits_HR=inits/effort) %>% 
   mutate(inits_xNE_HR=inits_xNE/effort)
 
-ISRS<-ISRS %>% relocate(1,2,8,3,4,6,5,9,10,7,27,28,29,30,23,24,25,11,12,13,
-                        14,15,16,17,18,
-                        19,20,21,22,26)
+ISRS<-ISRS %>% relocate(1,2,3,4,5,6,22,23,24,25,26,27,28,29,
+                        7,8,9,10,11,12,13,14,15,16,17,18,19,20,21)
+                        
 ISRS<-ISRS %>% arrange(Study.Area,desc(n_ints))
 ISRS$n_ints<-ISRS$n_ints%>% replace(is.na(.), 0)
 ISRS$ints_HR<-ISRS$ints_HR%>% replace(is.na(.), 0)
@@ -294,30 +287,14 @@ ISRS$ints_HR<-ISRS$ints_HR%>% replace(is.na(.), 0)
 # includes:
 ## all species pairs per study.area
 ## each interaction type & outcome
-## plus species chaeacteristics
+## plus species characteristics
 ## plus site characteristics
 rm(sp.pairs)
 # pairs for all interactions
 sp.pairs <- Interact_2 %>% 
   select(Study.Area,initsp,recipsp,interaction,isout,rsout) %>% 
   group_by(Study.Area,initsp,recipsp,interaction,isout,rsout) %>% 
-  count(recipsp) %>% rename(all_pair_ints=n)
-  # Neutral only
-x<-Interact_2 %>% filter(rating=='0') %>%
-  select(Study.Area,initsp,recipsp,interaction,isout,rsout) %>% 
-  group_by(Study.Area,initsp,recipsp,interaction,isout,rsout) %>% 
-  count(recipsp) %>% rename(NE_pair_ints=n)
-  # Merge 
-sp.pairs<-merge(sp.pairs,x,by=c('Study.Area','initsp','recipsp','interaction',
-                                'isout','rsout'),all = TRUE) %>% replace(is.na(.), 0) 
-  # Aggressive only
-x<-Interact_2 %>% filter(rating!='0') %>%
-  select(Study.Area,initsp,recipsp,interaction,isout,rsout) %>% 
-  group_by(Study.Area,initsp,recipsp,interaction,isout,rsout) %>% 
-  count(recipsp) %>% rename(Agg_pair_ints=n)
-  # Merge 
-sp.pairs<-merge(sp.pairs,x,by=c('Study.Area','initsp','recipsp','interaction',
-                                'isout','rsout'),all = TRUE) %>% replace(is.na(.), 0)
+  count(rsout) %>% rename(pair_ints=n)
 
 ## merge species traits for IS
 x<-Prof %>% select(Species,NestType,sp_lab,Avg_size,Avg_Weight,SG_status)
@@ -335,16 +312,7 @@ x<-x %>% rename(RS.NestType=NestType,
                 RS.wt=Avg_Weight,
                 RS.status=SG_status) 
 sp.pairs<-merge(sp.pairs,x,by.x='recipsp',by.y='Species')
-sp.pairs<-merge(sp.pairs,Indices_2,by='Study.Area',all=T)
-sp.pairs<-sp.pairs %>% select(1:36)
-sp.pairs<-sp.pairs %>% select(-20)
 
-sp.pairs<-sp.pairs %>% relocate(1,2,3,4,5,6,7,12,17,9,14,8,13,
-                                10,15,11,16,
-                                18,19,35,30,31,34,32,33,
-                                20,21,22,23,24,25,26,27,28,29)
-sp.pairs<-sp.pairs %>% mutate(size_diff=IS.size-RS.size) %>% 
-                              relocate(size_diff,.after = 'RS.size')
 
 
 #///////////////////////
@@ -395,9 +363,25 @@ Indices_2<-merge(Indices_2,x,by='Study.Area')
 x<-ISRS %>% 
   filter(role=='IS') %>% 
   group_by(Study.Area) %>% 
-  summarise(n_ints=sum(n_ints))
+  summarise(site.interactions=sum(n_ints))
 Indices_2<-merge(Indices_2,x,by='Study.Area')
 
+
+#//////////////////////////////////////
+# Adding Indices data to other DFs----
+#//////////////////////////////////////
+Composition_2<-merge(Composition_2,Indices_2,by='Study.Area',all=T)
+ISRS<-merge(ISRS,Indices_2,by='Study.Area',all=T)
+sp.pairs<-merge(sp.pairs,Indices_2,by='Study.Area',all=T)
+sp.pairs<-sp.pairs %>% select(-20)
+sp.pairs<-sp.pairs %>% relocate(1,2,3,4,5,6,7,12,17,9,14,8,13,
+                                10,15,11,16,
+                                18,19,35,30,31,34,32,33,
+                                20,21,22,23,24,25,26,27,28,29)
+sp.pairs<-sp.pairs %>% mutate(size_diff=IS.size-RS.size) %>% 
+  relocate(size_diff,.after = 'RS.size')
+
+# extra interaction spread for indices
 x<-ISRS %>% 
   ungroup() %>% 
   filter(role=='IS') %>% 
@@ -408,15 +392,6 @@ x<-ISRS %>%
   spread(key=interaction,value = n_ints) %>% 
   replace(is.na(.), 0)
 Indices_2<-merge(Indices_2,x,by='Study.Area')
-
-
-#//////////////////////////////////////
-# Adding Indices data to other DFs----
-#//////////////////////////////////////
-Composition_2<-merge(Composition_2,Indices_2,by='Study.Area',all=T)
-ISRS<-merge(ISRS,Indices_2,by='Study.Area',all=T)
-sp.pairs<-merge(sp.pairs,Indices_2,by='Study.Area',all=T)
-
 #///////////////////////
 # Enviro Long Transform
 #///////////////////////
@@ -561,7 +536,7 @@ ISRS %>% group_by(Species,outcome) %>%
 # Shapiro-wilk for small samples
 ## less than alpha 0.05 = not normal
 ## not less than alpha 0.05 = normal
-shapiro.test(Indices_2$n_ints) # normal
+shapiro.test(Indices_2$site.interactions) # normal
 shapiro.test(Indices_2$Neutral) # normal
 shapiro.test(Indices_2$Swoop) # normal
 shapiro.test(Indices_2$Displace) # normal
@@ -569,29 +544,25 @@ shapiro.test(Indices_2$Threat) # normal
 shapiro.test(Indices_2$Richness) # normal
 shapiro.test(Indices_2$Shannon) # normal
 shapiro.test(Indices_2$canopypc) # normal
-shapiro.test(Indices_2$cavs_canopy_sqm) # normal
+shapiro.test(Indices_2$cavs_canopy_sqm) # normal, just about
 skewness(Indices_2$canopypc)
 kurtosis(Indices_2$canopypc)
 skewness(Indices_2$Richness)
 kurtosis(Indices_2$Richness)
 # indices and survey site data are normally distributed
 
-shapiro.test(ISRS$rating) # not normal
+shapiro.test(ISRS$interaction) # not normal
 shapiro.test(ISRS$ints_HR) # not normal
-shapiro.test(sp.pairs$all_pair_ints) # not-normal
+shapiro.test(sp.pairs$pair_ints) # not-normal
 x<-Composition %>% sample_n(100)
 shapiro.test(x$distance)  # not-normal
 x<-Comp.max %>% filter(Study.Area!='Changi Airport')
 ggplot(x,aes(max_obs))+geom_histogram() # not normal
 x<-sp.pairs %>% ungroup() %>% 
-  group_by(initsp,recipsp) %>% summarise(n=sum(all_pair_ints))
+  group_by(initsp,recipsp) %>% summarise(n=sum(pair_ints))
 ggplot(x,aes(n))+geom_histogram() # not normal
 
-
-ggplot(Interact_2,aes(rating))+geom_histogram()
-skewness(Interact_2$rating)
-kurtosis(Interact_2$rating)
-skewness(x$n)
+skewness(x$n) # not normal
 kurtosis(x$n)
 
 # interaction data are measured ordinally
@@ -689,68 +660,74 @@ sorensen.plot
 Enviro_2 %>% 
   ggplot(aes(Study.Area,proportion,fill=land_prop))+
   geom_col(position='fill')+
+  labs(y='Proportion of land cover',x='Study Area',
+       title = 'Land type per study site')+
   scale_x_discrete(labels = function(Study.Area2) str_wrap(Study.Area2, width = 10))+
-  labs(y='Proportion of land cover',x='Study Area',title = 'Land type per study site')
+  scale_fill_discrete(name='Area use',labels=c('Buildings','Artificial surface',
+                                               'Natural surface','Other vegetation',
+                                               'Canopy','Waterbody','Mangrove'))
+
 
 ## RA curve----
 x<-Composition_2 %>% 
-  select(Study.Area,Species,max_obs,max.freq) %>% 
+  select(Study.Area,Species,max_obs,max.freq,SG_status) %>% 
   group_by(Study.Area) %>% 
   mutate(rank=dense_rank(desc(max.freq))) %>% 
   arrange(Study.Area,rank) %>% 
   group_by(Study.Area) %>%
-  mutate(id = row_number())
+  mutate(id = row_number()) %>% 
+  mutate('Species status'=case_when(SG_status=='I'~'Introduced',
+                              SG_status=='R'~'Resident',
+                              SG_status=='M'~'Migrant/Visitor',
+                              SG_status=='N'~'Migrant/Visitor',
+                              SG_status=='V'~'Migrant/Visitor')) 
 x$rank<-as.character(x$rank)
+x$`Species status`<-factor(x$`Species status`,levels=c('Resident','Introduced','Migrant/Visitor'))
 
 x %>% filter(Study.Area!='Changi Airport') %>% 
-  ggplot(aes(id,max.freq))+
-  geom_point(shape=1,alpha=0.6)+
-  geom_line(alpha=0.6,position = position_dodge(width=0.1))+
+  ggplot(aes(id,max.freq,color=`Species status`))+
+  geom_point(shape=1,alpha=1)+
+  geom_line(alpha=1,position = position_dodge(width=0.1))+
   facet_wrap(~Study.Area)+
   labs(title = 'Rank abundance curves',
        x='Rank',y='Abundance (percent)')+
   scale_x_continuous(limits = c(1, 54), 
                      breaks = c(1,5,10,15,20,25,30,35,40,45,50,54))+
   theme_pubclean()+
-  theme(legend.position = 'none')
-
-## Species status----
-y<-Composition_2 %>%
-  select(Study.Area,Species,max.freq,SG_status) %>% 
-  group_by(Study.Area,Species) %>% 
-  arrange(Study.Area,desc(max.freq)) %>% 
-  group_by(Study.Area) %>% 
-  top_n(n=5, wt=max.freq)  
-y<-y[-c(31,32,38),]
-# Non-natives account for the majority of the community in every site
-# house crows, parrots, javan mynas
-
+  scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
+                               'Migrant/Visitor'='#CCBB44'))
+# bar summary
 x<-Composition_2 %>% 
   drop_na(SG_status) %>% 
   select(Study.Area,Species,max.freq,SG_status) %>% 
-  mutate(Status=case_when(SG_status=='I'~'Non-native',
-                          SG_status=='R'~'Resident',
-                          SG_status=='M'~'Migratory',
-                          SG_status=='N'~'Migratory',
-                          SG_status=='V'~'Migratory')) %>% 
-  group_by(Study.Area,Status) %>% 
+  mutate('Species status'=case_when(SG_status=='I'~'Introduced',
+                                    SG_status=='R'~'Resident',
+                                    SG_status=='M'~'Migrant/Visitor',
+                                    SG_status=='N'~'Migrant/Visitor',
+                                    SG_status=='V'~'Migrant/Visitor')) %>% 
+  group_by(Study.Area,`Species status`) %>% 
   summarise(n=sum(max.freq)) %>% 
   arrange(Study.Area,desc(n)) 
-x$Status<-factor(x$Status,levels = c('Migratory','Resident','Non-native'))
-x %>% 
-  ggplot(aes(Study.Area,n,fill=Status))+
+x$`Species status`<-factor(x$`Species status`,levels=c('Resident','Introduced','Migrant/Visitor'))
+  x %>% 
+  ggplot(aes(Study.Area,n,fill=`Species status`))+
   geom_col(position = 'fill') +
-  scale_fill_discrete(name = "Status")+
   labs(y='Proportion of community',
        title = 'Proportion of resident / non-native / migratory species')+
+    scale_fill_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
+                                 'Migrant/Visitor'='#CCBB44'))+
+    theme_pubclean()+
   theme(axis.title.x = element_blank())
 # non native / introduced species are most prevalent in low biodiversity areas
 
 ## Species table----
-y %>% 
-  mutate(across(where(is.numeric), round, 2)) %>% 
-  kable(align = 'llcc') %>% 
-  kable_styling()
+x %>%
+    spread(key = Study.Area,value=n) %>% 
+    mutate(across(where(is.numeric), round, 2)) %>%
+    rename("Status/Site"='Species status') %>% 
+    replace(is.na(.), 0) %>% 
+    kable(align = 'lccccccc') %>% 
+    kable_styling()
 
 ## Profile table----
 Indices_2 %>% 
