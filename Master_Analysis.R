@@ -175,18 +175,16 @@ rm(cols_int)
 
   # Add interaction ratings
 Interact_2<-Interact_2 %>% 
-  mutate(rating=case_when(
-    interaction=="Neutral"~"0", # no aggression
-    interaction=="Displace"~"1", # remove from perch by landing
-    interaction=="Threat"~"2", # vocal or flaring threats
-    interaction=="Swoop"~"3", # fly within 60cm at species but not landing
-    interaction=="Chase"~"4", # in-flight pursuit may or may not displace
-    interaction=="Contact"~"5", # physical contact
-    interaction=="Fight"~"6")) # multiple physical contact
-Interact_2$rating<-as.numeric(Interact_2$rating)
+  mutate(interaction=case_when(
+    interaction=="Neutral"~"Neutral", # no aggression
+    interaction=="Displace"~"Displace", # remove from perch by landing
+    interaction=="Threat"~"Threat", # vocal or flaring threats
+    interaction=="Swoop"~"Swoop", # fly within 60cm at species but not landing
+    interaction=="Chase"~"Chase", # in-flight pursuit may or may not displace
+    interaction=="Contact"~"Contact", # physical contact
+    interaction=="Fight"~"Contact")) # multiple physical contact
 Interact_2$interaction<-factor(Interact_2$interaction,
-                             levels = c("Neutral","Displace","Threat","Swoop","Chase","Contact","Fight"))
-levels(Interact_2$interaction)
+                                  levels = c("Neutral","Displace","Threat","Swoop","Chase","Contact"))
 
 # Factorise Tree data
 str(Tree)
@@ -203,9 +201,9 @@ NSS$Species<-as.factor(NSS$Species)
 NSS$Count<-NSS$Count %>% replace(is.na(.), 0)
 
 
-#=============================#
+#////////////////////////////////
 # ISRS: Interact long-transform
-#=============================#
+#///////////////////////////////
 rm(ISRS)
 # IS
 IS<-Interact_2 %>% 
@@ -290,59 +288,69 @@ ISRS<-ISRS %>% arrange(Study.Area,desc(n_ints))
 ISRS$n_ints<-ISRS$n_ints%>% replace(is.na(.), 0)
 ISRS$ints_HR<-ISRS$ints_HR%>% replace(is.na(.), 0)
 
-#=============================#
+#///////////////////////
 # Species Pairs
-#=============================#
+#///////////////////////
+# includes:
+## all species pairs per study.area
+## each interaction type & outcome
+## plus species chaeacteristics
+## plus site characteristics
 rm(sp.pairs)
 # pairs for all interactions
 sp.pairs <- Interact_2 %>% 
-  select(Study.Area,initsp,recipsp,interaction) %>% 
-  group_by(Study.Area,initsp,recipsp,interaction) %>% 
+  select(Study.Area,initsp,recipsp,interaction,isout,rsout) %>% 
+  group_by(Study.Area,initsp,recipsp,interaction,isout,rsout) %>% 
   count(recipsp) %>% rename(all_pair_ints=n)
   # Neutral only
 x<-Interact_2 %>% filter(rating=='0') %>%
-  select(Study.Area,initsp,recipsp,interaction) %>% 
-  group_by(Study.Area,initsp,recipsp,interaction) %>% 
+  select(Study.Area,initsp,recipsp,interaction,isout,rsout) %>% 
+  group_by(Study.Area,initsp,recipsp,interaction,isout,rsout) %>% 
   count(recipsp) %>% rename(NE_pair_ints=n)
   # Merge 
-sp.pairs<-merge(sp.pairs,x,by=c('Study.Area','initsp','recipsp','interaction'),all = TRUE) %>% replace(is.na(.), 0) 
+sp.pairs<-merge(sp.pairs,x,by=c('Study.Area','initsp','recipsp','interaction',
+                                'isout','rsout'),all = TRUE) %>% replace(is.na(.), 0) 
   # Aggressive only
 x<-Interact_2 %>% filter(rating!='0') %>%
-  select(Study.Area,initsp,recipsp,interaction) %>% 
-  group_by(Study.Area,initsp,recipsp,interaction) %>% 
+  select(Study.Area,initsp,recipsp,interaction,isout,rsout) %>% 
+  group_by(Study.Area,initsp,recipsp,interaction,isout,rsout) %>% 
   count(recipsp) %>% rename(Agg_pair_ints=n)
   # Merge 
-sp.pairs<-merge(sp.pairs,x,by=c('Study.Area','initsp','recipsp','interaction'),all = TRUE) %>% replace(is.na(.), 0)
+sp.pairs<-merge(sp.pairs,x,by=c('Study.Area','initsp','recipsp','interaction',
+                                'isout','rsout'),all = TRUE) %>% replace(is.na(.), 0)
 
 ## merge species traits for IS
-x<-Prof %>% select(Species,NestType,sp_lab,Avg_size,Avg_Weight)
+x<-Prof %>% select(Species,NestType,sp_lab,Avg_size,Avg_Weight,SG_status)
 x<-x %>% rename(IS.NestType=NestType,
                 IS.sp_lab=sp_lab,
                 IS.size=Avg_size,
-                IS.wt=Avg_Weight) 
+                IS.wt=Avg_Weight,
+                IS.status=SG_status) 
 sp.pairs<-merge(sp.pairs,x,by.x='initsp',by.y='Species')
 ## merge species traits for RS
-x<-Prof %>% select(Species,NestType,sp_lab,Avg_size,Avg_Weight)
+x<-Prof %>% select(Species,NestType,sp_lab,Avg_size,Avg_Weight,SG_status)
 x<-x %>% rename(RS.NestType=NestType,
                 RS.sp_lab=sp_lab,
                 RS.size=Avg_size,
-                RS.wt=Avg_Weight) 
+                RS.wt=Avg_Weight,
+                RS.status=SG_status) 
 sp.pairs<-merge(sp.pairs,x,by.x='recipsp',by.y='Species')
+sp.pairs<-merge(sp.pairs,Indices_2,by='Study.Area',all=T)
+sp.pairs<-sp.pairs %>% select(1:36)
+sp.pairs<-sp.pairs %>% select(-20)
 
-sp.pairs<-sp.pairs %>% relocate(3,2,1,4,5,6,7,8,12,9,13,10,14,11,15)
-sp.pairs<-sp.pairs %>% mutate(size_diff=IS.size-RS.size)
+sp.pairs<-sp.pairs %>% relocate(1,2,3,4,5,6,7,12,17,9,14,8,13,
+                                10,15,11,16,
+                                18,19,35,30,31,34,32,33,
+                                20,21,22,23,24,25,26,27,28,29)
+sp.pairs<-sp.pairs %>% mutate(size_diff=IS.size-RS.size) %>% 
+                              relocate(size_diff,.after = 'RS.size')
 
-# Parrots only for quick reference
-sp.pairs.parrots<-sp.pairs %>% 
-  filter(initsp=="Monk parakeet"|
-           initsp=="Tanimbar corella"|
-           initsp=="Rose-ringed parakeet"|
-           initsp=="Red-breasted parakeet")
-  
 
-#============================#
+#///////////////////////
 # Indices_2
-#============================#
+#///////////////////////
+
 
 rm(Indices_2)
 # Environment data
@@ -402,15 +410,16 @@ x<-ISRS %>%
 Indices_2<-merge(Indices_2,x,by='Study.Area')
 
 
-#===============================#
-# ISRS 2 adding Indices data
-#===============================#
-rm(sp.pairs_2)
-sp.pairs_2<-merge(sp.pairs,Indices_2,by='Study.Area',all=T)
+#//////////////////////////////////////
+# Adding Indices data to other DFs----
+#//////////////////////////////////////
+Composition_2<-merge(Composition_2,Indices_2,by='Study.Area',all=T)
+ISRS<-merge(ISRS,Indices_2,by='Study.Area',all=T)
+sp.pairs<-merge(sp.pairs,Indices_2,by='Study.Area',all=T)
 
-#===============================#
+#///////////////////////
 # Enviro Long Transform
-#===============================#
+#///////////////////////
 
 # just for charting
 
@@ -1271,3 +1280,34 @@ summary(anova)
 
 # no strong correlation here!
 
+# Looking at the link between parrot population density and environment
+GLMdata_scale %>% 
+  #filter(Study.Area!='Changi Airport') %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
+  ggplot(aes(Shannon)) +
+  geom_density(aes(color = initsp), alpha = 0.5) +
+  theme_classic()
+# TC more often found is low BD areas,
+# RBP have a wide distribution
+# LTP is higher BD areas
+GLMdata_scale %>% 
+  #filter(Study.Area!='Changi Airport') %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
+    ggplot(aes(canopypc)) +
+  geom_density(aes(color = initsp), alpha = 0.5) +
+  theme_pubclean()+
+  facet_wrap(~initsp)
+# Variation of canopy cover within the sites is not a major factor
+# these birds like open forest
+# native LTP were seen most in one site which had the greatest canopy and veg
+  # here also high aggression with RBP
+GLMdata_scale %>% 
+  #filter(Study.Area!='Changi Airport') %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
+  ggplot(aes(buildpc)) +
+  geom_density(aes(color = initsp), alpha = 0.5) +
+  theme_pubclean()+
+  facet_wrap(~initsp)
+# this also shows no strong preference amongst RBP, MP or RRP
+# TC seem toprefer more built areas, perhaps this is the niche they can best 
+  # exploit, there is little competition from birds of a similar size
