@@ -1324,8 +1324,12 @@ GLMdata_scale %>%
   labs(title = 'Alpha biodiversity indices',
        x = 'Species diversity (Shannon)', y='Species Richness')+
   geom_text_repel(aes(label=Study.Area),
-                  nudge_y = 0.15,segment.color = NA,color='#555555',size=5)+
-  theme_pubclean()+style180+xlim(-1,1.5)
+                  nudge_y = 0.16,segment.color = NA,color='#555555',size=5)+
+  theme_pubclean()+style180+
+  scale_x_continuous(limits = c(-1.5,1.5),
+                     breaks = c(-1.5,-1.0,-0.5,0,0.5,1,1.5))+
+  scale_y_continuous(limits = c(-1.5,1.5),
+                     breaks = c(-1.5,-0.5,0.5,1.5))
 
 # looking at size diff in initiated interactions
 GLMdata_scale %>% 
@@ -1541,14 +1545,24 @@ GLMdata_ISRS_scale<-GLMdata_ISRS_scale %>% filter(!is.na(SG_status))
 # charts
 GLMdata_ISRS_scale %>% 
   filter(Study.Area!='Changi Airport') %>% 
+  mutate(status=case_when(SG_status=='I'~'Introduced',
+                                    SG_status=='R'~'Resident',
+                                    SG_status=='M'~'Migrant/Visitor',
+                                    SG_status=='N'~'Migrant/Visitor',
+                                    SG_status=='V'~'Migrant/Visitor')) %>% 
   ggplot(aes(Shannon)) +
-  geom_density(aes(fill = SG_status,color=SG_status), alpha = 0.1) +
+  geom_density(aes(fill = status,color=status), alpha = 0.2) +
   labs(x = 'Species diversity (Shannon)', y='Density',
        title = 'Distribution of species by introduction status')+
-    theme_pubclean()+style180+xlim(-1,1.5)+
-  theme(legend.title=element_blank())
+    theme_pubclean()+style180+
+  theme(legend.title=element_blank())+
+  scale_x_continuous(limits = c(-1.5,1.5),
+                     breaks = c(-1.5,-1.0,-0.5,0,0.5,1,1.5))+
+  scale_fill_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
+                               'Migrant/Visitor'='#CCBB44'))+
+scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
+                           'Migrant/Visitor'='#CCBB44'))
+
 ## Introduced species more prevalent in lower BD areas
-
-
 
 
