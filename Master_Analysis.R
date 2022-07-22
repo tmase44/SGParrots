@@ -1313,6 +1313,20 @@ GLMdata_scale %>%
   # +4 is the largest, herons, eagles
   # OPH is around 3 - can see the bump
 
+# shannon standard----
+GLMdata_scale %>% 
+  group_by(Study.Area) %>% 
+  summarise(Shannon=mean(Shannon),
+            Richness=mean(Richness)) %>% 
+  filter(Study.Area!='Changi Airport') %>% 
+  ggplot(aes(x=Shannon,y=Richness)) +
+  geom_point(size=5,color='#4477AA')+
+  labs(title = 'Alpha biodiversity indices',
+       x = 'Species diversity (Shannon)', y='Species Richness')+
+  geom_text_repel(aes(label=Study.Area),
+                  nudge_y = 0.15,segment.color = NA,color='#555555',size=5)+
+  theme_pubclean()+style180+xlim(-1,1.5)
+
 # looking at size diff in initiated interactions
 GLMdata_scale %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
@@ -1529,14 +1543,12 @@ GLMdata_ISRS_scale %>%
   filter(Study.Area!='Changi Airport') %>% 
   ggplot(aes(Shannon)) +
   geom_density(aes(fill = SG_status,color=SG_status), alpha = 0.1) +
-  theme_pubclean()
+  labs(x = 'Species diversity (Shannon)', y='Density',
+       title = 'Distribution of species by introduction status')+
+    theme_pubclean()+style180+xlim(-1,1.5)+
+  theme(legend.title=element_blank())
 ## Introduced species more prevalent in lower BD areas
-GLMdata_ISRS_scale %>% 
-  filter(Study.Area!='Changi Airport') %>% 
-  ggplot(aes(Shannon)) +
-  geom_density(aes(fill = sp_lab,color=sp_lab), alpha = 0.05) +
-  theme_pubclean()
 
-x<-lm(rating~outcome,
-      GLMdata_ISRS_scale)
-summary(x)
+
+
+
