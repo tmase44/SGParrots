@@ -154,7 +154,13 @@ x<-Composition %>%
 Composition_2<-merge(Composition_2,x, by=c('Study.Area','Species'),all = T)
   # rearrange cols
 Composition_2<-Composition_2 %>% relocate(1,2,5,3,17,10,11,8,9,4,6,7,12,13,14,15,16)
-
+  # add all_obs
+x<-Composition %>% 
+  group_by(Study.Area,Species) %>% 
+  summarise(all_obs=n())
+  #merge
+Composition_2<-merge(Composition_2,x, by=c('Study.Area','Species'),all = T)
+Composition_2<-Composition_2 %>% relocate(all_obs,.after = SG_status)
 
 # Factorise Composition_2
 str(Composition_2)
@@ -392,6 +398,30 @@ x<-ISRS %>%
   spread(key=interaction,value = n_ints) %>% 
   replace(is.na(.), 0)
 Indices_2<-merge(Indices_2,x,by='Study.Area')
+#n_ints
+x<-ISRS %>% 
+  ungroup() %>% 
+  filter(role=='IS') %>% 
+  select(Study.Area,interaction,n_ints) %>% 
+  group_by(Study.Area) %>% 
+  summarise(n_ints=sum(n_ints)) 
+Indices_2<-merge(Indices_2,x,by='Study.Area')
+
+# n_ints to Composition_2
+x<-ISRS %>% 
+  select(Study.Area,Species,interaction,n_ints) %>% 
+  group_by(Study.Area,Species) %>% 
+  summarise(n_ints=sum(n_ints)) 
+Composition_2<-merge(Composition_2,x,by=c('Study.Area','Species'))
+x<-ISRS %>% 
+  select(Study.Area,Species,interaction,n_ints) %>% 
+  filter(interaction!='Neutral') %>% 
+  group_by(Study.Area,Species) %>% 
+  summarise(n_ints_xNE=sum(n_ints)) 
+Composition_2<-merge(Composition_2,x,by=c('Study.Area','Species'),all=T)
+Composition_2$n_ints_xNE<-Composition_2$n_ints_xNE %>% replace(is.na(.), 0)
+  
+
 #///////////////////////
 # Enviro Long Transform
 #///////////////////////
@@ -450,7 +480,10 @@ j<-round((i/b)*100,2)
 sprintf('%s distinct initiator species, %s%% of the observed species pool',g,h)
 sprintf('%s distinct initiator species, %s%% of the observed species pool',i,j)
 
-
+ISRS %>% 
+  filter(role=='IS'|role=='RS') %>% 
+  summarise(n_distinct(Species))
+51/90
 #////////////////////
 # Interaction pairs
 #///////////////////
@@ -464,16 +497,23 @@ x<-nrow(int_pairs)
 sprintf('%s unique species pairs were observed interacting',x)
 
 int_pairs %>% 
-  group_by(recipsp) %>% summarise(n=sum(n)) %>% 
-  mutate(freq=n/sum(n)*100) %>% arrange(desc(freq)) %>% 
+  filter(initsp=='Red-breasted parakeet'|initsp=='Rose-ringed parakeet'|
+         initsp=='Monk parakeet'|initsp=='Tanimbar corella'|
+         initsp=='Yellow crested cockatoo'|initsp=='Sulphur crested cockatoo') %>% 
   filter(recipsp!='Red-breasted parakeet',recipsp!='Rose-ringed parakeet',
-         recipsp!='Monk parakeet',recipsp!='Tanimbar corella') %>% 
+         recipsp!='Monk parakeet',recipsp!='Tanimbar corella',
+         recipsp!='Yellow crested cockatoo',recipsp!='Sulphur crested cockatoo') %>% 
+    group_by(recipsp) %>% summarise(n=sum(n)) %>% 
+  mutate(freq=n/sum(n)*100) %>% arrange(desc(freq)) %>% 
   print(n=30)
 # non native parrots excluded
 # ~ Top recipients
   # Javan myna, LTP, house crow, LTP OPH, YCC, AGS, YVBB, Oriole,
   # Flameback, dollarbird 
-
+int_pairs %>% 
+  group_by(recipsp) %>% summarise(n=sum(n)) %>% 
+  mutate(freq=n/sum(n)*100) %>% arrange(desc(freq)) %>% 
+  print(n=30)
 
 #////////////////////////
 # Cavity Nesters in focus
@@ -608,6 +648,10 @@ style180 <-  theme(plot.title = element_text(size=20,margin = margin(0,0,25,0)),
                   axis.text.x = element_text(size=15, vjust = 0.5, hjust=1),
                   axis.text.y = element_text(size = 15))
 
+styleRA <-  theme(plot.title = element_text(size=20,margin = margin(0,0,25,0)),
+                   axis.title.y = element_text(size=15,margin = margin(0,25,0,0)),
+                   axis.title.x = element_text(size=15,margin = margin(25,0,0,0)))
+
 #pilot
 
 Pilot %>% 
@@ -720,7 +764,7 @@ x %>% filter(Study.Area!='Changi Airport') %>%
        x='Rank',y='Abundance (percent)')+
   scale_x_continuous(limits = c(1, 54), 
                      breaks = c(1,5,10,15,20,25,30,35,40,45,50,54))+
-  theme_pubclean()+
+  theme_pubclean()+styleRA+
   scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
                                'Migrant/Visitor'='#CCBB44'))
 # bar summary
@@ -761,9 +805,9 @@ Indices_2 %>%
   group_by(Study.Area) %>% 
   mutate('Built area'=sum(buildpc+artsurfacepc), #28
          'Natural area'=sum(canopypc+Vegpc+natsurfacepc), #29
-         'Water area'=sum(waterpc+mangrovepc)) %>% #30
+         'Water area'=sum(waterpc+mangrovepc)) %>%  #30
   select(1,3,5,6,28,29,30,
-         17,19,18,16,20) %>% 
+         17,19,18,16,27) %>% 
   mutate(across(where(is.numeric), round, 2)) %>% 
   rename(" "=Study.Area,
          'Survey area'='Site habitat types',
@@ -923,21 +967,17 @@ ISRS %>%
 #============================================================#
 ## interaction frequency standardised based on n observations
 #============================================================#
-x3<-Composition_3 %>%
+x3<-Composition_2 %>%
   group_by(Species) %>% summarise(all_obs=sum(all_obs),
                                   n_ints=sum(n_ints),
-                                  n_ints_xNE=sum(n_ints_xNE),
-                                  inits=sum(inits),
-                                  inits_xNE=sum(inits_xNE)) %>% 
+                                  n_ints_xNE=sum(n_ints_xNE)) %>% 
   mutate(ints_freq=n_ints/all_obs) %>% 
-  mutate(intsxNE_freq=n_ints_xNE/all_obs) %>% 
-  mutate(inits_freq=inits/all_obs) %>% 
-  mutate(inits_xNE_freq=inits_xNE/all_obs)
+  mutate(intsxNE_freq=n_ints_xNE/all_obs) 
 
 # all interactions / total obs all species
 x3 %>% 
-  filter(all_obs>=10&inits>0) %>% 
-  ggplot(aes(reorder(Species,inits_freq),inits_freq))+
+  filter(all_obs>=10&n_ints>0) %>% 
+  ggplot(aes(reorder(Species,ints_freq),ints_freq))+
   geom_col()+coord_flip()+
   labs(y= 'n initated interactions / n observations',
        x= 'Species')
@@ -946,15 +986,15 @@ x3 %>%
   filter(Species=="Monk parakeet"|Species=='Tanimbar corella'|
            Species=='Rose-ringed parakeet'|Species=='Red-breasted parakeet'|
            Species=='Long-tailed parakeet')%>%  
-  ggplot(aes(reorder(Species,inits_freq),inits_freq))+
+  ggplot(aes(reorder(Species,ints_freq),ints_freq))+
   geom_col()+coord_flip()+
   labs(y= 'n initated interactions / n observations',
        x= 'Species')
 
 # initiations - no NE / total obs all species
 x3 %>% 
-  filter(inits_xNE>1) %>% 
-  ggplot(aes(reorder(Species,inits_xNE_freq),inits_xNE_freq))+
+  filter(n_ints_xNE>1) %>% 
+  ggplot(aes(reorder(Species,n_ints_xNE),n_ints_xNE))+
   geom_col()+coord_flip()+
   labs(y= 'n initated interactions / n observations',
        x= 'Species')
@@ -964,7 +1004,7 @@ x3 %>%
   filter(Species=="Monk parakeet"|Species=='Tanimbar corella'|
            Species=='Rose-ringed parakeet'|Species=='Red-breasted parakeet'|
            Species=='Long-tailed parakeet')%>%  
-  ggplot(aes(reorder(Species,inits_xNE_freq),inits_xNE_freq))+
+  ggplot(aes(reorder(Species,intsxNE_freq),intsxNE_freq))+
   geom_col()+coord_flip()+
   labs(y= 'n initated interactions / n observations',
        x= 'Species')
@@ -1328,8 +1368,8 @@ GLMdata_scale %>%
   theme_pubclean()+style180+
   scale_x_continuous(limits = c(-1.5,1.5),
                      breaks = c(-1.5,-1.0,-0.5,0,0.5,1,1.5))+
-  scale_y_continuous(limits = c(-1.5,1.5),
-                     breaks = c(-1.5,-0.5,0.5,1.5))
+  scale_y_continuous(limits = c(-1.5,2.5),
+                     breaks = c(-1.5,-0.5,0.5,1.5,2.5))
 
 # looking at size diff in initiated interactions
 GLMdata_scale %>% 
