@@ -378,7 +378,7 @@ sp.pairs<-sp.pairs %>% relocate(1,2,3,4,5,6,7,12,17,9,14,8,13,
                                 10,15,11,16,
                                 18,19,35,30,31,34,32,33,
                                 20,21,22,23,24,25,26,27,28,29)
-sp.pairs<-sp.pairs %>% mutate(size_diff=IS.size-RS.size) %>% 
+sp.pairs<-sp.pairs %>% mutate(size_diff=RS.size-IS.size) %>% 
   relocate(size_diff,.after = 'RS.size')
 
 # extra interaction spread for indices
@@ -607,9 +607,6 @@ style180 <-  theme(plot.title = element_text(size=20,margin = margin(0,0,25,0)),
                   axis.title.x = element_text(size=15,margin = margin(25,0,0,0)),
                   axis.text.x = element_text(size=15, vjust = 0.5, hjust=1),
                   axis.text.y = element_text(size = 15))
-
-
-}
 
 #pilot
 
@@ -1205,7 +1202,11 @@ Interact %>%
                               'Long-tailed parakeet'='#009988'))
 
 #////////////////////////////////
-# GLMS ----
+# Standardize and LM ----
+#////////////////////////////////
+
+#////////////////////////////////
+## with sp.pairs ----
 #////////////////////////////////
 
 #https://www.guru99.com/r-generalized-linear-model.html
@@ -1319,34 +1320,26 @@ GLMdata_scale %>%
   geom_density(aes(color=isout))+
   geom_vline(data=highlight,aes(xintercept=RS.size))+
   theme_pubclean()+
-  facet_wrap(~initsp)
-# here -4 indicates that the recipient is bigger
-# + 2 indicates a parrot attacking a smaller bird
-# it seems to make a difference. More losses against bigger birds, primarily OPH
+  facet_wrap(~initsp)+
+  labs(y='Interaction frequency',
+       x='Size difference of recipient species',
+       title='Frequency of interaction and difference in recipient size')
 ## LTP & RBP have high n W/L against similar size = each other!
 
-# test with ANOVA----
-
-x<-GLMdata_scale %>% 
-  #filter(isout!='NE') %>% 
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet")
-anova <- aov(RS.size~isout, x)
-summary(anova)
-y<-lm(RS.size~isout, x)
-summary(y)
-# ANOVA confirms there is a large difference 
-
-# can explore some combination of variances with this
 GLMdata_scale %>% 
-  #filter(isout!='NE') %>% 
-    ggplot(aes(x = n_cavity, y = size_diff)) +
-  geom_point(aes(color = isout),
-             size = 0.5) +
-  stat_smooth(method = 'lm',
-              formula = y~poly(x, 2),
-              se = TRUE,
-              aes(color = isout)) +
-  theme_classic()
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
+  ggplot(aes(size_diff)) +
+  geom_density()+
+  geom_vline(data=highlight,aes(xintercept=RS.size))+
+  theme_pubclean()+
+  facet_wrap(~initsp)+
+  labs(y='Interaction frequency',
+       x='Size difference of recipient species',
+       title='All interactions by difference in size')
+## TC have a broader interaction network
+## RRP mostly interacting with species smaller
+## MP mostly larger
+## RBP and LTP skews toward smaller, not as much as RRP
 
 
 # Looking at the link between parrot population density and environment
@@ -1354,9 +1347,8 @@ GLMdata_scale %>%
   #filter(Study.Area!='Changi Airport') %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
   ggplot(aes(Shannon)) +
-  geom_density(aes(color = initsp), alpha = 0.5) +
-  theme_pubclean()+
-  facet_wrap(~initsp)
+  geom_density(aes(fill = initsp,color=initsp), alpha = 0.2) +
+  theme_pubclean()
 # TC more often found is low BD areas,
 # RBP have a wide distribution
 # LTP is higher BD areas
@@ -1454,8 +1446,6 @@ label = TRUE,
 label_size = 3,
 color = "grey50")
 
-
-
 #///////////////////////////////////
 # CORRELATION MATRIX NNP'S
 #//////////////////////////////////
@@ -1476,26 +1466,77 @@ ggcorr(corr.parrots,
        label_size = 3,
        color = "grey50")
 
-#GLM
-GLMdata_scale<-GLMdata_scale %>% select(-rating)
-set.seed(1234)
-create_train_test <- function(GLMdata_scale, size = 0.8, train = TRUE) {
-  n_row = nrow(GLMdata_scale)
-  total_row = size * n_row
-  train_sample <- 1: total_row
-  if (train == TRUE) {
-    return (GLMdata_scale[train_sample, ])
-  } else {
-    return (GLMdata_scale[-train_sample, ])
-  }
-}
-data_train <- create_train_test(GLMdata_scale, 0.8, train = TRUE)
-data_test <- create_train_test(GLMdata_scale, 0.8, train = FALSE)
-dim(data_train)
-dim(data_test)
+# test with ANOVA----
 
-formula <- interaction~.
-logit <- glm(formula, data = GLMdata_scale, family = 'binomial')
-summary(logit)
+x<-GLMdata_scale %>% 
+  #filter(isout!='NE') %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet")
+anova <- aov(RS.size~isout, x)
+summary(anova)
+y<-lm(RS.size~isout, x)
+summary(y)
+# ANOVA confirms there is a large difference 
 
-sapply(lapply(GLMdata_scale, unique), length)
+
+
+#////////////////////////////////
+## with ISRS ----
+#////////////////////////////////
+
+#https://www.guru99.com/r-generalized-linear-model.html
+# dev.off()
+
+# select continuous variables
+continuous <-select_if(ISRS, is.numeric)
+summary(continuous)
+
+GLMdata_ISRS <-ISRS 
+#ranking for the normalization
+GLMdata_ISRS<-GLMdata_ISRS %>% 
+  mutate(rating=case_when(
+    interaction=="Neutral"~"0", # no aggression
+    interaction=="Displace"~"1", # remove from perch by landing
+    interaction=="Threat"~"2", # vocal or flaring threats
+    interaction=="Swoop"~"3", # fly within 60cm at species but not landing
+    interaction=="Chase"~"4", # in-flight pursuit may or may not displace
+    interaction=="Contact"~"5", # physical contact
+    interaction=="Fight"~"5"))# multiple physical contact
+GLMdata_ISRS$rating<-as.numeric(GLMdata_ISRS$rating)
+GLMdata_ISRS<-GLMdata_ISRS %>% relocate(rating,.after = interaction)
+GLMdata_ISRS<-GLMdata_ISRS %>% select(-Avg_Weight,-Sci_name,-IUCN_status,-SG_abundance,
+                                      -Pref_hab,-Class,-`Site habitat types`,-`Surrounding habitat types`)
+
+#Calculated columns
+GLMdata_ISRS<-GLMdata_ISRS %>% 
+  group_by(Study.Area) %>% 
+  mutate(totalbuilt=sum(buildpc+artsurfacepc),
+         totalgreen=sum(canopypc+Vegpc+natsurfacepc)) %>% 
+  ungroup()
+
+# STANDARDIZE
+GLMdata_ISRS_scale <- GLMdata_ISRS %>% 
+  mutate_if(is.numeric, funs(as.numeric(scale(.))))
+
+str(GLMdata_ISRS_scale)
+
+# factorise
+GLMdata_ISRS_scale$role<-factor(GLMdata_ISRS_scale$role)
+
+GLMdata_ISRS_scale<-GLMdata_ISRS_scale %>% filter(!is.na(SG_status))
+
+# charts
+GLMdata_ISRS_scale %>% 
+  filter(Study.Area!='Changi Airport') %>% 
+  ggplot(aes(Shannon)) +
+  geom_density(aes(fill = SG_status,color=SG_status), alpha = 0.1) +
+  theme_pubclean()
+## Introduced species more prevalent in lower BD areas
+GLMdata_ISRS_scale %>% 
+  filter(Study.Area!='Changi Airport') %>% 
+  ggplot(aes(Shannon)) +
+  geom_density(aes(fill = sp_lab,color=sp_lab), alpha = 0.05) +
+  theme_pubclean()
+
+x<-lm(rating~outcome,
+      GLMdata_ISRS_scale)
+summary(x)
