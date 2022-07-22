@@ -980,7 +980,8 @@ x3 %>%
   ggplot(aes(reorder(Species,ints_freq),ints_freq))+
   geom_col()+coord_flip()+
   labs(y= 'n initated interactions / n observations',
-       x= 'Species')
+       x= 'Species')+
+  theme_pubclean()
 # parrots
 x3 %>% 
   filter(Species=="Monk parakeet"|Species=='Tanimbar corella'|
