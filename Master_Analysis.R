@@ -19,7 +19,7 @@ p_load(formattable,knitr,kableExtra, # nice tables
        Distance, # transect analysis, relative abundance, density
        readxl,writexl)
 library(gam)
-
+library(GGally)
 library(psych)
 
 
@@ -594,6 +594,33 @@ z
 ISRS$Species2 = str_wrap(ISRS$Species, width = 10)
 Enviro_2$Study.Area2 = str_wrap(Enviro_2$Study.Area, width = 10)
 
+# title styling
+  # 90 deg rotated x axis
+style90 <-  theme(plot.title = element_text(size=40,margin = margin(0,0,25,0)),
+           axis.title.y = element_text(size=25,margin = margin(0,25,0,0)),
+           axis.title.x = element_text(size=25,margin = margin(25,0,0,0)),
+           axis.text.x = element_text(size=25,angle = 90, vjust = 0.5, hjust=1),
+           axis.text.y = element_text(size = 25))
+  # standard
+style180 <-  theme(plot.title = element_text(size=20,margin = margin(0,0,25,0)),
+                  axis.title.y = element_text(size=15,margin = margin(0,25,0,0)),
+                  axis.title.x = element_text(size=15,margin = margin(25,0,0,0)),
+                  axis.text.x = element_text(size=15, vjust = 0.5, hjust=1),
+                  axis.text.y = element_text(size = 15))
+
+
+}
+
+#pilot
+
+Pilot %>% 
+  ggplot(aes(time,freq))+
+  geom_col()+
+  labs(x='Time of day',y='Interaction frequency',
+       title = 'Pilot study observations: Half-hourly interaction frequency')+
+  theme_pubclean()+style90
+
+
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 #======================== SURVEY SITES ===========================
@@ -603,23 +630,24 @@ Enviro_2$Study.Area2 = str_wrap(Enviro_2$Study.Area, width = 10)
 ## Alpha ----
 # Shannon / Simpson / Richness
 Indices %>% 
-  ggplot(aes(x=Simpson,y=Shannon)) +
-  geom_point(aes(color=Richness), size=4)+
+  ggplot(aes(x=Shannon,y=Richness)) +
+  geom_point(size=5,color='#4477AA')+
+  xlim(1.5,4)+ylim(25,60)+
   labs(title = 'Alpha biodiversity indices',
-       x = 'Simpson Index', y='Shannon Index',
-       color='Richness')+
+       x = 'Shannon Index', y='Species Richness')+
   geom_text_repel(aes(label=Study.Area),
-                  nudge_y = 0.04,segment.color = NA)
-  # without Changi Airport
+                  nudge_y = 1.6,segment.color = NA,color='#555555',size=5)+
+  theme_pubclean()+style180
+
+# Shannon / Simpson / Richness
 Indices %>% 
-  filter(Study.Area!='Changi Airport') %>% 
-  ggplot(aes(x=Simpson,y=Shannon)) +
-  geom_point(aes(color=Richness), size=4)+
+  ggplot(aes(x=Simpson,y=Richness)) +
+  geom_point(size=5,color='#4477AA')+
   labs(title = 'Alpha biodiversity indices',
-       x = 'Simpson Index', y='Shannon Index',
-       color='Richness')+
+       x = 'Simpson Index', y='Species Richness')+
   geom_text_repel(aes(label=Study.Area),
-                  nudge_y = 0.04,segment.color = NA)
+                  nudge_y = 1.6,segment.color = NA,color='#555555',size=5)+
+  theme_pubclean()+style180
 
   # Table form
 formattable(Indices) 
@@ -643,7 +671,9 @@ sorensen.plot<-sorensen.melted %>%
   ggplot(aes(x=Var1, y=Var2, fill = value))+
   geom_tile(color = "white")+
   labs(title = 'Sorensen (Beta biodiversity index)')+
-  theme(legend.title = element_blank())+
+    theme_pubclean()+
+  theme(legend.title = element_blank(),
+        axis.text.x=element_text(angle=90,hjust=0.95,vjust=0.2))+
   scale_fill_gradient2(low = "white", high = "black",
                        mid="grey", midpoint = 0.5, limit = c(0,1),
                        breaks=c(0,0.5,1),
@@ -818,41 +848,52 @@ z %>%
 # SITE----
 #========================#
 Indices_2 %>% 
-  filter(Study.Area!='Changi Airport') %>% 
   group_by(Study.Area) %>% 
   mutate(built_surf=sum(buildpc+artsurfacepc)) %>% 
-  ggplot(aes(built_surf,Richness))+
+  ggplot(aes(built_surf,Shannon))+
   geom_point(aes(color=Study.Area))+
   stat_poly_line(se=F)+
   stat_poly_eq()+
   labs(x='Proportion urban land cover',y='Shannon')
-# glm
+# lm
 x<-Indices_2 %>% 
-  filter(Study.Area!='Changi Airport') %>% 
   group_by(Study.Area) %>% 
   mutate(built_surf=sum(buildpc+artsurfacepc))
-y<-glm(Richness~built_surf,x)
+y<-lm(Shannon~built_surf,x)
+y<-aov(Shannon~built_surf,x)
 summary(y)
+summary.aov(y)
+# R² = .894, F(1,4)=33.75,p<0.00437)
+# Urbanised land predicted reduced bird species richness (β = -38.367, p < .00437)
+
+
 ## BD and Richness declines with building and road cover
 Indices_2 %>% 
-  filter(Study.Area!='Changi Airport') %>% 
   group_by(Study.Area) %>% 
   mutate(vegcan=sum(canopypc+Vegpc)) %>% 
-  ggplot(aes(vegcan,Richness))+
+  ggplot(aes(vegcan,Shannon))+
   geom_point(aes(color=Study.Area))+
   stat_poly_line(se=F)+
   stat_poly_eq()+
   labs(x='Proportion greenery cover',y='Shannon')
-## BD and Richness increases with total greenery cover 
-## canopy cover and vegetation alone have minimal correlation, but 
-  # together have a multiplicative effect
+
+# Linear models for all land types
+x<-Indices_2 %>% 
+  group_by(Study.Area) %>% 
+  mutate(builtarea=sum(buildpc+artsurfacepc),
+         greenarea=sum(canopypc+Vegpc))
+y<-lm(Shannon~buildpc,GLMdata_scale)
+summary(y)                        
+
+#xxxxxxxxxxxxxxxxxx
 
 Indices_2 %>% 
-  filter(Study.Area!='Changi Airport') %>% 
-  ggplot(aes(n_ints,freq.I))+
+  ggplot(aes(Shannon,freq.parrots))+
   geom_point(aes(color=Study.Area))+
   stat_poly_line(se=F)+
   stat_poly_eq()
+y<-aov(Richness~built_surf,x)
+
    
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
@@ -860,18 +901,6 @@ Indices_2 %>%
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
-#pilot
-
-Pilot %>% 
-  ggplot(aes(time,freq))+
-  geom_col()+
-  labs(x='Time of day',y='Interaction frequency',
-       title = 'Pilot study observations: Half-hourly interaction frequency')+
-  theme_pubclean()+
-  theme(axis.text.x = element_text(size=25,angle = 90, vjust = 0.5, hjust=1),
-        axis.text.y = element_text(size = 25),
-      plot.title = element_text(size=40),
-      axis.title = element_text(size=18))
 
 # n interactions parrots
 ISRS %>% 
@@ -1175,7 +1204,9 @@ Interact %>%
                               'Tanimbar corella'='#33BBEE',
                               'Long-tailed parakeet'='#009988'))
 
-# GLM ----
+#////////////////////////////////
+# GLMS ----
+#////////////////////////////////
 
 #https://www.guru99.com/r-generalized-linear-model.html
 # dev.off()
@@ -1204,10 +1235,14 @@ GLMdata<-GLMdata %>%
   interaction=="Fight"~"5"))# multiple physical contact
 GLMdata$rating<-as.numeric(GLMdata$rating)
 GLMdata<-GLMdata %>% relocate(rating,.after = interaction)
+GLMdata<-GLMdata %>% select(-IS.wt,-RS.wt,-`Site habitat types`,-`Surrounding habitat types`)
 
-# NORMALIZE - dont need this, its the same as standardizaion
-#GLMdata_norm <- GLMdata %>% 
-  #mutate_if(is.numeric, funs(as.numeric(normalize(.))))
+#Calculated columns
+GLMdata<-GLMdata %>% 
+  group_by(Study.Area) %>% 
+  mutate(totalbuilt=sum(buildpc+artsurfacepc),
+         totalgreen=sum(canopypc+Vegpc+natsurfacepc)) %>% 
+  ungroup()
 
 # STANDARDIZE
 GLMdata_scale <- GLMdata %>% 
@@ -1240,7 +1275,7 @@ graph
 GLMdata_scale<-GLMdata_scale %>% filter(!is.na(RS.status))
 #run again from factor to check
 
-# plots
+# plots----
 GLMdata_scale %>% 
   filter(IS.sp_lab=='NNP') %>% 
   filter(interaction!='Neutral') %>% 
@@ -1265,11 +1300,13 @@ highlight
 GLMdata_scale %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
   ggplot(aes(RS.size)) +
-  geom_density()+
-  geom_vline(data=highlight,aes(xintercept=RS.size,color=initsp))+
+  geom_density(aes(color=isout))+
+  geom_vline(data=highlight,aes(xintercept=RS.size))+
   theme_pubclean()+
-  theme(legend.position = 'none')+
-  facet_wrap(~initsp)
+  facet_wrap(~initsp)+
+  labs(y='Interaction frequency',
+       x='Rise of recipient species',
+       title='Frequency of interaction by type and recipient size')
 ## line shows the mean size of the intiator
   # -2 is the smallest birds 
   # +4 is the largest, herons, eagles
@@ -1277,10 +1314,10 @@ GLMdata_scale %>%
 
 # looking at size diff in initiated interactions
 GLMdata_scale %>% 
-  #filter(isout!='NE') %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
   ggplot(aes(size_diff)) +
   geom_density(aes(color=isout))+
+  geom_vline(data=highlight,aes(xintercept=RS.size))+
   theme_pubclean()+
   facet_wrap(~initsp)
 # here -4 indicates that the recipient is bigger
@@ -1288,14 +1325,15 @@ GLMdata_scale %>%
 # it seems to make a difference. More losses against bigger birds, primarily OPH
 ## LTP & RBP have high n W/L against similar size = each other!
 
-# test with ANOVA
+# test with ANOVA----
 
 x<-GLMdata_scale %>% 
   #filter(isout!='NE') %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet")
 anova <- aov(RS.size~isout, x)
 summary(anova)
-
+y<-lm(RS.size~isout, x)
+summary(y)
 # ANOVA confirms there is a large difference 
 
 # can explore some combination of variances with this
@@ -1344,8 +1382,66 @@ GLMdata_scale %>%
 # TC seem toprefer more built areas, perhaps this is the niche they can best 
   # exploit, there is little competition from birds of a similar size
 
-install.packages('GGally')
+
+#///////////////////////////////////
+# Correllation matrix----
+#//////////////////////////////////
+
+## BLUE == NEGATIVE CORR.
+## RED == POSITIVE CORR
+## WHITE == NO CORR
+
+#///////////////////////////////////
+# SITES GENERAL
+#//////////////////////////////////
 library(GGally)
+# Convert data to numeric
+corr.site <- data.frame(lapply(GLMdata_scale, as.integer))
+corr.site<-corr.site %>% select(Richness,Shannon,rating,site.interactions,cav.sp.freq,freq.I,freq.parrots,
+                                n_cavity,cavs_canopy_sqm,canopypc,Vegpc,natsurfacepc,buildpc,
+                                artsurfacepc,waterpc,mangrovepc) %>% 
+  rename('Shannon index'=Shannon,
+         'Total interactions/site'=site.interactions,
+         'pc cavity nester spp.'=cav.sp.freq,
+         'pc introduced spp.'=freq.I,
+         'pc parrot spp.'=freq.parrots,
+         'n cavities/site'=n_cavity,
+         'cavity density/sqm'=cavs_canopy_sqm,
+         'pc canopy cover'=canopypc,
+         'pc vegetation cover'=Vegpc,
+         'pc natural surface cover'=natsurfacepc,
+         'pc buildings'=buildpc,
+         'pc artificial surface'=artsurfacepc,
+         'pc waterbodies'=waterpc,
+         'pc mangroves'=mangrovepc)
+# Plot 
+ggcorr(corr.site,
+       method = c("pairwise", "spearman"),
+       nbreaks = 6,
+       hjust = 0.8,
+       label = TRUE,
+       label_size = 3,
+       color = "grey50",
+       low="#2166AC", 
+       mid="#F7F7F7",
+       high="#B2182B",
+       layout.exp = 2)+
+  theme_pubclean()
+
+## aggressive interactions positively correlated with number & density of cavities, and greater urban area
+  ## negatively correlated with more diverse habitats, grassland, rivers, mangroves
+
+## Shannon diversity is negatively correlated with several important factors:
+  ## freq of cavity nesters and introduced species, greater cavity density and more aggressions
+    ## positively correlated with waterbodies
+
+## aggression level is not highly influenced by any particular environmental factor
+
+
+#///////////////////////////////////
+# ALL SPECIES
+#//////////////////////////////////
+
 # Convert data to numeric
 corr <- data.frame(lapply(GLMdata_scale, as.integer))
 corr<-corr %>% select(-IS.wt,-RS.wt,-Site.habitat.types,-Surrounding.habitat.types)
@@ -1358,8 +1454,48 @@ label = TRUE,
 label_size = 3,
 color = "grey50")
 
-## BLUE = NEGATIVE CORR.
-## RED == POSITIVE CORR
-## WHITE = NO CORR
 
 
+#///////////////////////////////////
+# CORRELATION MATRIX NNP'S
+#//////////////////////////////////
+
+
+# Convert data to numeric
+corr.parrots<-GLMdata_scale %>% filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|
+                                         initsp=="Rose-ringed parakeet"| initsp=="Red-breasted parakeet")
+corr.parrots <- data.frame(lapply(corr.parrots, as.integer))
+corr.parrots<-corr.parrots %>% select(-IS.wt,-RS.wt,-Site.habitat.types,-Surrounding.habitat.types) 
+
+# Plot 
+ggcorr(corr.parrots,
+       method = c("pairwise", "spearman"),
+       nbreaks = 6,
+       hjust = 0.8,
+       label = TRUE,
+       label_size = 3,
+       color = "grey50")
+
+#GLM
+GLMdata_scale<-GLMdata_scale %>% select(-rating)
+set.seed(1234)
+create_train_test <- function(GLMdata_scale, size = 0.8, train = TRUE) {
+  n_row = nrow(GLMdata_scale)
+  total_row = size * n_row
+  train_sample <- 1: total_row
+  if (train == TRUE) {
+    return (GLMdata_scale[train_sample, ])
+  } else {
+    return (GLMdata_scale[-train_sample, ])
+  }
+}
+data_train <- create_train_test(GLMdata_scale, 0.8, train = TRUE)
+data_test <- create_train_test(GLMdata_scale, 0.8, train = FALSE)
+dim(data_train)
+dim(data_test)
+
+formula <- interaction~.
+logit <- glm(formula, data = GLMdata_scale, family = 'binomial')
+summary(logit)
+
+sapply(lapply(GLMdata_scale, unique), length)

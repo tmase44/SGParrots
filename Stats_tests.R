@@ -163,10 +163,17 @@ https://www.statology.org/dunns-test/
 #Kruskal-Wallis test is a nonparametric test, so the normality assumption
   # is not required. However, the independence assumption still holds.
 
-kruskal.test(rating ~ initsp,
+kruskal.test(interaction ~ initsp,
              data = Interact_2)
 
 # The P-Value is .000074. The result is significant at p < .05.
+
+kruskal.test(Species ~ outcome,
+             data = ISRS)
+kruskal.test(Species ~ interaction,
+             data = ISRS)
+kruskal.test(Species ~ inits_xNE_HR,
+             data = ISRS)
 
 # post hoc test to decide which species is most different----
 ## DUNN TEST----
@@ -199,7 +206,7 @@ ggbetweenstats(
 
 
 
-x<-Interact_2 %>% select(Study.Area,rating)
+x<-Interact_2 %>% select(Study.Area,interaction,initsp)
 x<-x %>% filter(initsp=='Tanimbar corella'|
                   initsp=='Red-breasted parakeet'|
                   initsp=='Long-tailed parakeet'|  
@@ -209,7 +216,7 @@ x<-x %>% filter(initsp=='Tanimbar corella'|
                   initsp=='Javan myna'|
                   initsp=='House crow')
 
-kruskal.test(rating ~ Study.Area,
+kruskal.test(interaction ~ Study.Area,
              data = x)
 
 
