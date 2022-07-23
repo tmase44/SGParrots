@@ -942,6 +942,53 @@ y<-aov(Richness~built_surf,x)
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
+# obs / ints point
+Composition_2 %>% 
+  group_by(Species) %>% 
+  summarise(all_obs=sum(all_obs),
+            n_ints=sum(n_ints)) %>% 
+  ggplot(aes(all_obs,n_ints,color=Species))+
+  geom_jitter(height = 4,alpha=.8)+
+  coord_trans(x='log10')+
+  theme_pubclean()+
+  labs(x='Number of observations',y='Number of interactions',
+       title = 'Total observations and interactions')+
+  scale_colour_manual(values=c('Red-breasted parakeet'='#CC3311',
+                             'Monk parakeet'='#004488',
+                             'Rose-ringed parakeet'='#EE3377',
+                             'Tanimbar corella'='#33BBEE',
+                             'Long-tailed parakeet'='#009988'))
+# majority of all observed sp. in study areas were not in parrot interaction networks
+
+#/////////////////////////
+# THIS ONE
+  # sp involved in parrot interaction networks
+Composition_2 %>% 
+  filter(Species!="Monk parakeet"&Species!="Tanimbar corella"&
+           Species!="Rose-ringed parakeet"&Species!="Red-breasted parakeet") %>%
+  group_by(Species) %>% 
+  summarise(all_obs=sum(all_obs),
+            n_ints=sum(n_ints)) %>% 
+  filter(n_ints>1) %>% 
+  filter(all_obs>1) %>% 
+  ggplot(aes(all_obs,n_ints))+
+  geom_jitter(height = 4,width=1,alpha=.6,color='blue')+
+  coord_trans(x='log10')+
+  theme_pubclean()+
+  labs(x='Number of observations',y='Number of interactions',
+       title = 'Species within parrot interaction networks')+
+  geom_text_repel(data=Composition_2 %>% 
+                    filter(Species!="Monk parakeet"&Species!="Tanimbar corella"&
+                             Species!="Rose-ringed parakeet"&Species!="Red-breasted parakeet") %>%
+                    group_by(Species) %>% 
+                    summarise(all_obs=sum(all_obs),
+                              n_ints=sum(n_ints)) %>% 
+                    filter(n_ints>10) %>% 
+                    filter(all_obs>1),aes(label=Species),
+                  nudge_y=2,
+                  box.padding = 0.5, max.overlaps = Inf)
+# species within the regular interaction network
+## of the focal non-native parrots
 
 # n interactions parrots
 ISRS %>% 
