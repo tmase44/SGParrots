@@ -955,15 +955,6 @@ ISRS %>%
   labs(x='Species',y='n',title='Total interactions')
 # 
 
-# n interactions all
-ISRS %>% 
-  group_by(Species) %>% 
-  summarise(n=sum(n_ints)) %>% 
-  ggplot(aes(reorder(Species,n),n,))+ # this order high to low
-  geom_col(position='dodge',alpha=0.8)+coord_flip()+
-  labs(x='Species',y='total interactions',title='Total interactions')+
-  theme(legend.position = 'none')
-
 #============================================================#
 ## interaction frequency standardised based on n observations
 #============================================================#
@@ -977,16 +968,22 @@ x3<-Composition_2 %>%
 # all interactions / total obs all species
 x3 %>% 
   filter(all_obs>=10&n_ints>0) %>% 
-  ggplot(aes(reorder(Species,ints_freq),ints_freq))+
+  ggplot(aes(reorder(Species,ints_freq),ints_freq,fill=Species))+
   geom_col()+coord_flip()+
   labs(y= 'n initated interactions / n observations',
        x= 'Species')+
-  theme_pubclean()
+  theme_pubclean()+
+  theme(axis.title.y = element_blank())+
+  scale_fill_manual(values=c('Red-breasted parakeet'='#CC3311',
+                              'Monk parakeet'='#004488',
+                              'Rose-ringed parakeet'='#EE3377',
+                              'Tanimbar corella'='#33BBEE',
+                              'Long-tailed parakeet'='#009988'))
+
 # parrots
 x3 %>% 
   filter(Species=="Monk parakeet"|Species=='Tanimbar corella'|
-           Species=='Rose-ringed parakeet'|Species=='Red-breasted parakeet'|
-           Species=='Long-tailed parakeet')%>%  
+           Species=='Rose-ringed parakeet'|Species=='Red-breasted parakeet')%>%  
   ggplot(aes(reorder(Species,ints_freq),ints_freq))+
   geom_col()+coord_flip()+
   labs(y= 'n initated interactions / n observations',
@@ -1003,12 +1000,13 @@ x3 %>%
 # parrots
 x3 %>% 
   filter(Species=="Monk parakeet"|Species=='Tanimbar corella'|
-           Species=='Rose-ringed parakeet'|Species=='Red-breasted parakeet'|
-           Species=='Long-tailed parakeet')%>%  
+           Species=='Rose-ringed parakeet'|Species=='Red-breasted parakeet')%>%  
   ggplot(aes(reorder(Species,intsxNE_freq),intsxNE_freq))+
   geom_col()+coord_flip()+
   labs(y= 'n initated interactions / n observations',
-       x= 'Species')
+       title = 'Interaction frequency')+
+  theme_pubclean()+
+  theme(axis.title.y = element_blank())
 
 
 #/////////////#
