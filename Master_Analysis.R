@@ -401,12 +401,14 @@ Indices_2<-merge(Indices_2,x,by='Study.Area')
 
 # n_ints to Composition_2
 x<-ISRS %>% 
-  select(Study.Area,Species,interaction,n_ints) %>% 
+  filter(Study.Area!='Changi Airport'|Species!='Javan myna') %>% 
+    select(Study.Area,Species,interaction,n_ints) %>% 
   group_by(Study.Area,Species) %>% 
   summarise(n_ints=sum(n_ints)) 
 Composition_2<-merge(Composition_2,x,by=c('Study.Area','Species'),all=T)
 x<-ISRS %>% 
-  select(Study.Area,Species,interaction,n_ints) %>% 
+  filter(Study.Area!='Changi Airport'|Species!='Javan myna') %>% 
+    select(Study.Area,Species,interaction,n_ints) %>% 
   filter(interaction!='Neutral') %>% 
   group_by(Study.Area,Species) %>% 
   summarise(n_ints_xNE=sum(n_ints)) 
@@ -415,14 +417,16 @@ Composition_2$n_ints_xNE<-Composition_2$n_ints_xNE %>% replace(is.na(.), 0)
   
 # n_initis to Composition_2
 x<-ISRS %>% 
-  filter(role=='IS') %>% 
+  filter(Study.Area!='Changi Airport'|Species!='Javan myna') %>% 
+    filter(role=='IS') %>% 
   select(Study.Area,Species,interaction,n_ints) %>% 
   group_by(Study.Area,Species) %>% 
   summarise(n_initis=sum(n_ints)) 
 Composition_2<-merge(Composition_2,x,by=c('Study.Area','Species'),all=T)
 Composition_2$n_initis<-Composition_2$n_initis %>% replace(is.na(.), 0)
 x<-ISRS %>% 
-  filter(role=='IS') %>% 
+  filter(Study.Area!='Changi Airport'|Species!='Javan myna') %>% 
+    filter(role=='IS') %>% 
     select(Study.Area,Species,interaction,n_ints) %>% 
   filter(interaction!='Neutral') %>% 
   group_by(Study.Area,Species) %>% 
