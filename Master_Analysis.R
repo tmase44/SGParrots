@@ -1162,7 +1162,8 @@ x3 %>%
 #2. ROLES
 # n IS RS
 ISRS %>%
-  filter(Species=="Monk parakeet"|Species=="Tanimbar corella"|Species=="Rose-ringed parakeet"|Species=="Red-breasted parakeet"|Species=="Long-tailed parakeet") %>%  
+  filter(interaction!='Neutral') %>% 
+  filter(sp_lab=='NNP'|Species=='Long-tailed parakeet') %>%  
   group_by(Species,role) %>% 
   summarise(n=sum(n_ints)) %>% 
   ggplot(aes(reorder(Species,-n),n,fill=role))+
@@ -1170,7 +1171,8 @@ ISRS %>%
   geom_text(aes(label = n),position=position_stack(vjust=.5))+ 
   scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
   labs(x='Species',y='n',title='n interactions intiated and recieved')+
-  scale_fill_manual(values=c('IS'='#4a7b77','RS'='#f67e4b'))
+  scale_fill_manual(values=c('IS'='#994455','RS'='#EE99AA'))+
+  theme_pubclean()+style180Centered
 
 # % IS RS
 ISRS %>%  
@@ -1185,7 +1187,7 @@ ISRS %>%
   geom_text(aes(label = round(freq,1)),position=position_fill(vjust=.5))+ 
   scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
   labs(x='Species',y='Proprotion of interactions',title='Proportion aggressive interactions intiated and recieved')+
-  scale_fill_manual(values=c('IS'='#4a7b77','RS'='#f67e4b'))+
+  scale_fill_manual(values=c('IS'='#994455','RS'='#EE99AA'))+
   theme_pubclean()+style180Centered
 
 # 3. W/L/NE summary
