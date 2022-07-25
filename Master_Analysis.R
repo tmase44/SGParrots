@@ -1144,34 +1144,58 @@ x3 %>%
   ggplot(aes(reorder(Species,ints_freq),ints_freq,fill=label))+
   geom_col(alpha=.9)+
   coord_flip()+
-  labs(y= 'Interaction involvement / Individuals observed',
+  labs(y= 'Interaction frequency',
        x= 'Species',
-       title = 'Interaction frequency')+
+       title = 'Number of interactions standardised by maximum observed individuals')+
   theme_pubclean()+
-   style180+
+  style180+
   theme(axis.title.y = element_blank(),
         legend.title = element_blank(),
-        axis.text.y = element_text(size=13))
+        axis.text.y = element_text(size=13))+
+  scale_fill_manual(values=c('I cavity nester'='#88CCEE',
+                             'I non-cavity nester'='#44AA99',
+                             'R cavity nester'='#DDCC77',
+                             'R non-cavity nester'='#999933',
+                             'R optional-cavity nester'='#117733',
+                             'M non-cavity nester'='#CC6677'))
+                    
+                    
+                    
 
 # /// THIS ONE///
 # all INITIATIONS / obs max----
 
 x3 %>% 
   filter(max_obs>0&n_initis_xNE>1) %>% 
-  ggplot(aes(reorder(Species,initisxNE_freq),initisxNE_freq,fill=NestType))+
+  ggplot(aes(reorder(Species,initisxNE_freq),initisxNE_freq,fill=label))+
   geom_col(alpha=.9)+
   coord_flip()+
-  labs(y= 'Initiated interactions / Individuals observed',
+  labs(y= 'Initiated interaction frequency',
        x= 'Species',
-       title = 'Initiated interaction frequency')+
+       title = 'Initiated interactions standardised by maximum observed individuals')+
   theme_pubclean()+
-  scale_fill_manual(labels=c('Cavity Nesters','Non-cavity nesters'),
-                    values=c('Cavity'='#009988','Non-cavity'='#7f7f7f'))+ 
   style180+
   theme(axis.title.y = element_blank(),
-        legend.title = element_blank())
+        legend.title = element_blank(),
+        axis.text.y = element_text(size=13))+
+  scale_fill_manual(values=c('I cavity nester'='#88CCEE',
+                             'I non-cavity nester'='#44AA99',
+                             'R cavity nester'='#DDCC77',
+                             'R non-cavity nester'='#999933',
+                             'R optional-cavity nester'='#117733',
+                             'M non-cavity nester'='#CC6677'))
 
 
+
+x3 %>% 
+  filter(max_obs>0&n_initis>0) %>% 
+  ggplot(aes(n_ints,max_obs,color=label))+
+  geom_point(size=4)+
+  stat_poly_line(se=F)+
+  stat_poly_eq()
+
+# n individuals is not a strong predictors that interactions will happen
+  
 ##########
 
 #2. ROLES
