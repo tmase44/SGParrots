@@ -936,7 +936,7 @@ z %>%
 #========================#
 Indices_2 %>% 
   group_by(Study.Area) %>% 
-  mutate(built_surf=sum(buildpc+artsurfacepc)) %>% 
+  (built_surf=sum(buildpc+artsurfacepc)) %>% 
   ggplot(aes(built_surf,Shannon))+
   geom_point(aes(color=Study.Area))+
   stat_poly_line(se=F)+
@@ -1033,49 +1033,58 @@ Composition_2 %>%
 Composition_2 %>% 
   filter(Study.Area!='Changi Airport'|Species!='Javan myna') %>% 
   filter(Species!="Monk parakeet"&Species!="Tanimbar corella"&
-           Species!="Rose-ringed parakeet"&Species!="Red-breasted parakeet"&
-           Species!='Yellow crested cockatoo'&Species!='Sulphur crested cockatoo') %>%
+           Species!="Rose-ringed parakeet"&Species!="Red-breasted parakeet") %>%
   group_by(Species) %>% 
   summarise(max_obs=sum(max_obs),
-            n_ints_xNE=sum(n_ints_xNE)) %>% 
-  filter(n_ints_xNE>1) %>% 
+            n_ints=sum(n_ints)) %>% 
+  filter(n_ints>1) %>% 
   filter(max_obs>0) %>% 
-  ggplot(aes(max_obs,n_ints_xNE))+
-  geom_jitter(height = 4,width=1,alpha=.8,color='#CC3311',size=2)+
-  coord_trans(x='log10')+
+  ggplot(aes(max_obs,n_ints))+
+  geom_jitter(height = 4,width=1,alpha=.8,color='#CC3311',size=3)+
+  #coord_trans(x='log10')+
+  stat_poly_eq()+
+  stat_poly_line()+
   theme_pubclean()+
   labs(x='Individuals observed',y='Total number of interactions',
        title = 'Aggressive interactions within focal species network')+
   geom_text_repel(data=Composition_2 %>% 
                     filter(Study.Area!='Changi Airport'|Species!='Javan myna') %>% 
                     filter(Species!="Monk parakeet"&Species!="Tanimbar corella"&
-                             Species!="Rose-ringed parakeet"&Species!="Red-breasted parakeet"&
-                             Species!='Yellow crested cockatoo'&Species!='Sulphur crested cockatoo') %>%
+                             Species!="Rose-ringed parakeet"&Species!="Red-breasted parakeet") %>%
                     group_by(Species) %>% 
                     summarise(max_obs=sum(max_obs),
-                              n_ints_xNE=sum(n_ints_xNE)) %>% 
-                    filter(n_ints_xNE>8) %>% 
-                    filter(max_obs>1),aes(label=Species),
+                              n_ints=sum(n_ints)) %>% 
+                    filter(n_ints>18) %>% 
+                    filter(max_obs>5),aes(label=Species),
                   nudge_y=4,size=3,
                   box.padding = 0.5, max.overlaps = Inf)+
   scale_y_continuous(limits = c(0, 200), oob = scales::squish)+style180
 
+x<-Composition_2 %>% 
+  filter(Study.Area!='Changi Airport'|Species!='Javan myna') %>% 
+  filter(Species!="Monk parakeet"&Species!="Tanimbar corella"&
+           Species!="Rose-ringed parakeet"&Species!="Red-breasted parakeet")  %>%
+  group_by(Species) %>% 
+  summarise(max_obs=sum(max_obs),
+            n_ints=sum(n_ints))
+# dependent = n ints
+y<-lm(n_ints~max_obs,x)
+  summary(y)
 
 # species within the regular interaction network
 ## of the focal non-native parrots
 
-# n interactions parrots
+# n interactions raw
 ISRS %>% 
-  #filter(interaction!='Neutral') %>% 
-  filter(Species=="Monk parakeet"|Species=="Tanimbar corella"|
-           Species=="Rose-ringed parakeet"|Species=="Red-breasted parakeet") %>%  
+  #filter(interaction!='Neutral') %>%
   group_by(Species) %>% 
   summarise(n=sum(n_ints)) %>% 
+  filter(n>2) %>% 
   ggplot(aes(reorder(Species,-n),n))+
   geom_col()+
-  geom_text(aes(label = n), vjust = -0.5)+
-  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
-  labs(x='Species',y='n',title='Total interactions')
+  geom_text(aes(label = n), hjust = -0.5)+
+  coord_flip()+
+   labs(x='Species',y='n',title='Total interactions')
 # 
 296+264+133+132+128
 256+196+101+99+85
@@ -1085,30 +1094,6 @@ ISRS %>%
 sp.pairs %>% 
   summarise(n=sum(pair_ints))
 
-
-#============================================================#
-## interaction frequency standardised based on all observations
-#============================================================#
-x3<-Composition_2 %>%
-  group_by(Species) %>% summarise(all_obs=sum(all_obs),
-                                  n_ints=sum(n_ints),
-                                  n_ints_xNE=sum(n_ints_xNE)) %>% 
-  mutate(ints_freq=n_ints/all_obs) %>% 
-  mutate(intsxNE_freq=n_ints_xNE/all_obs) 
-
-# all spp. interactions relative to total obs
-x3 %>% 
-  filter(all_obs>=10&n_ints>1) %>% 
-  ggplot(aes(reorder(Species,ints_freq),ints_freq,fill=Species))+
-  geom_col()+coord_flip()+
-  labs(y= 'n initated interactions / n observations',
-       x= 'Species')+
-  theme_pubclean()+
-  theme(axis.title.y = element_blank())+
-  scale_fill_manual(values=c('Red-breasted parakeet'='#CC3311',
-                              'Monk parakeet'='#009988',
-                              'Rose-ringed parakeet'='#EE3377',
-                              'Tanimbar corella'='#33BBEE'))
 
 
 #============================================================#
@@ -1135,7 +1120,13 @@ x3<-Composition_2 %>%
                          SG_status=='M'&NestType=='Cavity'~'M cavity nester',
                          SG_status=='M'&NestType=='Non-cavity'~'M non-cavity nester',
                          SG_status=='M'&NestType=='Cavity-optional'~'M optional-cavity nester'))
-
+x3 %>% 
+  ggplot(aes(max_obs,ints_freq))+
+  geom_jitter(height = 4,width=1,alpha=.8,color='#CC3311',size=2)+
+  #coord_trans(x='log10')+
+  stat_poly_eq()+
+  stat_poly_line()+
+  theme_pubclean()
 
 # All interactions / obs max----
 
@@ -1163,16 +1154,39 @@ x3 %>%
                     
 
 # /// THIS ONE///
-# all INITIATIONS / obs max----
-
+# N INTERACTIONS / obs ----
 x3 %>% 
-  filter(max_obs>0&n_initis_xNE>1) %>% 
-  ggplot(aes(reorder(Species,initisxNE_freq),initisxNE_freq,fill=label))+
+  ungroup() %>% 
+  top_n(20,n_ints) %>% 
+    ggplot(aes(reorder(Species,n_ints),n_ints,fill=label))+
   geom_col(alpha=.9)+
   coord_flip()+
-  labs(y= 'Initiated interaction frequency',
+  labs(y= 'Number of interactions',
        x= 'Species',
-       title = 'Initiated interactions standardised by maximum observed individuals')+
+       title = 'Total interactions - Top 20 species')+
+  theme_pubclean()+
+  style180+
+  theme(axis.title.y = element_blank(),
+        legend.title = element_blank(),
+        axis.text.y = element_text(size=13))+
+  scale_fill_manual(values=c('I cavity nester'='#88CCEE',
+                             'I non-cavity nester'='#44AA99',
+                             'R cavity nester'='#DDCC77',
+                             'R non-cavity nester'='#999933',
+                             'R optional-cavity nester'='#117733',
+                             'M non-cavity nester'='#CC6677'))
+
+# /// THIS ONE///
+# FREQ INITIATIONS / obs ----
+x3 %>% 
+  ungroup() %>% 
+  top_n(20,ints_freq) %>% 
+  ggplot(aes(reorder(Species,ints_freq),ints_freq,fill=label))+
+  geom_col(alpha=.9)+
+  coord_flip()+
+  labs(y= 'Interaction frequency',
+       x= 'Species',
+       title = 'Interaction frequency / observed individuals - Top 20 species')+
   theme_pubclean()+
   style180+
   theme(axis.title.y = element_blank(),
@@ -1186,23 +1200,62 @@ x3 %>%
                              'M non-cavity nester'='#CC6677'))
 
 
+ ## normalised\\\\\\\\\\\\
+x3.norm<-x3 %>% filter(!is.na(initis_freq))
+x3.norm<-x3.norm %>% filter(!is.na(label))
+x3.norm$label<-as.factor(x3.norm$label)
+x3.norm<-x3.norm %>% ungroup() %>% 
+  mutate_if(is.numeric, funs(as.numeric(scale(.))))
 
-x3 %>% 
-  filter(max_obs>0&n_initis>0) %>% 
-  ggplot(aes(n_ints,max_obs,color=label))+
-  geom_point(size=4)+
+x3.norm %>% ggplot(aes(n_ints))+geom_histogram()# binomial
+
+y<-gam(ints_HR~s(max_obs),data=x3,family = 'poisson')
+summary(y)
+
+plot(y,rugplot = T, se = T)
+
+
+# interesting----
+x3.norm %>% 
+  filter(max_obs!=0) %>% 
+  ggplot(aes(max_obs,n_ints,color=label))+
+  geom_point(size=2)+
   stat_poly_line(se=F)+
-  stat_poly_eq()
+  stat_poly_eq()+
+  labs(x='Observed individuals',y='Total number of interactions',
+       title = 'Total number of interactions plotted against the total number of individuals')+
+  theme_pubclean()+style180
 
 # n individuals is not a strong predictors that interactions will happen
-  
+
+
+x3 %>% 
+  #filter(max_obs>0&n_initis>0) %>% 
+  ggplot(aes(max_obs,ints_freq))+
+  geom_point(size=4)+
+  stat_poly_line(se=F)+
+  stat_poly_eq()+
+  labs(x='Observed individuals',y='Number of / population',
+       title = 'Total number of interactions standardized by population size')+
+  theme_pubclean()+style180
+
+x3.norm<-x3 %>% filter(!is.na(initis_freq))
+x3.norm<-x3.norm %>% filter(!is.na(label))
+x3.norm$label<-as.factor(x3.norm$label)
+x3.norm<-x3.norm %>% ungroup() %>% 
+  mutate_if(is.numeric, funs(as.numeric(scale(.))))
+
+x3.norm %>% ggplot(aes(n_ints))+geom_histogram()#
+y<-gam(as.factor(ints_freq)~max_obs,data=x3,family = 'binomial')
+summary(y)
+
 ##########
 
 #2. ROLES
 # n IS RS
 ISRS %>%
   filter(interaction!='Neutral') %>% 
-  filter(sp_lab=='NNP'|Species=='Long-tailed parakeet') %>%  
+  filter(sp_lab=='NNP/'|Species=='Long-tailed parakeet') %>%  
   group_by(Species,role) %>% 
   summarise(n=sum(n_ints)) %>% 
   ggplot(aes(reorder(Species,-n),n,fill=role))+
@@ -1331,14 +1384,15 @@ ISRS %>%
 Interact %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
   ggplot(aes(nxt_cav,initsp))+
-  geom_jitter(aes(color=initsp),width=2,height=0.1,alpha=0.4,size=3,shape=20)+
+  geom_jitter(aes(color=initsp),width=5,height=0.25,alpha=0.4,size=3,shape=20)+
   labs(y='Species observed',x='distance from cavity',title='Distance of interaction from the nearest cavity')+
-  theme(legend.position = 'none')+
   scale_color_manual(values=c('Red-breasted parakeet'='#CC3311',
                               'Monk parakeet'='#004488',
                               'Rose-ringed parakeet'='#EE3377',
                               'Tanimbar corella'='#33BBEE',
-                              'Long-tailed parakeet'='#009988'))
+                              'Long-tailed parakeet'='#009988'))+
+  theme_pubclean()+style180+
+  theme(legend.position = 'none')
 
 #////////////////////////////////
 # Standardize and LM ----
