@@ -10,17 +10,19 @@
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 library(pacman)
-library(Ostats)
 p_load(formattable,knitr,kableExtra, # nice tables
        tidyverse,vegan,lubridate,gridExtra,grid,ggrepel,reshape2,ggpmisc,
-       BBmisc,stringr,Hmisc,moments,Rmisc,
+       BBmisc,stringr,Hmisc,moments,
        ggpubr,AICcmodavg, #anova
        circlize, # interaction networks
        Distance, # transect analysis, relative abundance, density
        readxl,writexl)
+library(Ostats)
 library(gam)
 library(GGally)
 library(psych)
+
+
 
 
 
@@ -96,7 +98,7 @@ colnames(simpson)<-"Simpson"
 
 # Putting together all indices.max
 Indices<-cbind(richness, shannon, simpson)
-Indices<-data.frame(Indices.max)
+Indices<-data.frame(Indices)
 Indices <- rownames_to_column(Indices, "Study.Area")
 
 
@@ -406,6 +408,7 @@ x<-ISRS %>%
   group_by(Study.Area,Species) %>% 
   summarise(n_ints=sum(n_ints)) 
 Composition_2<-merge(Composition_2,x,by=c('Study.Area','Species'),all=T)
+Composition_2$n_ints<-Composition_2$n_ints %>% replace(is.na(.), 0)
 x<-ISRS %>% 
   filter(Study.Area!='Changi Airport'|Species!='Javan myna') %>% 
     select(Study.Area,Species,interaction,n_ints) %>% 
@@ -476,6 +479,23 @@ c<-round((b/407)*100,2)
 sprintf('%s individuals observed in total',a)
 sprintf('%s distinct species observed, equal to %s%% of avian species in Singapore',b,c)
 
+# number by status
+Comp.max %>% ungroup() %>% summarise(n=sum(max_obs))
+Composition_2 %>% filter(SG_status=='R')%>% 
+  select(Species) %>% n_distinct()
+Composition_2 %>% filter(SG_status=='R')%>% 
+  select(Species,max_obs) %>% summarise(n=sum(max_obs))
+Composition_2 %>% filter(SG_status=='I')%>% 
+  select(Species) %>% n_distinct()
+Composition_2 %>% filter(SG_status=='I')%>% 
+  select(Species,max_obs) %>% summarise(n=sum(max_obs))
+Composition_2 %>% filter(SG_status=='V'|SG_status=='M'|SG_status=='N')%>% 
+  select(Species) %>% n_distinct()
+Composition_2 %>% filter(SG_status=='V'|SG_status=='M'|SG_status=='N')%>% 
+  select(Species) %>% n_distinct()
+
+
+
 #//////////////////////
 # Interaction summaries
 #//////////////////////
@@ -521,7 +541,7 @@ int_pairs %>%
 # non native parrots excluded
 # ~ Top recipients
   # Javan myna, LTP, house crow, LTP OPH, YCC, AGS, YVBB, Oriole,
-  # Flameback, dollarbird 
+  # Flameback, dollarbird ===
 int_pairs %>% 
   group_by(recipsp) %>% summarise(n=sum(n)) %>% 
   mutate(freq=n/sum(n)*100) %>% arrange(desc(freq)) %>% 
@@ -787,7 +807,7 @@ x %>% filter(Study.Area!='Changi Airport') %>%
   theme_pubclean()+styleRA+
   scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
                                'Migrant/Visitor'='#CCBB44'))
-# bar summary
+# residency summary
 x<-Composition_2 %>% 
   drop_na(SG_status) %>% 
   select(Study.Area,Species,max.freq,SG_status) %>% 
@@ -798,9 +818,10 @@ x<-Composition_2 %>%
                                     SG_status=='V'~'Migrant/Visitor')) %>% 
   group_by(Study.Area,Status) %>% 
   summarise(n=sum(max.freq),
-            n2=n_distinct(Study.Area,Status)) %>% 
-  arrange(Study.Area,Status,desc(n)) 
+            n2=n_distinct(Study.Area,Species,Status))
+
 x$Status<-factor(x$Status,levels=c('Resident','Introduced','Migrant/Visitor'))
+
   x %>% 
   ggplot(aes(Study.Area,n,fill=Status))+
   geom_col(position = 'fill') +
@@ -811,16 +832,16 @@ x$Status<-factor(x$Status,levels=c('Resident','Introduced','Migrant/Visitor'))
     theme_pubclean()+
   theme(axis.title.x = element_blank())
   
-status_freq_SE<-summarySE(x, measurevar="n", groupvars="'Species status'")
-status_freq_SE  
+describeBy(x,x$Status)  #two grouping variables  
 
 # non native / introduced species are most prevalent in low biodiversity areas
 
 ## Species table----
 x %>%
+  select(-n2) %>% 
     spread(key = Study.Area,value=n) %>% 
     mutate(across(where(is.numeric), round, 2)) %>%
-    rename("Status/Site"='Species status') %>% 
+    rename("Status/Site"='Status') %>% 
     replace(is.na(.), 0) %>% 
     kable(align = 'lccccccc') %>% 
     kable_styling()
@@ -960,6 +981,24 @@ Indices_2 %>%
   stat_poly_eq()
 y<-aov(Richness~built_surf,x)
 
+# CAVITY / NON NATIVES
+Indices_2 %>% 
+  filter(Study.Area!='Changi Airport') %>% 
+  group_by(Study.Area) %>% 
+  ggplot(aes(cavs_canopy_sqm,freq.I))+
+  geom_point(aes(color=Study.Area))+
+  stat_poly_line(se=F)+
+  stat_poly_eq()+
+  labs(x='Proportion urban land cover',y='Shannon')
+# lm
+x<-Indices_2 %>% 
+  filter(Study.Area!='Changi Airport')
+y<-lm(freq.I~cavs_canopy_sqm,x)
+summary(y)
+
+# R² = .894, F(1,4)=33.75,p<0.00437)
+# Urbanised land predicted reduced bird species richness (β = -38.367, p < .00437)
+
    
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
@@ -1077,7 +1116,8 @@ x3 %>%
 #============================================================#
 #library(tidytext)
 x3<-Composition_2 %>%
-  group_by(Species,NestType) %>% summarise(max_obs=sum(max_obs),
+  filter(Study.Area!='Changi Airport'|Species!='Javan myna') %>% # remove outliers
+    group_by(Species,SG_status,NestType) %>% summarise(max_obs=sum(max_obs),
                                   n_ints=sum(n_ints),
                                   n_ints_xNE=sum(n_ints_xNE),
                                   n_initis=sum(n_initis),
@@ -1085,31 +1125,39 @@ x3<-Composition_2 %>%
   mutate(ints_freq=n_ints/max_obs,
          intsxNE_freq=n_ints_xNE/max_obs,
          initis_freq=n_initis/max_obs,
-         initisxNE_freq=n_initis_xNE/max_obs)
+         initisxNE_freq=n_initis_xNE/max_obs) %>% 
+  mutate(label=case_when(SG_status=='I'&NestType=='Cavity'~'I cavity nester',
+                         SG_status=='I'&NestType=='Non-cavity'~'I non-cavity nester',
+                         SG_status=='I'&NestType=='Cavity-optional'~'I optional-cavity nester',
+                         SG_status=='R'&NestType=='Cavity'~'R cavity nester',
+                         SG_status=='R'&NestType=='Non-cavity'~'R non-cavity nester',
+                         SG_status=='R'&NestType=='Cavity-optional'~'R optional-cavity nester',
+                         SG_status=='M'&NestType=='Cavity'~'M cavity nester',
+                         SG_status=='M'&NestType=='Non-cavity'~'M non-cavity nester',
+                         SG_status=='M'&NestType=='Cavity-optional'~'M optional-cavity nester'))
 
 
 # All interactions / obs max----
 
 x3 %>% 
-  filter(max_obs>0&n_ints>0) %>% 
-  ggplot(aes(reorder(Species,ints_freq),ints_freq,fill=NestType))+
+  filter(max_obs>0&n_ints>1) %>% 
+  ggplot(aes(reorder(Species,ints_freq),ints_freq,fill=label))+
   geom_col(alpha=.9)+
   coord_flip()+
   labs(y= 'Interaction involvement / Individuals observed',
        x= 'Species',
        title = 'Interaction frequency')+
   theme_pubclean()+
-  scale_fill_manual(labels=c('Cavity Nesters','Non-cavity nesters'),
-                    values=c('Cavity'='#009988','Non-cavity'='#7f7f7f'))+ 
-  style180+
+   style180+
   theme(axis.title.y = element_blank(),
-        legend.title = element_blank())
+        legend.title = element_blank(),
+        axis.text.y = element_text(size=13))
 
 # /// THIS ONE///
 # all INITIATIONS / obs max----
 
 x3 %>% 
-  filter(max_obs>0&n_initis_xNE>0) %>% 
+  filter(max_obs>0&n_initis_xNE>1) %>% 
   ggplot(aes(reorder(Species,initisxNE_freq),initisxNE_freq,fill=NestType))+
   geom_col(alpha=.9)+
   coord_flip()+
@@ -1122,29 +1170,6 @@ x3 %>%
   style180+
   theme(axis.title.y = element_blank(),
         legend.title = element_blank())
-
-# Parrots only
-x3 %>% 
-  filter(Species=="Monk parakeet"|Species=='Tanimbar corella'|
-           Species=='Rose-ringed parakeet'|Species=='Red-breasted parakeet')%>%  
-  ggplot(aes(reorder(Species,ints_freq),ints_freq))+
-  geom_col()+coord_flip()+
-  labs(y= 'n initated interactions / n observations',
-       x= 'Species')+
-  theme_pubclean()+
-  theme(axis.title.y = element_blank())
-
-
-# Neutral excluded
-x3 %>% 
-  filter(Species=="Monk parakeet"|Species=='Tanimbar corella'|
-           Species=='Rose-ringed parakeet'|Species=='Red-breasted parakeet')%>%  
-  ggplot(aes(reorder(Species,intsxNE_freq),intsxNE_freq))+
-  geom_col()+coord_flip()+
-  labs(y= 'n initated interactions / n observations',
-       title = 'Aggressive interaction frequency')+
-  theme_pubclean()+
-  theme(axis.title.y = element_blank())
 
 
 ##########
