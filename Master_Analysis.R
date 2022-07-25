@@ -13,7 +13,7 @@ library(pacman)
 library(Ostats)
 p_load(formattable,knitr,kableExtra, # nice tables
        tidyverse,vegan,lubridate,gridExtra,grid,ggrepel,reshape2,ggpmisc,
-       BBmisc,stringr,Hmisc,moments,
+       BBmisc,stringr,Hmisc,moments,Rmisc,
        ggpubr,AICcmodavg, #anova
        circlize, # interaction networks
        Distance, # transect analysis, relative abundance, density
@@ -791,17 +791,18 @@ x %>% filter(Study.Area!='Changi Airport') %>%
 x<-Composition_2 %>% 
   drop_na(SG_status) %>% 
   select(Study.Area,Species,max.freq,SG_status) %>% 
-  mutate('Species status'=case_when(SG_status=='I'~'Introduced',
+  mutate(Status=case_when(SG_status=='I'~'Introduced',
                                     SG_status=='R'~'Resident',
                                     SG_status=='M'~'Migrant/Visitor',
                                     SG_status=='N'~'Migrant/Visitor',
                                     SG_status=='V'~'Migrant/Visitor')) %>% 
-  group_by(Study.Area,`Species status`) %>% 
-  summarise(n=sum(max.freq)) %>% 
-  arrange(Study.Area,desc(n)) 
-x$`Species status`<-factor(x$`Species status`,levels=c('Resident','Introduced','Migrant/Visitor'))
+  group_by(Study.Area,Status) %>% 
+  summarise(n=sum(max.freq),
+            n2=n_distinct(Study.Area,Status)) %>% 
+  arrange(Study.Area,Status,desc(n)) 
+x$Status<-factor(x$Status,levels=c('Resident','Introduced','Migrant/Visitor'))
   x %>% 
-  ggplot(aes(Study.Area,n,fill=`Species status`))+
+  ggplot(aes(Study.Area,n,fill=Status))+
   geom_col(position = 'fill') +
   labs(y='Proportion of community',
        title = 'Proportion of resident / non-native / migratory species')+
@@ -809,6 +810,10 @@ x$`Species status`<-factor(x$`Species status`,levels=c('Resident','Introduced','
                                  'Migrant/Visitor'='#CCBB44'))+
     theme_pubclean()+
   theme(axis.title.x = element_blank())
+  
+status_freq_SE<-summarySE(x, measurevar="n", groupvars="'Species status'")
+status_freq_SE  
+
 # non native / introduced species are most prevalent in low biodiversity areas
 
 ## Species table----
