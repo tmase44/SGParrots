@@ -1408,7 +1408,7 @@ ISRS %>%
 # distance from nest----
 
 # by spp. box
-Interact_2 %>% 
+a<-Interact_2 %>% 
   filter(interaction!='Neutral') %>% 
   filter(nxt_cav<100) %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
@@ -1420,7 +1420,7 @@ Interact_2 %>%
   scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
   theme(axis.title.x = element_blank())
 # by interaction
-Interact_2 %>% 
+b<-Interact_2 %>% 
   filter(interaction!='Neutral') %>% 
   filter(nxt_cav<100) %>% 
   #filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
@@ -1430,9 +1430,10 @@ Interact_2 %>%
   labs(y='Distance from cavity or roost (metres)',title='Distance of interaction from cavity or roost by interaction type')+
   theme_pubclean()+style180Centered+
   scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
-  theme(axis.title.x = element_blank())
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank())
 # by study Area box
-Interact_2 %>% 
+c<-Interact_2 %>% 
   filter(interaction!='Neutral') %>% 
   filter(nxt_cav<100) %>% 
   #filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet") %>%  
@@ -1443,19 +1444,21 @@ Interact_2 %>%
   theme_pubclean()+style180Centered+
   scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
   theme(axis.title.x = element_blank())
-
 # by outcome
-Interact_2 %>% 
+d<-Interact_2 %>% 
   filter(interaction!='Neutral') %>% 
   filter(nxt_cav<100) %>% 
   #filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet") %>%  
   ggplot(aes(isout,nxt_cav))+
   geom_boxplot(outlier.colour = 'red',outlier.shape = 1,outlier.size = 2)+
   geom_jitter(width=0.2,height=1.5,alpha=0.2,size=3,shape=20,color='#0077BB')+
-  labs(y='Distance from cavity or roost (metres)',title='Distance of interaction from cavity or roost by site')+
+  labs(y='Distance from cavity or roost (metres)',title='Distance of interaction from cavity or roost by outcome')+
   theme_pubclean()+style180Centered+
   scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
-  theme(axis.title.x = element_blank())
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank())
+
+grid.arrange(a,b,c,d)
 
 # Site profile
 Indices_2 %>% 
@@ -1491,7 +1494,7 @@ Indices_2 %>%
   scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
   theme(axis.title.x = element_blank())
 
-grid.arrange(a,b,c,d)
+
 
 
 # negative bionomial reg
