@@ -21,8 +21,8 @@ library(Ostats)
 library(gam)
 library(GGally)
 library(psych)#
-library(MASS)
-
+#library(MASS)
+#detach("package:MASS", unload=TRUE)
 
 
 
@@ -491,7 +491,7 @@ sprintf('%s sites were surveyed for a total of %s hours',x,y)
 #   equal effort to each focal species.
 
 #//////////////////////
-# Composition summaries 
+# Composition summaries ----
 #//////////////////////
 # https://www.nparks.gov.sg/biodiversity/wildlife-in-singapore/species-list/bird
 
@@ -519,7 +519,7 @@ Composition_2 %>% filter(SG_status=='V'|SG_status=='M'|SG_status=='N')%>%
 
 
 #//////////////////////
-# Interaction summaries
+# Interaction summaries----
 #//////////////////////
 d<-Interact %>% count(initsp) %>% summarise(sum(n))
 e<-Interact %>% filter(rsout!='NE') %>% count(initsp) %>% summarise(sum(n))
@@ -538,7 +538,7 @@ ISRS %>%
   summarise(n_distinct(Species))
 51/90
 #////////////////////
-# Interaction pairs
+# Interaction pairs----
 #///////////////////
 int_pairs <- Interact_2 %>%
   #filter(interaction!='Neutral') %>% 
@@ -570,7 +570,7 @@ int_pairs %>%
   print(n=30)
 
 #////////////////////////
-# Cavity Nesters in focus
+# Cavity Nesters in focus----
 #////////////////////////
 x<-ISRS %>% 
   ungroup() %>% 
@@ -607,10 +607,10 @@ rm(a,b,c,d,e,f,g,h,i,j,x,y,z,y2,y3,y4,y5,z2)
 
 
 #============================#
-# 9.d. Interaction Detail
+# 9.d. Interaction Detail----
 #============================#
 ISRS %>% group_by(interaction) %>% 
-  filter(role=='IS') %>% 
+  filter(role=='IS') %>% filter(interaction!='Neutral') %>% 
   summarise(n=sum(n_ints)) %>% mutate(freq=n/sum(n)*100)
 
 ISRS %>% group_by(Species) %>%
@@ -1386,6 +1386,33 @@ ISRS %>%
   theme(legend.position = 'none')+labs(y='relative frequency',x='interaction',title='Interaction distribution: positively skewed')+
   facet_wrap(~Species)
 
+ISRS %>% 
+  filter(interaction!='Neutral') %>% 
+  filter(role=='IS') %>% group_by(Species) %>% 
+  filter(Species=="Monk parakeet"|Species=="Tanimbar corella"|
+           Species=="Rose-ringed parakeet"|Species=="Red-breasted parakeet") %>%  
+  mutate(freq=n_ints/sum(n_ints)*100) %>% 
+    ggplot(aes(Species,freq,fill=Species))+
+  geom_col(alpha=0.9)+
+  labs(title = 'Frequency of ininitated interactions per species',
+       y='Frequency')+
+  facet_wrap(~interaction)+
+  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
+  theme_pubclean()+
+  style180Centered+
+    theme(axis.title.x = element_blank(),
+          legend.position = 'none',
+          strip.text = element_text(size=15))+
+                             'Red-breasted parakeet'='#8A8A8A',
+                             'Rose-ringed parakeet'='#575757',
+                             'Tanimbar corella'='#000000'))
+  
+Interact_2 %>% 
+  filter(initsp=='Tanimbar corella') %>% 
+  filter(interaction=='Swoop') %>% 
+  count(recipsp) %>% 
+  mutate(f=n/sum(n)*100)
+
 # Site difference x species----
 ISRS %>% 
   filter(role=='IS') %>% group_by(Species) %>% 
@@ -1415,10 +1442,11 @@ a<-Interact_2 %>%
   ggplot(aes(initsp,nxt_cav))+
   geom_boxplot(outlier.colour = 'red',outlier.shape = 1,outlier.size = 2)+
   geom_jitter(width=0.2,height=1.5,alpha=0.2,size=3,shape=20,color='#0077BB')+
-    labs(y='Distance from cavity or roost (metres)',title='Distance of interaction from cavity or roost by species')+
+    labs(y='Distance from cavity or roost (metres)',title='A) by species')+
   theme_pubclean()+style180Centered+
   scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
-  theme(axis.title.x = element_blank())
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(vjust = -5))
 # by interaction
 b<-Interact_2 %>% 
   filter(interaction!='Neutral') %>% 
@@ -1427,11 +1455,12 @@ b<-Interact_2 %>%
   ggplot(aes(interaction,nxt_cav))+
   geom_boxplot(outlier.colour = 'red',outlier.shape = 1,outlier.size = 2)+
   geom_jitter(width=0.2,height=1.5,alpha=0.2,size=3,shape=20,color='#0077BB')+
-  labs(y='Distance from cavity or roost (metres)',title='Distance of interaction from cavity or roost by interaction type')+
+  labs(y='Distance from cavity or roost (metres)',title='B) by interaction type')+
   theme_pubclean()+style180Centered+
   scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
   theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank())
+        axis.title.y = element_blank(),
+        plot.title = element_text(vjust = -5))
 # by study Area box
 c<-Interact_2 %>% 
   filter(interaction!='Neutral') %>% 
@@ -1440,10 +1469,11 @@ c<-Interact_2 %>%
   ggplot(aes(Study.Area,nxt_cav))+
   geom_boxplot(outlier.colour = 'red',outlier.shape = 1,outlier.size = 2)+
   geom_jitter(width=0.2,height=1.5,alpha=0.2,size=3,shape=20,color='#0077BB')+
-  labs(y='Distance from cavity or roost (metres)',title='Distance of interaction from cavity or roost by site')+
+  labs(y='Distance from cavity or roost (metres)',title='C) by site')+
   theme_pubclean()+style180Centered+
   scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
-  theme(axis.title.x = element_blank())
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(vjust = -5))
 # by outcome
 d<-Interact_2 %>% 
   filter(interaction!='Neutral') %>% 
@@ -1452,13 +1482,18 @@ d<-Interact_2 %>%
   ggplot(aes(isout,nxt_cav))+
   geom_boxplot(outlier.colour = 'red',outlier.shape = 1,outlier.size = 2)+
   geom_jitter(width=0.2,height=1.5,alpha=0.2,size=3,shape=20,color='#0077BB')+
-  labs(y='Distance from cavity or roost (metres)',title='Distance of interaction from cavity or roost by outcome')+
+  labs(y='Distance from cavity or roost (metres)',title='D) by outcome')+
   theme_pubclean()+style180Centered+
   scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
   theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank())
+        axis.title.y = element_blank(),
+        plot.title = element_text(vjust = -5))
 
-grid.arrange(a,b,c,d)
+grid.arrange(a,b,c,d,top=textGrob("Interaction distance from cavity or roost",
+                                  gp=gpar(fontsize=22),vjust=0.2))
+
+
+
 
 # Site profile
 Indices_2 %>% 
@@ -1864,6 +1899,7 @@ GLMdata_ISRS_scale$role<-factor(GLMdata_ISRS_scale$role)
 GLMdata_ISRS_scale<-GLMdata_ISRS_scale %>% filter(!is.na(SG_status))
 
 # charts
+  # shannon x status
 GLMdata_ISRS_scale %>% 
   filter(Study.Area!='Changi Airport') %>% 
   mutate(status=case_when(SG_status=='I'~'Introduced',
@@ -1885,5 +1921,3 @@ scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
                            'Migrant/Visitor'='#CCBB44'))
 
 ## Introduced species more prevalent in lower BD areas
-
-
