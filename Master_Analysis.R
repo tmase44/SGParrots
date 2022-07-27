@@ -525,27 +525,48 @@ sprintf('%s sites were surveyed for a total of %s hours',x,y)
 # https://www.nparks.gov.sg/biodiversity/wildlife-in-singapore/species-list/bird
 
 a<-nrow(Composition)
-b<-Composition %>% select(Species) %>% n_distinct()
+b<-Composition %>% filter(Study.Area!='Changi Airport') %>%select(Species) %>% n_distinct()
 c<-round((b/407)*100,2)
 sprintf('%s individuals observed in total',a)
 sprintf('%s distinct species observed, equal to %s%% of avian species in Singapore',b,c)
 
 # number by status
-Comp.max %>% ungroup() %>% summarise(n=sum(max_obs))
-Composition_2 %>% filter(SG_status=='R')%>% 
-  select(Species) %>% n_distinct()
-Composition_2 %>% filter(SG_status=='R')%>% 
-  select(Species,max_obs) %>% summarise(n=sum(max_obs))
-Composition_2 %>% filter(SG_status=='I')%>% 
-  select(Species) %>% n_distinct()
-Composition_2 %>% filter(SG_status=='I')%>% 
-  select(Species,max_obs) %>% summarise(n=sum(max_obs))
-Composition_2 %>% filter(SG_status=='V'|SG_status=='M'|SG_status=='N')%>% 
-  select(Species) %>% n_distinct()
-Composition_2 %>% filter(SG_status=='V'|SG_status=='M'|SG_status=='N')%>% 
-  select(Species) %>% n_distinct()
+Comp.max %>% ungroup() %>% filter(Study.Area!='Changi Airport') %>%  summarise(n=sum(max_obs))
 
+Composition_2 %>% filter(Study.Area!='Changi Airport') %>%filter(SG_status=='R')%>% 
+  select(Species) %>% n_distinct()
+Composition_2 %>%  filter(Study.Area!='Changi Airport') %>%filter(SG_status=='R')%>%
+  select(Species,max_obs) %>% summarise(n=sum(max_obs))
+Composition_2 %>%  filter(Study.Area!='Changi Airport') %>%filter(SG_status=='I')%>%
+  select(Species) %>% n_distinct()
+Composition_2 %>% filter(Study.Area!='Changi Airport') %>%filter(SG_status=='I')%>% 
+  select(Species,max_obs) %>% summarise(n=sum(max_obs))
+Composition_2 %>% filter(SG_status=='N'|SG_status=='M'|SG_status=='V')%>% filter(Study.Area!='Changi Airport') %>%
+  select(Species) %>% n_distinct()
+Composition_2 %>% filter(SG_status=='N'|SG_status=='M'|SG_status=='V')%>% filter(Study.Area!='Changi Airport') %>%
+  select(Species,max_obs) %>% summarise(n=sum(max_obs))
 
+x<-Composition_2 %>% 
+  filter(Study.Area!='Changi Airport') %>% 
+  filter(!is.na(max_obs)) %>% 
+  select(Species,SG_status,max_obs) %>%
+  group_by(Species,SG_status) %>% 
+  summarise(n=mean(max_obs)) %>% arrange(desc(n))
+
+Composition_2 %>% filter(NestType=='Cavity')%>% filter(sp_lab=='NNP')%>% filter(Study.Area!='Changi Airport') %>%
+  select(Species) %>% n_distinct()
+Composition_2 %>% filter(NestType=='Cavity')%>% filter(Study.Area!='Changi Airport') %>%
+  select(Species,max_obs) %>% summarise(n=sum(max_obs))
+
+Composition_2 %>% filter(NestType=='Non-cavity')%>% filter(Study.Area!='Changi Airport') %>%
+  select(Species) %>% n_distinct()
+Composition_2 %>% filter(NestType=='Non-cavity')%>% filter(Study.Area!='Changi Airport') %>%
+  select(Species,max_obs) %>% summarise(n=sum(max_obs))
+
+Composition_2 %>% filter(NestType=='Cavity-optional')%>% filter(Study.Area!='Changi Airport') %>%
+  select(Species) %>% n_distinct()
+Composition_2 %>% filter(NestType=='Cavity-optional')%>% filter(Study.Area!='Changi Airport') %>%
+  select(Species,max_obs) %>% summarise(n=sum(max_obs))
 
 #//////////////////////
 # Interaction summaries----
@@ -610,7 +631,7 @@ y<-ISRS %>%
   filter(NestType=='Cavity') %>% filter(role=='IS') %>% 
   summarise(n=n_distinct(Species)) %>% summarise(sum(n))
 y2<-ISRS %>% ungroup() %>% 
-  filter(role=='IS') %>% filter(NestType=='Cavity') %>%  
+  filter(SG_status!='I')  %>%  
   summarise(n=sum(n_ints))
 y3<-round((y2/d)*100,2)
 z<-round((x/b)*100,2)
@@ -837,7 +858,7 @@ Enviro_2 %>%
 
 ## RA curve----
 x<-Composition_2 %>% 
-  select(Study.Area,Species,max_obs,max.freq,SG_status) %>% 
+  select(Study.Area,Species,max_obs,max.freq,SG_status,NestType) %>% 
   group_by(Study.Area) %>% 
   mutate(rank=dense_rank(desc(max.freq))) %>% 
   arrange(Study.Area,rank) %>% 
@@ -847,7 +868,8 @@ x<-Composition_2 %>%
                               SG_status=='R'~'Resident',
                               SG_status=='M'~'Migrant/Visitor',
                               SG_status=='N'~'Migrant/Visitor',
-                              SG_status=='V'~'Migrant/Visitor')) 
+                              SG_status=='V'~'Migrant/Visitor')) %>% 
+  filter(!is.na(max.freq))
 x$rank<-as.character(x$rank)
 x$`Species status`<-factor(x$`Species status`,levels=c('Resident','Introduced','Migrant/Visitor'))
 
@@ -865,9 +887,11 @@ x %>% filter(Study.Area!='Changi Airport') %>%
   scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
                                'Migrant/Visitor'='#CCBB44'))
 # freq diff style
-x %>% filter(Study.Area!='Changi Airport') %>% 
+x %>% 
+  filter(Study.Area!='Changi Airport') %>% 
   ggplot(aes(id,max.freq,color=`Species status`))+
   geom_col(fill='white')+
+  geom_point(aes(id,max.freq,shape=NestType),size=3,color='black')+
   facet_wrap(~Study.Area)+
   labs(title = 'Rank abundance curves',
        x='Rank',y='Abundance (proportion)')+
@@ -880,7 +904,8 @@ x %>% filter(Study.Area!='Changi Airport') %>%
         axis.text.x = element_text(size=14),
         axis.text.y = element_text(size=14))+
   scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
-                               'Migrant/Visitor'='#CCBB44'))
+                               'Migrant/Visitor'='#CCBB44'))+
+  scale_shape_manual(values=c(20,21,7))
 
 # n actual & diff style
 x %>% filter(Study.Area!='Changi Airport') %>% 
@@ -896,7 +921,8 @@ x %>% filter(Study.Area!='Changi Airport') %>%
         legend.title = element_text(size=16),
         strip.text = element_text(size=16))+
   scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
-                               'Migrant/Visitor'='#CCBB44'))
+                               'Migrant/Visitor'='#CCBB44'))+
+  
 # residency summary
 x<-Composition_2 %>% 
   drop_na(SG_status) %>% 
@@ -929,11 +955,13 @@ describeBy(x,x$Status)  #two grouping variables
 ## Species table----
 x %>%
   select(-n2) %>% 
-    spread(key = Study.Area,value=n) %>% 
+    spread(key = Status,value=n) %>% 
     mutate(across(where(is.numeric), round, 2)) %>%
-    rename("Status/Site"='Status') %>% 
+    rename("Site"='Study.Area') %>% 
     replace(is.na(.), 0) %>% 
     kable(align = 'lccccccc') %>% 
+  add_header_above(header=c(" "=1,
+                            "Community composition by species status"=3)) %>% 
     kable_styling()
 
 ## Profile table----
@@ -971,14 +999,18 @@ Indices_2 %>%
 
 # Pop trend----
 NSS %>% 
+  filter(Species=='Red-breasted parakeet'|Species=='Rose-ringed parakeet'|Species=='Tanimbar corella') %>% 
   group_by(Year,Species) %>% 
   summarise(n=sum(Count)) %>% 
-  ggplot(aes(Year,n,color=Species))+
+  ggplot(aes(Year,n))+
   geom_point()+
-  geom_smooth(se=F)+
+  geom_smooth(se=F,color='black')+
   facet_wrap(~Species,scale='free')+
   labs(x='Year',y='Observations',title = 'NSS Parrot count')+
-  theme(legend.position = 'none')
+  theme_pubclean()+style180+
+  theme(legend.text = element_text(size=14),
+        strip.text = element_text(size=14),
+        legend.position = 'none')
 
 ## MP not documented at all
 ## RBP continuous growth but populations may be reaching capacity
@@ -1005,13 +1037,30 @@ y<-NSS %>%
 rm(z)
 z<-merge(x,y,by=c('Study.Area','Species','max_obs','source'),all=T)
 
+z$Study.Area<-factor(z$Study.Area,
+                                 levels = c(
+                                   'Changi Airport','Changi Village','Springleaf','Sengkang Riverside Park',
+                                   'Palawan Beach','Pasir Ris Town Park','Stirling Road'
+                                 ))
+
 z %>% 
   filter(Study.Area!='Changi Airport') %>% 
   ggplot(aes(source,max_obs,fill=Species))+
   geom_col()+
   facet_wrap(~Study.Area)+
   labs(y='number of individuals',x='Survey & Year',
-       title = 'Parrot population comparison 2019-2022')
+       title = 'Parrot population comparison 2019-2022')+
+  theme_pubclean()+style180Centered+
+  theme(strip.text = element_text(size=14),
+        legend.text = element_text(size=12))+
+  scale_fill_manual(values=c("Monk parakeet"='#332288',
+                             "Long-tailed parakeet"='#88CCEE',
+                             "Red-breasted parakeet"='#44AA99',
+                             "Rose-ringed parakeet"='#117733',
+                             "Tanimbar corella"='#999933',
+                              'Yellow crested cockatoo'='#DDCC77',
+                             'Sulphur crested cockatoo'='#CC6677'))
+
 
 
 #/////////////////////////////////////////////////////////////////////////////
@@ -1124,17 +1173,18 @@ Composition_2 %>%
   filter(Study.Area!='Changi Airport'|Species!='Javan myna') %>% 
   filter(Species!="Monk parakeet"&Species!="Tanimbar corella"&
            Species!="Rose-ringed parakeet"&Species!="Red-breasted parakeet") %>%
-  group_by(Species) %>% 
+  group_by(Species,NestType) %>% 
   summarise(max_obs=sum(max_obs),
             n_ints=sum(n_ints)) %>% 
   filter(n_ints>1) %>% 
   filter(max_obs>0) %>% 
   ggplot(aes(max_obs,n_ints))+
-  geom_jitter(height = 4,width=1,alpha=.8,color='#CC3311',size=3)+
+  geom_jitter(aes(max_obs,n_ints,shape=NestType),height = 4,width=1,alpha=.8,color='black',size=3)+
   #coord_trans(x='log10')+
   stat_poly_eq()+
   stat_poly_line()+
   theme_pubclean()+
+  theme(legend.text = element_text(size=14))+
   labs(x='Individuals observed',y='Total number of interactions',
        title = 'Aggressive interactions within focal species network')+
   geom_text_repel(data=Composition_2 %>% 
@@ -1146,9 +1196,10 @@ Composition_2 %>%
                               n_ints=sum(n_ints)) %>% 
                     filter(n_ints>18) %>% 
                     filter(max_obs>5),aes(label=Species),
-                  nudge_y=4,size=3,
+                  nudge_y=4,size=4.5,
                   box.padding = 0.5, max.overlaps = Inf)+
-  scale_y_continuous(limits = c(0, 200), oob = scales::squish)+style180
+  scale_y_continuous(limits = c(0, 200), oob = scales::squish)+style180+
+  scale_shape_manual(values=c(20,21,7))
 
 x<-Composition_2 %>% 
   filter(Study.Area!='Changi Airport'|Species!='Javan myna') %>% 
@@ -1201,15 +1252,15 @@ x3<-Composition_2 %>%
          intsxNE_freq=n_ints_xNE/max_obs,
          initis_freq=n_initis/max_obs,
          initisxNE_freq=n_initis_xNE/max_obs) %>% 
-  mutate(label=case_when(SG_status=='I'&NestType=='Cavity'~'I cavity nester',
-                         SG_status=='I'&NestType=='Non-cavity'~'I non-cavity nester',
-                         SG_status=='I'&NestType=='Cavity-optional'~'I optional-cavity nester',
-                         SG_status=='R'&NestType=='Cavity'~'R cavity nester',
-                         SG_status=='R'&NestType=='Non-cavity'~'R non-cavity nester',
-                         SG_status=='R'&NestType=='Cavity-optional'~'R optional-cavity nester',
-                         SG_status=='M'&NestType=='Cavity'~'M cavity nester',
-                         SG_status=='M'&NestType=='Non-cavity'~'M non-cavity nester',
-                         SG_status=='M'&NestType=='Cavity-optional'~'M optional-cavity nester'))
+  mutate(label=case_when(SG_status=='I'&NestType=='Cavity'~'ICN',
+                         SG_status=='I'&NestType=='Non-cavity'~'InCN',
+                         SG_status=='I'&NestType=='Cavity-optional'~'IoCN',
+                         SG_status=='R'&NestType=='Cavity'~'RCN',
+                         SG_status=='R'&NestType=='Non-cavity'~'RnCN',
+                         SG_status=='R'&NestType=='Cavity-optional'~'RoCN',
+                         SG_status=='M'&NestType=='Cavity'~'MCN',
+                         SG_status=='M'&NestType=='Non-cavity'~'MnCN',
+                         SG_status=='M'&NestType=='Cavity-optional'~'MoCN'))
 x3 %>% 
   ggplot(aes(max_obs,ints_freq))+
   geom_jitter(height = 4,width=1,alpha=.8,color='#CC3311',size=2)+
@@ -1259,12 +1310,12 @@ x3 %>%
   theme(axis.title.y = element_blank(),
         legend.title = element_blank(),
         axis.text.y = element_text(size=13))+
-  scale_fill_manual(values=c('I cavity nester'='#88CCEE',
-                             'I non-cavity nester'='#44AA99',
-                             'R cavity nester'='#DDCC77',
-                             'R non-cavity nester'='#999933',
-                             'R optional-cavity nester'='#117733',
-                             'M non-cavity nester'='#CC6677'))
+  scale_fill_manual(values=c('ICN'='#88CCEE',
+                             'InCN'='#44AA99',
+                             'RCN'='#DDCC77',
+                             'RnCN'='#999933',
+                             'RoCN'='#117733',
+                             'MnCN'='#CC6677'))
 
 # /// THIS ONE///
 # FREQ INITIATIONS / obs ----
@@ -1282,13 +1333,61 @@ x3 %>%
   theme(axis.title.y = element_blank(),
         legend.title = element_blank(),
         axis.text.y = element_text(size=13))+
-  scale_fill_manual(values=c('I cavity nester'='#88CCEE',
-                             'I non-cavity nester'='#44AA99',
-                             'R cavity nester'='#DDCC77',
-                             'R non-cavity nester'='#999933',
-                             'R optional-cavity nester'='#117733',
-                             'M non-cavity nester'='#CC6677'))
+  scale_fill_manual(values=c('ICN'='#88CCEE',
+                             'InCN'='#44AA99',
+                             'RCN'='#DDCC77',
+                             'RnCN'='#999933',
+                             'RoCN'='#117733',
+                             'MnCN'='#CC6677'))
 
+## TABLE WITH ALL
+x4<-x3 %>%
+  filter(n_ints>0) %>% 
+  select(Species,SG_status,NestType,max_obs,n_ints,ints_freq,n_ints_xNE,intsxNE_freq,
+         n_initis,initis_freq,n_initis_xNE,initisxNE_freq) %>% 
+  group_by(Species,SG_status,NestType) %>% 
+  summarise(n_observed=sum(max_obs),
+            n_ints=sum(n_ints),
+            ints_freq=mean(ints_freq),
+            n_ints_Agg=sum(n_ints_xNE),
+            ints_Agg_freq=mean(intsxNE_freq),
+            n_inits=sum(n_initis),
+            inits_freq=mean(initis_freq),
+            n_inits_Agg=sum(n_initis_xNE),
+            inits_Agg_freq=mean(initisxNE_freq)) %>% 
+    arrange(desc(n_ints))
+  
+# all ints + all intiations
+x4 %>% 
+  top_n(12,ints_freq) %>% 
+  mutate(across(where(is.numeric), round, 2)) %>%
+  select(-n_inits_Agg,-inits_Agg_freq,-n_ints_Agg,-ints_Agg_freq) %>%
+  rename('Individuals observed'='n_observed',
+         'n interactions'='n_ints',
+         'Interactions/individuals'='ints_freq',
+         'n initiated interactions'='n_inits',
+         'Initiations/individuals'='inits_freq') %>% 
+  kable(align = 'lllccccc') %>% 
+  add_header_above(header=c(" "=4,
+                            "All interactions"=2,
+                            "Initiated interactions only"=2)) %>% 
+  kable_styling()
+
+# all ints + all AGGRESSIVE intiations
+x4 %>% 
+  top_n(12,ints_freq) %>% 
+  mutate(across(where(is.numeric), round, 2)) %>%
+  select(-n_inits,-inits_freq,-n_ints_Agg,-ints_Agg_freq) %>%
+  rename('Individuals observed'='n_observed',
+         'n interactions'='n_ints',
+         'Interactions/individuals'='ints_freq',
+         'n initiated aggressions'='n_inits_Agg',
+         'Initiations/individuals'='inits_Agg_freq') %>% 
+  kable(align = 'lllccccc') %>% 
+  add_header_above(header=c(" "=4,
+                            "All interactions"=2,
+                            "Initiated aggressions only"=2)) %>% 
+  kable_styling()
 
  ## normalised\\\\\\\\\\\\
 x3.norm<-x3 %>% filter(!is.na(initis_freq))
