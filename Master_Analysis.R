@@ -203,6 +203,8 @@ Interact_2$Study.Area<-factor(Interact_2$Study.Area,
                                  ))
 levels(Interact_2$Study.Area)
 
+Interact_2$tree_h<-as.numeric(Interact_2$tree_h)
+
 # Factorise NSS data
 NSS$Site<-as.factor(NSS$Site)
 NSS$Study.Area<-as.factor(NSS$Study.Area)
@@ -356,6 +358,13 @@ x<-Composition_2 %>%
   summarise(freq.I=sum(freq))
 Indices_2<-merge(Indices_2,x,by='Study.Area')
 
+# Total non-native "I" species number
+x<-Composition_2 %>% 
+  filter(SG_status=='I') %>% 
+  group_by(Study.Area) %>% 
+  summarise(n.I=sum(max_obs))
+Indices_2<-merge(Indices_2,x,by='Study.Area')
+
 # Parrot proportion
 x<-Composition_2 %>% 
   filter(Species=="Monk parakeet"|Species=="Red-breasted parakeet"|Species=="Tanimbar corella"|
@@ -365,6 +374,15 @@ x<-Composition_2 %>%
   summarise(freq=mean(max.freq)) %>% 
   group_by(Study.Area) %>% 
   summarise(freq.parrots=sum(freq))
+Indices_2<-merge(Indices_2,x,by='Study.Area')
+
+# Parrot n
+x<-Composition_2 %>% 
+  filter(Species=="Monk parakeet"|Species=="Red-breasted parakeet"|Species=="Tanimbar corella"|
+           Species=="Long-tailed parakeet"|Species=="Rose-ringed parakeet"|
+           Species=='Yellow crested cockatoo'|Species=='Sulphur crested cockatoo') %>% 
+  group_by(Study.Area) %>% 
+  summarise(n.parrots=sum(max_obs))
 Indices_2<-merge(Indices_2,x,by='Study.Area')
 
 # Explicit Cavity nester proportion
@@ -383,6 +401,16 @@ x<-ISRS %>%
   summarise(site.interactions=sum(n_ints))
 Indices_2<-merge(Indices_2,x,by='Study.Area')
 
+# avg tree height
+x<-Interact_2 %>%
+  select(Study.Area,tree_h,cav_h_m) %>% 
+  filter(!is.na(tree_h)) %>% 
+  filter(!is.na(cav_h_m)) %>% 
+  group_by(Study.Area) %>% 
+  summarise(meantree=mean(tree_h),
+            meancav=mean(cav_h_m))
+Indices_2<-merge(Indices_2,x,by='Study.Area')
+
 
 #//////////////////////////////////////
 # Adding Indices data to other DFs----
@@ -391,10 +419,6 @@ Composition_2<-merge(Composition_2,Indices_2,by='Study.Area',all=T)
 ISRS<-merge(ISRS,Indices_2,by='Study.Area',all=T)
 sp.pairs<-merge(sp.pairs,Indices_2,by='Study.Area',all=T)
 sp.pairs<-sp.pairs %>% select(-20)
-sp.pairs<-sp.pairs %>% relocate(1,2,3,4,5,6,7,12,17,9,14,8,13,
-                                10,15,11,16,
-                                18,19,35,30,31,34,32,33,
-                                20,21,22,23,24,25,26,27,28,29)
 sp.pairs<-sp.pairs %>% mutate(size_diff=RS.size-IS.size) %>% 
   relocate(size_diff,.after = 'RS.size')
 
@@ -473,6 +497,11 @@ Indices_2$Study.Area<-factor(Indices_2$Study.Area,
                           'Pasir Ris Town Park','Palawan Beach','Springleaf'
                         ))
 
+Composition_2$Study.Area<-factor(Composition_2$Study.Area,
+                             levels = c(
+                               'Changi Airport','Changi Village','Stirling Road','Sengkang Riverside Park',
+                               'Pasir Ris Town Park','Palawan Beach','Springleaf'
+                             ))
 #/////////////////////////////////////////////////////////////////////////////
 #/////////////////////////////////////////////////////////////////////////////
 #============================= DATA SUMMARIES =============================
@@ -722,7 +751,7 @@ Pilot %>%
   ggplot(aes(time,freq))+
   geom_col()+
   labs(x='Time of day',y='Interaction frequency',
-       title = 'Pilot study observations: Half-hourly interaction frequency')+
+       title = 'Pilot study interaction frequency')+
   theme_pubclean()+style90
 
 
@@ -738,7 +767,7 @@ Indices %>%
   ggplot(aes(x=Shannon,y=Richness)) +
   geom_point(size=5,color='#4477AA')+
   xlim(1.5,4)+ylim(25,60)+
-  labs(title = 'Alpha biodiversity indices',
+  labs(title = 'Alpha diversity index',
        x = 'Shannon Index', y='Species Richness')+
   geom_text_repel(aes(label=Study.Area),
                   nudge_y = 1.6,segment.color = NA,color='#555555',size=5)+
@@ -776,15 +805,17 @@ formattable(Indices)
 sorensen.plot<-sorensen.melted %>%
   ggplot(aes(x=Var1, y=Var2, fill = value))+
   geom_tile(color = "white")+
-  labs(title = 'Sorensen (Beta biodiversity index)')+
+  labs(title = 'Beta diversity index (Sorensen)')+
     theme_pubclean()+
   theme(legend.title = element_blank(),
-        axis.text.x=element_text(angle=90,hjust=0.95,vjust=0.2))+
-  scale_fill_gradient2(low = "white", high = "black",
+        axis.text.x=element_text(angle=90,hjust=0.95,vjust=0.2,size=14),
+        axis.text.y=element_text(size=14),
+        plot.title = element_text(size=22))+
+    scale_fill_gradient2(low = "#EAECCC", high = "#364B9A",
                        mid="grey", midpoint = 0.5, limit = c(0,1),
                        breaks=c(0,0.5,1),
                        labels=c('No overlap','0.5','Max. overlap'))+
-  geom_text(aes(label = value), color = "black", size = 4)+ #Adding values of Jaccard distance
+  geom_text(aes(label = value), color = "black", size = 6)+ #Adding values of Jaccard distance
   xlab("")+ylab("") #Removing the labels (x and y axis)
 sorensen.plot
 
@@ -820,6 +851,7 @@ x<-Composition_2 %>%
 x$rank<-as.character(x$rank)
 x$`Species status`<-factor(x$`Species status`,levels=c('Resident','Introduced','Migrant/Visitor'))
 
+# proportional
 x %>% filter(Study.Area!='Changi Airport') %>% 
   ggplot(aes(id,max.freq,color=`Species status`))+
   geom_point(shape=1,alpha=1)+
@@ -830,6 +862,39 @@ x %>% filter(Study.Area!='Changi Airport') %>%
   scale_x_continuous(limits = c(1, 54), 
                      breaks = c(1,5,10,15,20,25,30,35,40,45,50,54))+
   theme_pubclean()+styleRA+
+  scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
+                               'Migrant/Visitor'='#CCBB44'))
+# freq diff style
+x %>% filter(Study.Area!='Changi Airport') %>% 
+  ggplot(aes(id,max.freq,color=`Species status`))+
+  geom_col(fill='white')+
+  facet_wrap(~Study.Area)+
+  labs(title = 'Rank abundance curves',
+       x='Rank',y='Abundance (proportion)')+
+  scale_x_continuous(limits = c(0, 54), 
+                     breaks = c(1,5,10,15,20,25,30,35,40,45,50,54))+
+  theme_pubclean()+styleRA+
+  theme(legend.text = element_text(size=14),
+        legend.title = element_text(size=16),
+        strip.text = element_text(size=16),
+        axis.text.x = element_text(size=14),
+        axis.text.y = element_text(size=14))+
+  scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
+                               'Migrant/Visitor'='#CCBB44'))
+
+# n actual & diff style
+x %>% filter(Study.Area!='Changi Airport') %>% 
+  ggplot(aes(id,max_obs,color=`Species status`))+
+  geom_col(fill='white')+
+  facet_wrap(~Study.Area)+
+  labs(title = 'Rank abundance curves',
+       x='Rank',y='Abundance (n)')+
+  scale_x_continuous(limits = c(0, 54), 
+                     breaks = c(1,5,10,15,20,25,30,35,40,45,50,54))+
+  theme_pubclean()+styleRA+
+  theme(legend.text = element_text(size=14),
+        legend.title = element_text(size=16),
+        strip.text = element_text(size=16))+
   scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
                                'Migrant/Visitor'='#CCBB44'))
 # residency summary
