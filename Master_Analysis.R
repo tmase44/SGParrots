@@ -165,7 +165,7 @@ x<-Composition %>%
 Composition_2<-merge(Composition_2,x, by=c('Study.Area','Species'),all = T)
 Composition_2<-Composition_2 %>% relocate(all_obs,.after = SG_status)
 
-# Factorise Composition_2
+# Factorise Composition_2----
 str(Composition_2)
 cols_comp <-c('Study.Area','Species','SG_status',
               'IUCN_status','NestType','sp_lab',
@@ -174,7 +174,7 @@ Composition_2<-Composition_2 %>% mutate_at(cols_comp, factor)
 str(Composition_2)
 rm(cols_comp)
 
-# Factorise Interactions
+# Factorise Interactions----
 str(Interact)
 cols_int <-c('Region.Label','Study.Area','ampm','initsp','recipsp','interaction',
              'isout','rsout','treeid','treesci','treecom','trim','at_cav')
@@ -502,6 +502,10 @@ Composition_2$Study.Area<-factor(Composition_2$Study.Area,
                                'Changi Airport','Changi Village','Stirling Road','Sengkang Riverside Park',
                                'Pasir Ris Town Park','Palawan Beach','Springleaf'
                              ))
+# relvel
+ISRS$Species<-as.character(ISRS$Species) 
+ISRS$Species<-factor(ISRS$Species) 
+
 #/////////////////////////////////////////////////////////////////////////////
 #/////////////////////////////////////////////////////////////////////////////
 #============================= DATA SUMMARIES =============================
@@ -1242,6 +1246,7 @@ sp.pairs %>%
 #============================================================#
 #library(tidytext)
 x3<-Composition_2 %>%
+  filter(Class=='Bird') %>% 
   filter(Study.Area!='Changi Airport'|Species!='Javan myna') %>% # remove outliers
     group_by(Species,SG_status,NestType) %>% summarise(max_obs=sum(max_obs),
                                   n_ints=sum(n_ints),
@@ -1340,7 +1345,7 @@ x3 %>%
                              'RoCN'='#117733',
                              'MnCN'='#CC6677'))
 
-## TABLE WITH ALL
+  ## TABLE WITH ALL
 x4<-x3 %>%
   filter(n_ints>0) %>% 
   select(Species,SG_status,NestType,max_obs,n_ints,ints_freq,n_ints_xNE,intsxNE_freq,
@@ -1356,40 +1361,47 @@ x4<-x3 %>%
             n_inits_Agg=sum(n_initis_xNE),
             inits_Agg_freq=mean(initisxNE_freq)) %>% 
     arrange(desc(n_ints))
-  
-# all ints + all intiations
+
+# add number of wins total & wins intiated
+x<-ISRS %>% 
+  filter(Class=='Bird') %>% 
+  group_by(Species) %>% 
+  filter(outcome=='W') %>% 
+  summarise(wins_all=sum(n_ints))
+y<-ISRS %>% 
+  filter(Class=='Bird') %>% 
+    group_by(Species) %>% 
+  filter(role=='IS') %>% filter(outcome=='W') %>% 
+  summarise(wins_init=sum(n_ints))
+x<-merge(x,y,by='Species',all=T) %>% replace(is.na(.), 0) 
+x4<-merge(x4,x,by='Species',all=T) %>% replace(is.na(.), 0) 
+x4<-x4 %>% 
+  mutate('wins / all interactions'=(wins_all/n_ints),
+         'wins / initiations'=(wins_init/n_inits))
+
+# all ints + all AGGRESSIVE intiations----
 x4 %>% 
-  top_n(12,ints_freq) %>% 
+  arrange(desc(n_ints)) %>% 
   mutate(across(where(is.numeric), round, 2)) %>%
-  select(-n_inits_Agg,-inits_Agg_freq,-n_ints_Agg,-ints_Agg_freq) %>%
-  rename('Individuals observed'='n_observed',
+  select(-n_inits,-inits_freq,-n_ints_Agg,-ints_Agg_freq,-wins_all,-wins_init) %>%
+  rename('Status'='SG_status',
+         'Nest type'='NestType',
+         'Individuals observed'='n_observed',
          'n interactions'='n_ints',
-         'Interactions/individuals'='ints_freq',
-         'n initiated interactions'='n_inits',
-         'Initiations/individuals'='inits_freq') %>% 
-  kable(align = 'lllccccc') %>% 
+         'Interactions / individuals'='ints_freq',
+         'n initiations'='n_inits_Agg',
+         'Initiations / individuals'='inits_Agg_freq') %>% 
+  replace(is.na(.), '-') %>% 
+  kable(align = 'lccccccccc') %>% 
   add_header_above(header=c(" "=4,
                             "All interactions"=2,
-                            "Initiated interactions only"=2)) %>% 
-  kable_styling()
+                            "Initiated interactions only"=2,
+                            "Win rate"=2)) %>% 
+  kable_styling() %>% 
+  save_kable(file = "interaction_table.html")
+webshot::webshot("interaction_table.html", "interaction_table.png")
 
-# all ints + all AGGRESSIVE intiations
-x4 %>% 
-  top_n(12,ints_freq) %>% 
-  mutate(across(where(is.numeric), round, 2)) %>%
-  select(-n_inits,-inits_freq,-n_ints_Agg,-ints_Agg_freq) %>%
-  rename('Individuals observed'='n_observed',
-         'n interactions'='n_ints',
-         'Interactions/individuals'='ints_freq',
-         'n initiated aggressions'='n_inits_Agg',
-         'Initiations/individuals'='inits_Agg_freq') %>% 
-  kable(align = 'lllccccc') %>% 
-  add_header_above(header=c(" "=4,
-                            "All interactions"=2,
-                            "Initiated aggressions only"=2)) %>% 
-  kable_styling()
-
- ## normalised\\\\\\\\\\\\
+ ## normalised---
 x3.norm<-x3 %>% filter(!is.na(initis_freq))
 x3.norm<-x3.norm %>% filter(!is.na(label))
 x3.norm$label<-as.factor(x3.norm$label)
