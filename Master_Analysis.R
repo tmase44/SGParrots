@@ -604,16 +604,6 @@ int_pairs %>% print(n=20) # top 10 interaction pairs
 x<-nrow(int_pairs)
 sprintf('%s unique species pairs were observed interacting',x)
 
-int_pairs %>% 
-  filter(initsp=='Red-breasted parakeet'|initsp=='Rose-ringed parakeet'|
-         initsp=='Monk parakeet'|initsp=='Tanimbar corella'|
-         initsp=='Yellow crested cockatoo'|initsp=='Sulphur crested cockatoo') %>% 
-  filter(recipsp!='Red-breasted parakeet',recipsp!='Rose-ringed parakeet',
-         recipsp!='Monk parakeet',recipsp!='Tanimbar corella',
-         recipsp!='Yellow crested cockatoo',recipsp!='Sulphur crested cockatoo') %>% 
-    group_by(recipsp) %>% summarise(n=sum(n)) %>% 
-  mutate(freq=n/sum(n)*100) %>% arrange(desc(freq)) %>% 
-  print(n=30)
 # non native parrots excluded
 # ~ Top recipients
   # Javan myna, LTP, house crow, LTP OPH, YCC, AGS, YVBB, Oriole,
@@ -622,6 +612,13 @@ int_pairs %>%
   group_by(recipsp) %>% summarise(n=sum(n)) %>% 
   mutate(freq=n/sum(n)*100) %>% arrange(desc(freq)) %>% 
   print(n=30)
+
+sp.pairs %>% 
+  select(initsp,recipsp,IS.sp_lab,RS.sp_lab,pair_ints) %>% 
+  ungroup() %>% 
+  filter(IS.sp_lab=='NNP'&RS.sp_lab=='NNP') %>%
+  summarise(n=sum(pair_ints))
+  
 
 #////////////////////////
 # Cavity Nesters in focus----
@@ -1400,6 +1397,8 @@ x4 %>%
   kable_styling() %>% 
   save_kable(file = "interaction_table.html")
 webshot::webshot("interaction_table.html", "interaction_table.png")
+
+##  extract more wins and losses fro this---- 
 
  ## normalised---
 x3.norm<-x3 %>% filter(!is.na(initis_freq))
