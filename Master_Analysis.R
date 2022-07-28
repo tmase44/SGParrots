@@ -1077,15 +1077,7 @@ NSS %>%
   theme_pubclean()+style180+
   theme(legend.position = 'none')
 
-# function for a boxplot
-MinMeanSEMMax <- function(x) {
-  v <- c(min(x), mean(x) - sd(x)/sqrt(length(x)), mean(x), mean(x) + sd(x)/sqrt(length(x)), max(x))
-  names(v) <- c("ymin", "lower", "middle", "upper", "ymax")
-  v
-}
-# line for plot
-# stat_summary(fun.data=MinMeanSEMMax, geom="boxplot", colour="black")+
-  
+# movement----
 x<-NSS %>% 
   replace(is.na(.), 0) %>% 
   group_by(Study.Area) %>% 
@@ -1119,13 +1111,18 @@ x %>%
   filter(Count>0) %>% 
   filter(Species=='Red-breasted parakeet'|Species=='Tanimbar corella'|Species=='Rose-ringed parakeet') %>% 
     ggplot(aes(Year,..scaled..))+
-    geom_density(aes(color=Species,fill=Species),alpha=.3)+
+    geom_density(aes(color=Species,fill=Species),alpha=.2)+
     labs(y='density',title = 'Roost site use over time')+
     facet_wrap(~Study.Area.new)+
     theme_pubclean()+style180Centered+
-  theme(axis.text.x = element_text(size=12),
+  theme(strip.text = element_text(size=12),
+        axis.text.x = element_text(size=12),
         axis.text.y = element_text(size=12),
-        axis.title.x = element_blank())
+        axis.title.x = element_blank())+
+  scale_fill_manual(values=c('Red-breasted parakeet'='#EE6677','Rose-ringed parakeet'='#4477AA',
+                             'Tanimbar corella'='#CCBB44'))+
+  scale_colour_manual(values=c('Red-breasted parakeet'='#EE6677','Rose-ringed parakeet'='#4477AA',
+                               'Tanimbar corella'='#CCBB44'))
 
 # box
 x %>% 
