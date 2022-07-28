@@ -1088,7 +1088,7 @@ x <- x %>% mutate(Site.num=factor(as.integer(Study.Area)))
 
 # Sort data for the chart 
 x<-x %>% 
-  mutate(Study.Area.new=case_when(Study.Area=='Nanyang Avenue'~'All other sites',
+  mutate(Study.Area.new=factor(case_when(Study.Area=='Nanyang Avenue'~'All other sites',
                                   Study.Area=='Buona Vista'~'All other sites',
                                   Study.Area=='Elias Road'~'All other sites',
                                   Study.Area=='Bottletree Park'~'All other sites',
@@ -1105,7 +1105,9 @@ x<-x %>%
                                   Study.Area=='Botanic Gardens'~'All other sites',
                                   Study.Area=='Brickland Road'~'All other sites',
                                   Study.Area=='Dempsey Hill'~'All other sites',
-                                  TRUE ~ as.character(Study.Area)))
+                                  TRUE ~ as.character(Study.Area))))
+
+levels(x$Study.Area.new)
 
 x %>% 
   filter(Count>0) %>% 
