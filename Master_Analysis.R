@@ -415,7 +415,7 @@ Indices_2<-merge(Indices_2,x,by='Study.Area')
 #//////////////////////////////////////
 # Adding Indices data to other DFs----
 #//////////////////////////////////////
-Composition_2<-merge(Composition_2,Indices_2,by='Study.Area',all=T)
+Composition_2<-merge(Composition_2,Indices_2,by='Study.Area',all = T)
 ISRS<-merge(ISRS,Indices_2,by='Study.Area',all=T)
 sp.pairs<-merge(sp.pairs,Indices_2,by='Study.Area',all=T)
 sp.pairs<-sp.pairs %>% select(-20)
@@ -786,13 +786,16 @@ Pilot %>%
 ## Alpha ----
 # Shannon / Richness
 Indices %>% 
+  filter(Study.Area!='Changi Airport') %>% 
   ggplot(aes(x=Shannon,y=Richness)) +
-  geom_point(size=5,color='#4477AA')+
-  xlim(1.5,4)+ylim(25,60)+
+  geom_point(size=5,color='#000000')+
+ ylim(25,60)+
   labs(title = 'Alpha diversity index',
        x = 'Shannon Index', y='Species Richness')+
-  geom_text_repel(aes(label=Study.Area),
-                  nudge_y = 1.6,segment.color = NA,color='#555555',size=5)+
+  scale_x_continuous(limits = c(2.5,3.7),
+                     breaks = c(2.6,2.8,3.0,3.2,3.2,3.4,3.6))+
+    geom_text_repel(aes(label=Study.Area),
+                  nudge_y = 1.6,segment.color = NA,color='black',size=5)+
   theme_pubclean()+style180
 
 # Simpson / Richness
@@ -1062,15 +1065,82 @@ z %>%
                               'Yellow crested cockatoo'='#DDCC77',
                              'Sulphur crested cockatoo'='#CC6677'))
 
+levels(NSS$Study.Area)
 
+NSS %>% 
+  filter(Count>5) %>% 
+  filter(Species=='Red-breasted parakeet'|Species=='Tanimbar corella'|Species=='Rose-ringed parakeet') %>% 
+  ggplot(aes(Year,..scaled..))+
+  geom_density(aes(color=Species,fill=Species),alpha=0.025)+
+  labs(y='density',title = 'Roost site use over time')+
+  facet_wrap(~Study.Area,ncol=1,nrow=3,scales='free')+
+  theme_pubclean()+style180+
+  theme(legend.position = 'none')
+
+# function for a boxplot
+MinMeanSEMMax <- function(x) {
+  v <- c(min(x), mean(x) - sd(x)/sqrt(length(x)), mean(x), mean(x) + sd(x)/sqrt(length(x)), max(x))
+  names(v) <- c("ymin", "lower", "middle", "upper", "ymax")
+  v
+}
+# line for plot
+# stat_summary(fun.data=MinMeanSEMMax, geom="boxplot", colour="black")+
+  
+x<-NSS %>% 
+  replace(is.na(.), 0) %>% 
+  group_by(Study.Area) %>% 
+  mutate(site.max=sum(Count)) %>% 
+  arrange(desc(site.max))
+x$Study.Area<-reorder(x$Study.Area,desc(x$site.max))
+x <- x %>% mutate(Site.num=factor(as.integer(Study.Area)))
+
+x %>% 
+  filter(Count>0) %>% 
+  filter(Species=='Red-breasted parakeet'|Species=='Tanimbar corella'|Species=='Rose-ringed parakeet') %>% 
+  ggplot(aes(Site.num,Count))+
+  stat_summary(fun.data=MinMeanSEMMax, geom="boxplot", colour="black")+
+  facet_wrap(~Species,ncol=1,nrow=3,scales = 'free_y')+
+  labs(title = 'Variation in roosting numbers over sites')
+  theme_pubclean()+style180+
+  theme(strip.text = element_text(size=12))
+  
+x %>% 
+  filter(Species=='Red-breasted parakeet'|Species=='Tanimbar corella'|Species=='Rose-ringed parakeet') %>% 
+  filter(Count>0) %>% 
+    ggplot(aes(Year,..scaled..))+
+    geom_density(aes(color=Species,fill=Species),alpha=.4)+
+    labs(y='density',title = 'Roost site use over time')+
+    facet_wrap(~Study.Area)+
+    theme_pubclean()+style180
+  filter(Study.Area!=='Botanic Gardens',Study.Area!=='Bottletree Park',)
 
 #/////////////////////////////////////////////////////////////////////////////
 #/////////////////////////////////////////////////////////////////////////////
 #======================== TOP-LINE CORRELATIONS =========================
 #/////////////////////////////////////////////////////////////////////////////
 #/////////////////////////////////////////////////////////////////////////////
-
-
+# shannon x density----
+Composition_2 %>% 
+  group_by(Shannon) %>% 
+  filter(Study.Area!='Changi Airport') %>% 
+  mutate(status=case_when(SG_status=='I'~'Introduced',
+                          SG_status=='R'~'Resident',
+                          SG_status=='M'~'Migrant/Visitor',
+                          SG_status=='N'~'Migrant/Visitor',
+                          SG_status=='V'~'Migrant/Visitor')) %>% 
+  ggplot(aes(Shannon,..scaled..)) +
+  geom_density(aes(fill = status,color=status), alpha = 0.2) +
+  labs(x = 'Species diversity (Shannon)', y='Density',
+       title = 'Species occurrence across sites')+
+  theme_pubclean()+style180+
+  theme(legend.title=element_blank())+
+  scale_x_continuous(limits = c(2.5,3.7),
+                     breaks = c(2.6,2.8,3.0,3.2,3.2,3.4,3.6))+
+    scale_fill_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
+                             'Migrant/Visitor'='#CCBB44'))+
+  scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
+                               'Migrant/Visitor'='#CCBB44'))
+  
 #========================#
 # SITE----
 #========================#
@@ -1451,7 +1521,7 @@ summary(y)
 
 ##########
 
-#2. ROLES
+#2. ROLES----
 # n IS RS
 ISRS %>%
   filter(interaction!='Neutral') %>% 
@@ -1482,7 +1552,7 @@ ISRS %>%
   scale_fill_manual(values=c('IS'='#994455','RS'='#EE99AA'))+
   theme_pubclean()+style180Centered
 
-# 3. W/L/NE summary
+# 3. W/L/NE summary----
 # n W/L/NE all ints
 
 ISRS %>% 
@@ -1588,18 +1658,6 @@ Interact_2 %>%
   count(recipsp) %>% 
   mutate(f=n/sum(n)*100)
 
-# Site difference x species----
-ISRS %>% 
-  filter(role=='IS') %>% group_by(Species) %>% 
-  filter(Species=="Monk parakeet"|Species=="Tanimbar corella"|Species=="Rose-ringed parakeet"|Species=="Red-breasted parakeet"|Species=="Long-tailed parakeet") %>%  
-  filter(Study.Area!='Pasir Ris Town Park'|Species!='Red-breasted parakeet') %>% 
-  filter(Study.Area!='Stirling Road'|Species!='Rose-ringed parakeet') %>% 
-  ggplot(aes(Study.Area,fill=interaction,label=n_ints))+
-  geom_bar(position='fill',width=0.9)+
-  facet_grid(~Species,scales='free',space='free')+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
-  labs(title = 'Species aggressions across sites')
-
 # Tanimbar corella 
   ## aggression across two separate sites is identical in frequency.
   ## most frequent contact / fight
@@ -1667,42 +1725,49 @@ d<-Interact_2 %>%
 grid.arrange(a,b,c,d,top=textGrob("Interaction distance from cavity or roost",
                                   gp=gpar(fontsize=22),vjust=0.2))
 
+# SE distance----
+# DO NOT USE - MEAN ONLY FOR NORMAL DISTRIBS. MEDIAN FOR THIS
+## calc1
+x <-Interact_2$nxt_cav
+std_mean <- function(x) sd(x)/sqrt(length(x))
+std_mean(x)
+## calc2
+se<-std <- function(x) sd(x)/sqrt(length(x))
+median(Interact_2$nxt_cav)
+se(Interact_2$nxt_cav)
+# error bars
+x<-Interact_2 %>% 
+  filter(Study.Area!='Changi Airport') %>% 
+  filter(nxt_cav<100) %>% 
+  group_by(Study.Area) %>% 
+  mutate(se=(sd(nxt_cav)/sqrt(length((nxt_cav))))) %>% 
+  summarise(mean=mean(nxt_cav),
+            se=mean(se)) 
+# function for a boxplot
+MinMeanSEMMax <- function(x) {
+  v <- c(min(x), mean(x) - sd(x)/sqrt(length(x)), mean(x), mean(x) + sd(x)/sqrt(length(x)), max(x))
+  names(v) <- c("ymin", "lower", "middle", "upper", "ymax")
+  v
+}
+# line for plot
+stat_summary(fun.data=MinMeanSEMMax, geom="boxplot", colour="black")+
+  
 
 
+## means se boxplot
+Interact_2 %>% 
+  filter(Study.Area!='Changi Airport') %>% 
+  filter(nxt_cav<100) %>% 
+  ggplot(aes(Study.Area,nxt_cav))+
+  stat_summary(fun.data=MinMeanSEMMax, geom="boxplot", colour="black")+
+  labs(title = 'Interaction distance from nest / roost',
+       y = 'Distance (metres)')+
+  theme_pubclean()+style180Centered+
+  theme(axis.title.x = element_blank())+
+  scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
+  facet_wrap(~initsp)
 
-# Site profile
-Indices_2 %>% 
-  filter(Study.Area!='Changi Airport') %>% 
-  ggplot(aes(Study.Area,site.interactions))+
-  geom_boxplot()+
-  labs(y='n',title='Total interactions')+
-  theme_pubclean()+style180Centered+
-  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
-  theme(axis.title.x = element_blank())
-Indices_2 %>% 
-  filter(Study.Area!='Changi Airport') %>% 
-  ggplot(aes(Study.Area,cavs_canopy_sqm))+
-  geom_boxplot()+
-  labs(y='n',title='Nest holes per sqm')+
-  theme_pubclean()+style180Centered+
-  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
-  theme(axis.title.x = element_blank())
-Indices_2 %>% 
-  filter(Study.Area!='Changi Airport') %>% 
-  ggplot(aes(Study.Area,freq.I))+
-  geom_boxplot()+
-  labs(y='%',title='Proportion of introduced species')+
-  theme_pubclean()+style180Centered+
-  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
-  theme(axis.title.x = element_blank())
-Indices_2 %>% 
-  filter(Study.Area!='Changi Airport') %>% 
-  ggplot(aes(Study.Area,freq.parrots))+
-  geom_boxplot()+
-  labs(y='%',title='Proportion of parrot species')+
-  theme_pubclean()+style180Centered+
-  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
-  theme(axis.title.x = element_blank())
+
 
 
 
