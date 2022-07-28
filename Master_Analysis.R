@@ -895,7 +895,7 @@ x %>%
   filter(Study.Area!='Changi Airport') %>% 
   ggplot(aes(id,max.freq,color=`Species status`))+
   geom_col(fill='white')+
-  geom_point(aes(id,max.freq,shape=NestType),size=3,color='black')+
+  geom_point(aes(id,max.freq,shape=NestType),size=3,color='black',alpha=.7)+
   facet_wrap(~Study.Area)+
   labs(title = 'Rank abundance curves',
        x='Rank',y='Abundance (proportion)')+
@@ -907,8 +907,8 @@ x %>%
         strip.text = element_text(size=16),
         axis.text.x = element_text(size=14),
         axis.text.y = element_text(size=14))+
-  scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
-                               'Migrant/Visitor'='#CCBB44'))+
+  scale_colour_manual(values=c('Introduced'='#994455','Resident'='#997700',
+                               'Migrant/Visitor'='#000000'))+
   scale_shape_manual(values=c(20,21,7))
 
 # n actual & diff style
@@ -1057,13 +1057,13 @@ z %>%
   theme_pubclean()+style180Centered+
   theme(strip.text = element_text(size=14),
         legend.text = element_text(size=12))+
-  scale_fill_manual(values=c("Monk parakeet"='#332288',
-                             "Long-tailed parakeet"='#88CCEE',
-                             "Red-breasted parakeet"='#44AA99',
-                             "Rose-ringed parakeet"='#117733',
-                             "Tanimbar corella"='#999933',
-                              'Yellow crested cockatoo'='#DDCC77',
-                             'Sulphur crested cockatoo'='#CC6677'))
+  scale_fill_manual(values=c("Monk parakeet"='#6699CC',
+                             "Long-tailed parakeet"='#004488',
+                             "Red-breasted parakeet"='#EECC66',
+                             "Rose-ringed parakeet"='#994455',
+                             "Tanimbar corella"='#997700',
+                              'Yellow crested cockatoo'='#EE99AA',
+                             'Sulphur crested cockatoo'='#000000'))
 
 levels(NSS$Study.Area)
 
@@ -1115,7 +1115,8 @@ x %>%
     labs(y='density',title = 'Roost site use over time')+
     facet_wrap(~Study.Area.new)+
     theme_pubclean()+style180Centered+
-  theme(strip.text = element_text(size=12),
+  theme(legend.text = element_text(size=14),
+        strip.text = element_text(size=12),
         axis.text.x = element_text(size=12),
         axis.text.y = element_text(size=12),
         axis.title.x = element_blank())+
