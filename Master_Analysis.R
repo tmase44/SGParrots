@@ -1094,6 +1094,40 @@ x<-NSS %>%
 x$Study.Area<-reorder(x$Study.Area,desc(x$site.max))
 x <- x %>% mutate(Site.num=factor(as.integer(Study.Area)))
 
+# Sort data for the chart 
+x<-x %>% 
+  mutate(Study.Area.new=case_when(Study.Area=='Nanyang Avenue'~'All other sites',
+                                  Study.Area=='Buona Vista'~'All other sites',
+                                  Study.Area=='Elias Road'~'All other sites',
+                                  Study.Area=='Bottletree Park'~'All other sites',
+                                  Study.Area=='Choa Chu Kang'~'All other sites',
+                                  Study.Area=='Yishun Street 11'~'All other sites',
+                                  Study.Area=='Pasir Ris Heights'~'All other sites',
+                                  Study.Area=='Sengkang Riverside Park'~'All other sites',
+                                  Study.Area=='One North Woods'~'All other sites',
+                                  Study.Area=='Lower Peirce Reservoir'~'All other sites',
+                                  Study.Area=='Bukit Timah Rd - near Caltex'~'All other sites',
+                                  Study.Area=='Malcolm Park'~'All other sites',
+                                  Study.Area=='Dakota Crescent'~'All other sites',
+                                  Study.Area=='Thong Soon Green'~'All other sites',
+                                  Study.Area=='Botanic Gardens'~'All other sites',
+                                  Study.Area=='Brickland Road'~'All other sites',
+                                  Study.Area=='Dempsey Hill'~'All other sites',
+                                  TRUE ~ as.character(Study.Area)))
+
+x %>% 
+  filter(Count>0) %>% 
+  filter(Species=='Red-breasted parakeet'|Species=='Tanimbar corella'|Species=='Rose-ringed parakeet') %>% 
+    ggplot(aes(Year,..scaled..))+
+    geom_density(aes(color=Species,fill=Species),alpha=.3)+
+    labs(y='density',title = 'Roost site use over time')+
+    facet_wrap(~Study.Area.new)+
+    theme_pubclean()+style180Centered+
+  theme(axis.text.x = element_text(size=12),
+        axis.text.y = element_text(size=12),
+        axis.title.x = element_blank())
+
+# box
 x %>% 
   filter(Count>0) %>% 
   filter(Species=='Red-breasted parakeet'|Species=='Tanimbar corella'|Species=='Rose-ringed parakeet') %>% 
@@ -1101,18 +1135,9 @@ x %>%
   stat_summary(fun.data=MinMeanSEMMax, geom="boxplot", colour="black")+
   facet_wrap(~Species,ncol=1,nrow=3,scales = 'free_y')+
   labs(title = 'Variation in roosting numbers over sites')
-  theme_pubclean()+style180+
+theme_pubclean()+style180+
   theme(strip.text = element_text(size=12))
-  
-x %>% 
-  filter(Species=='Red-breasted parakeet'|Species=='Tanimbar corella'|Species=='Rose-ringed parakeet') %>% 
-  filter(Count>0) %>% 
-    ggplot(aes(Year,..scaled..))+
-    geom_density(aes(color=Species,fill=Species),alpha=.4)+
-    labs(y='density',title = 'Roost site use over time')+
-    facet_wrap(~Study.Area)+
-    theme_pubclean()+style180
-  filter(Study.Area!=='Botanic Gardens',Study.Area!=='Bottletree Park',)
+
 
 #/////////////////////////////////////////////////////////////////////////////
 #/////////////////////////////////////////////////////////////////////////////
