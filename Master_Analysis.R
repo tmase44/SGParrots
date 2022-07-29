@@ -205,10 +205,12 @@ levels(Interact_2$Study.Area)
 
 Interact_2$tree_h<-as.numeric(Interact_2$tree_h)
 
-# Factorise NSS data
+# Factorise NSS data----
 NSS$Site<-as.factor(NSS$Site)
 NSS$Study.Area<-as.factor(NSS$Study.Area)
 NSS$Species<-as.factor(NSS$Species)
+NSS$Year<-as.factor(NSS$Year)
+
   # remove na
 NSS$Count<-NSS$Count %>% replace(is.na(.), 0)
 
@@ -1016,6 +1018,67 @@ NSS %>%
         strip.text = element_text(size=14),
         legend.position = 'none')
 
+# summary population RBP
+NSS_2<-NSS %>% 
+  replace(is.na(.), 0) %>% 
+  ungroup() %>% 
+  filter(Species=='Red-breasted parakeet'|Species=='Rose-ringed parakeet'|Species=='Tanimbar corella') %>% 
+  group_by(Year,Species) %>% 
+  summarise(n=sum(Count)) %>% ungroup() %>% 
+  group_by(Species) %>% 
+  mutate(pct_change = (n/lag(n) - 1) * 100)
+# avg growth rate
+NSS_2 %>% 
+  replace(is.na(.), 0) %>% 
+    group_by(Species) %>% 
+  summarise(mean_growth=mean(pct_change))
+# lambda
+counts = NSS_2$n
+l = counts[-1]/counts[-length(counts)]
+round(l, 2)
+#hist
+hist(l, breaks = 8, main = "Histogram of lambdas")
+# mean and SD
+mean(log(l))
+sd(log(l))
+#
+set.seed(2)
+sim.l = rlnorm(50, meanlog = mean(log(l)), sdlog = sd(log(l)))
+round(sim.l, 2)
+# Single simulation
+set.seed(2)
+time = 10 # years
+N0 = 882 # starting pop
+N = vector(length = time)
+N[1] = N0
+sim.l = rlnorm(time, meanlog = mean(log(l)), sdlog = sd(log(l)))
+for (t in 2:time) {
+  N[t] = N[t - 1] * sim.l[t - 1]
+}
+par(mar = c(4, 4, 1, 4))
+plot(1:(time), N, type = "o", las = 1, xaxt = "n")
+axis(side = 1, at = c(1, 3, 5, 7, 9,11,14), labels = c(2020, 2022, 
+                                                    2024, 2026, 2028, 2030))
+
+# multi sim
+set.seed(2)
+sims = 5
+outmat = sapply(1:sims, function(x) {
+  time = 10
+  N0 = 882
+  N = vector(length = time)
+  N[1] = N0
+  sim.l = rlnorm(time, meanlog = mean(log(l)), sdlog = sd(log(l)))
+  for (t in 2:time) {
+    N[t] = N[t - 1] * sim.l[t - 1]
+  }
+  N
+})
+par(mar = c(4, 4, 1, 4))
+matplot(1:time, outmat, type = "l", las = 1, lty = 5, ylab = "N", xaxt = "n", xlab = "Year")
+axis(side = 1, at = c(0,2,4,6,8,10), labels = c(2020, 2022, 
+                                                       2024, 2026, 2028, 2030))
+
 ## MP not documented at all
 ## RBP continuous growth but populations may be reaching capacity
 ## RRP growth is high, potential to explode
@@ -1483,7 +1546,7 @@ x4 %>%
          'Interactions / individuals'='ints_freq',
          'n initiations'='n_inits_Agg',
          'Initiations / individuals'='inits_Agg_freq') %>% 
-  replace(is.na(.), '-') %>% 
+  replace(is.na(.), 0) %>% 
   kable(align = 'lccccccccc') %>% 
   add_header_above(header=c(" "=4,
                             "All interactions"=2,
@@ -1491,7 +1554,29 @@ x4 %>%
                             "Win rate"=2)) %>% 
   kable_styling() %>% 
   save_kable(file = "interaction_table.html")
-webshot::webshot("interaction_table.html", "interaction_table.png")
+webshot::webshot("interaction_table.html", "interaction_table.pdf")#pdf better
+
+## now just focal parrots
+x4 %>% 
+  filter(Species=='Red-breasted parakeet'|Species=='Rose-ringed parakeet'|
+           Species=='Monk parakeet'|Species=='Tanimbar corella') %>% 
+  arrange(desc(n_ints)) %>% 
+  group_by(Species) %>% 
+  mutate(pc_inits_Agg=n_inits_Agg/n_ints) %>% 
+  mutate(across(where(is.numeric), round, 2)) %>%
+  select(Species,n_ints,pc_inits_Agg,`wins / all interactions`,`wins / initiations`) %>%
+  rename('n interactions'='n_ints',
+         '% initiations'='pc_inits_Agg') %>% 
+  kable(align = 'lcccc') %>% 
+    kable_styling(full_width = FALSE) %>% 
+  column_spec(column = 1, width = "5cm")%>% 
+  column_spec(column = 2, width = "1.7cm") %>% 
+  column_spec(column = 3, width = "1.7") %>% 
+  column_spec(column = 4, width = "1.7cm") %>% 
+  column_spec(column = 5, width = "1.7cm") %>%
+  save_kable(file = "interaction_table_focal.html")
+webshot::webshot("interaction_table_focal.html", "interaction_table_focal.pdf")
+
 
 ##  extract more wins and losses fro this---- 
 
