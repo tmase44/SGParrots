@@ -755,6 +755,9 @@ z
 ISRS$Species2 = str_wrap(ISRS$Species, width = 10)
 Enviro_2$Study.Area2 = str_wrap(Enviro_2$Study.Area, width = 10)
 Interact_2$Study.Area2 = str_wrap(Interact_2$Study.Area, width = 10)
+sp.pairs$Study.Area2 = str_wrap(sp.pairs$Study.Area, width = 10)
+sp.pairs_2$Study.Area2 = str_wrap(sp.pairs_2$Study.Area, width = 10)
+
 
 # title styling
   # 90 deg rotated x axis
@@ -2001,19 +2004,26 @@ sp.pairs_2 %>%
                                                'L'='#d6604d'))+
   scale_shape_manual(name='Grouping',values=c('M'=20,'N'=1,'NN'=22,'NNP'=2))
 
-# as RS
+# ... by site----
 sp.pairs_2 %>% 
   filter(interaction!='Neutral') %>% 
-  filter(IS.size<300) %>% 
+  filter(RS.size<300) %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
-  ggplot(aes(interaction,RS.size))+
+  ggplot(aes(Study.Area,RS.size))+
   geom_boxplot(aes(color=isout),outlier.shape = NA)+
-  geom_hline(aes(yintercept=IS.size),linetype='dashed',size=.75)+
-  labs(y='Recipient body size (cm)',title='A) by species')+
+  geom_hline(aes(yintercept=IS.size),linetype='dotted',size=.75,alpha=1)+
+  geom_point(aes(Study.Area,RS.size,group=isout,color=isout,shape=RS.sp_lab),size=3,position = position_dodge(width = .8))+
+  labs(y='Recipient body size (cm)',title='Initiated interactions and outcomes by site')+
   theme_pubclean()+style180Centered+
   theme(axis.title.x = element_blank(),
-        plot.title = element_text(vjust = -5))+
-  facet_wrap(~initsp)
+        plot.title = element_text(vjust = -5),
+        strip.text = element_text(size=12))+
+  facet_wrap(~initsp,scales = 'free_x')+
+  scale_color_manual(name='Outcome',values = c('W'='#4393c3',
+                                               'L'='#d6604d'))+
+  scale_shape_manual(name='Grouping',values=c('M'=20,'N'=1,'NN'=22,'NNP'=2))+
+  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))
+  
 
 
   

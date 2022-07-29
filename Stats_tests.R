@@ -485,7 +485,7 @@ Composition_3 %>% filter(n_ints>5) %>%
 
 
 
-# Parrot targets----
+# body size boxes----
 all.targets %>% 
   filter(initsp=="Monk parakeet"|initsp=='Tanimbar corella'|
            initsp=='Rose-ringed parakeet'|initsp=='Red-breasted parakeet')%>% 

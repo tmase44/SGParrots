@@ -14,10 +14,11 @@ Chord$interaction<-factor(Chord$interaction,
 # prepare data frame
 intchord<-Chord %>% 
   filter(recipsp!="NA") %>% 
-  filter(initsp=="Monk parakeet"|
-           initsp=="Tanimbar corella"|
-           initsp=="Rose-ringed parakeet"|
-           initsp=="Red-breasted parakeet") %>%  
+  filter(interaction!='Neutral') %>% 
+  # filter(initsp=="Monk parakeet"|
+  #          initsp=="Tanimbar corella"|
+  #          initsp=="Rose-ringed parakeet"|
+  #          initsp=="Red-breasted parakeet") %>%  
   group_by(initsp,recipsp,isout) %>% 
   tally() %>% 
   filter(n>1) %>% 
@@ -29,11 +30,55 @@ levels(reciplist$recipsp)
 
 intchord<-intchord %>% 
   mutate(IS=case_when(
-    initsp=="Monk parakeet"~"MP",
-    initsp=="Tanimbar corella"~"TC",
-    initsp=="Rose-ringed parakeet"~"RrP",
-    initsp=="Red-breasted parakeet"~"RbP",
-    initsp=="Long-tailed parakeet"~"LtP"))
+    initsp=="Asian glossy starling"~"AGS",
+    initsp=="Asian koel"~"AK",
+    initsp=="Black naped oriole"~"BnO",
+    initsp=="Blue throated bee eater"~"BtB",
+    initsp=="Brown throated sunbird"~"BtSb",
+    initsp=="Cat"~"Mammal",
+    initsp=="Changeable hawk eagle"~"CHE",
+    initsp=="Collared kingfisher"~"CK",
+    initsp=="Common flameback"~"CF",
+    initsp=="Common hill myna"~"CHM",
+    initsp=="Common iora"~"CI",
+    initsp=="Common myna"~"CM",
+    initsp=="Common tailorbird"~"CTb",
+    initsp=="Grey headed fish eagle"~"GhFe",
+    initsp=="Grey heron"~"GH",               
+    initsp=="House crow"~"HC",               
+    initsp=="House sparrow"~"HS",          
+    initsp=="Javan myna"~"JM",              
+    initsp=="Junglefowl"~"Jf",              
+    initsp=="Large billed crow"~"LbC",        
+    initsp=="Lesser green leafbird"~"LgLB",   
+    initsp=="Lineated barbet"~"LB",       
+    initsp=="Little tern"~"LT",             
+    initsp=="Long-tailed macaque"~"Mammal",     
+    initsp=="Long-tailed parakeet"~"LtP",     
+    initsp=="Monk parakeet"~"MP",           
+    initsp=="Olive backed sunbird"~"ObSb",    
+    initsp=="Olive winged bulbul"~"OwB",     
+    initsp=="Oriental dollarbird"~"OD",      
+    initsp=="Oriental magpie robin"~"OmR",    
+    initsp=="Oriental pied hornbill"~"OpH",  
+    initsp=="Otter"~"Mammal",                    
+    initsp=="Pied triller"~"PT",             
+    initsp=="Pink necked green pigeon"~"PngP", 
+    initsp=="Purple heron"~"PH",             
+    initsp=="Red-breasted parakeet"~"RbP",   
+    initsp=="Rock dove"~"RD",               
+    initsp=="Rose-ringed parakeet"~"RrP",     
+    initsp=="Rufous woodpecker"~"RWp",        
+    initsp=="Scaly breasted munia"~"SbM",     
+    initsp=="Spotted dove"~"SD",            
+    initsp=="Squirrel"~"Mammal",                 
+    initsp=="Stork billed kingfisher"~"SbKf",  
+    initsp=="Sulphur crested cockatoo"~"ScC", 
+    initsp=="Tanimbar corella"~"TC",         
+    initsp=="White throated kingfisher"~"WtKf",
+    initsp=="Yellow crested cockatoo"~"YcC",  
+    initsp=="Yellow vented bulbul"~"YvB",
+    initsp=="Zebra dove"~"ZD"))
 intchord<-intchord %>% 
   mutate(RS=case_when(
     recipsp=="Asian glossy starling"~"AGS",
@@ -99,20 +144,22 @@ levels(inchord2$IS)
 # http://opencolor.tools/palettes/wesanderson/  
 
 # Make the circular plot
-par(mfrow=c(1,1))
-chordDiagram(inchord2,grid.col=grid.col,annotationTrack = "grid",
-             preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
+#par(mfrow=c(1,1))
+#chordDiagram(inchord2,grid.col=grid.col,annotationTrack = "grid",
+          #   preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
 # above removes the labels, below adds them in 90deg angle
-circos.track(track.index = 1, panel.fun = function(x, y) {
-  circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index, 
-              facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5))
-}, bg.border = NA)
+#circos.track(track.index = 1, panel.fun = function(x, y) {
+#  circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index, 
+             # facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5))
+#}, bg.border = NA)
 
 circos.clear()
 
-#... multi chord!!!!!----
+# WHOLE NETWORK----
 circos.clear()
-par(mfrow = c(2, 3))
+
+#par(cex = 1.5, mar = c(1, 0, 0, 0)) #adjust text size
+
 grid.col=c("AGS"="grey",
     "AK"="grey",
     "BnO"="grey",
@@ -136,7 +183,7 @@ grid.col=c("AGS"="grey",
    "LB"="grey",       
    "LT"="grey",             
     "LtP"="grey",     
-   "MP"="#2E604A",           
+   "MP"="#004488",           
    "ObSb"="grey",    
    "OwB"="grey",     
   "OD"="grey",      
@@ -146,20 +193,19 @@ grid.col=c("AGS"="grey",
 "PT"="grey",             
    "PngP"="grey", 
     "PH"="grey",             
-   "RbP"="#D1362F",   
+   "RbP"="#994455",   
     "RD"="grey",               
-   "RrP"="#E6A2C5",     
+   "RrP"="#EE99AA",     
    "RWp"="grey",        
    "SbM"="grey",     
 "SD"="grey",            
 "SbKf"="grey",  
-"ScC"="grey", 
-"TC"="#27223C",         
+"ScC"="#EECC66", 
+"TC"="#997700",         
 "WtKf"="grey",
- "YcC"="grey",  
+ "YcC"="#6699CC",  
 "YvB"="grey",
 "ZD"="grey")    
-
 
 chordDiagram(inchord2,grid.col=grid.col,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
              preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
@@ -170,14 +216,61 @@ circos.track(track.index = 1, panel.fun = function(x, y) {
 }, bg.border = NA)
 title(main = "Parrot interaction network")
 
-# multi
+# RBP ONLY
 rbp<-inchord2 %>% filter(IS=='RbP')
 circos.clear()
-par(mfrow=c(2,3))
+#par(mfrow=c(2,3))
 par(cex = 0.5, mar = c(0, 0, 0, 0)) #adjust text size
 circos.par(start.degree = 0)
 #plot all----
-chordDiagram(rbp,grid.col=grid.col,transparency = 0.8,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
+grid.col.rbp=c("AGS"="grey",
+           "AK"="grey",
+           "BnO"="grey",
+           "BtB"="grey",
+           "BtSb"="grey",
+           "CHE"="grey",
+           "CK"="grey",
+           "CF"="grey",
+           "CHM"="grey",
+           "CI"="grey",
+           "CM"="grey",
+           "CTb"="grey",
+           "GhFe"="grey",
+           "GH"="grey",               
+           "HC"="grey",               
+           "HS"="grey",          
+           "JM"="grey",              
+           "Jf"="grey",              
+           "LbC"="grey",        
+           "LgLB"="grey",   
+           "LB"="grey",       
+           "LT"="grey",             
+           "LtP"="grey",     
+           "MP"="#004488",           
+           "ObSb"="grey",    
+           "OwB"="grey",     
+           "OD"="grey",      
+           "OmR"="grey",    
+           "OpH"="grey",  
+           "Mammal"="grey",                    
+           "PT"="grey",             
+           "PngP"="grey", 
+           "PH"="grey",             
+           "RbP"="#994455",   
+           "RD"="grey",               
+           "RrP"="#EE99AA",     
+           "RWp"="grey",        
+           "SbM"="grey",     
+           "SD"="grey",            
+           "SbKf"="grey",  
+           "ScC"="#EECC66", 
+           "TC"="#997700",         
+           "WtKf"="grey",
+           "YcC"="#6699CC",  
+           "YvB"="grey",
+           "ZD"="grey")    
+
+chordDiagram(rbp,grid.col=grid.col.rbp,transparency = 0.8,annotationTrack = "grid",annotationTrackHeight = c(0.03, 0.01),
              preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
 circos.track(track.index = 1, panel.fun = function(x, y) {
   circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index, 
