@@ -1982,7 +1982,7 @@ sp.pairs_2 %>%
   scale_color_manual(name='Outcome',values = c('W'='#4393c3',
                                 'L'='#d6604d'))
 
-# wins and losses by weight, per interaction species facet
+# wins and losses by weight, per interaction species facet----
 sp.pairs_2 %>% 
   filter(interaction!='Neutral') %>% 
   filter(RS.size<300) %>% 
@@ -1990,7 +1990,7 @@ sp.pairs_2 %>%
   ggplot(aes(interaction,RS.size))+
   geom_boxplot(aes(color=isout),outlier.shape = NA)+
   geom_hline(aes(yintercept=IS.size),linetype='dotted',size=.75,alpha=1)+
-  geom_point(aes(interaction,RS.size,color=isout,shape=RS.sp_lab,position_dodge()))+
+  geom_point(aes(interaction,RS.size,group=isout,color=isout,shape=RS.sp_lab),size=3,position = position_dodge(width = .8))+
   labs(y='Recipient body size (cm)',title='Initiated interactions and outcomes')+
   theme_pubclean()+style180Centered+
   theme(axis.title.x = element_blank(),
@@ -1998,7 +1998,8 @@ sp.pairs_2 %>%
         strip.text = element_text(size=12))+
   facet_wrap(~initsp,scales = 'free_x')+
   scale_color_manual(name='Outcome',values = c('W'='#4393c3',
-                                               'L'='#d6604d'))
+                                               'L'='#d6604d'))+
+  scale_shape_manual(name='Grouping',values=c('M'=20,'N'=1,'NN'=22,'NNP'=2))
 
 # as RS
 sp.pairs_2 %>% 
