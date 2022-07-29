@@ -317,6 +317,7 @@ sp.pairs <- Interact_2 %>%
   group_by(Study.Area,initsp,recipsp,interaction,isout,rsout) %>% 
   count(rsout) %>% rename(pair_ints=n)
 
+
 ## merge species traits for IS
 x<-Prof %>% select(Species,NestType,sp_lab,Avg_size,Avg_Weight,SG_status)
 x<-x %>% rename(IS.NestType=NestType,
@@ -605,6 +606,16 @@ int_pairs <- Interact_2 %>%
 int_pairs %>% print(n=20) # top 10 interaction pairs
 x<-nrow(int_pairs)
 sprintf('%s unique species pairs were observed interacting',x)
+
+int_pairs$initsp<-as.character(int_pairs$initsp)
+int_pairs$recipsp<-as.character(int_pairs$recipsp)
+
+int_pairs2 <- int_pairs %>%
+  mutate(Var = map2_chr(initsp, recipsp, ~toString(sort(c(.x, .y))))) %>%
+  distinct(Var, .keep_all = TRUE) %>%
+  select(-Var)
+int_pairs2
+
 
 # non native parrots excluded
 # ~ Top recipients
@@ -1757,10 +1768,7 @@ ISRS %>%
   style180Centered+
     theme(axis.title.x = element_blank(),
           legend.position = 'none',
-          strip.text = element_text(size=15))+
-                             'Red-breasted parakeet'='#8A8A8A',
-                             'Rose-ringed parakeet'='#575757',
-                             'Tanimbar corella'='#000000'))
+          strip.text = element_text(size=15))
   
 Interact_2 %>% 
   filter(initsp=='Tanimbar corella') %>% 
@@ -1877,11 +1885,6 @@ Interact_2 %>%
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
   facet_wrap(~initsp)
 
-
-
-
-
-
 # negative bionomial reg
 x<-ISRS %>% filter(!is.na(interaction))
 str(ISRS)
@@ -1906,6 +1909,113 @@ x %>%
 y<-glm.nb(site.interactions ~ sp_lab, data = x)
 summary(y)
 
+# species pairs analysis----
+top_one_RS.size <- quantile(sp.pairs$RS.size, .99)
+top_one_IS.size <- quantile(sp.pairs$IS.size, .99)
+#
+sp.pairs_2 <-sp.pairs %>%
+  filter(RS.size<top_one_RS.size) %>% 
+  filter(IS.size<top_one_IS.size)
+rm(top_one_IS.size)
+rm(top_one_RS.size)
+#ranking for the normalization
+sp.pairs_2<-sp.pairs_2 %>% 
+  mutate(rating=factor(case_when(
+    interaction=="Neutral"~"0", # no aggression
+    interaction=="Displace"~"1", # remove from perch by landing
+    interaction=="Threat"~"2", # vocal or flaring threats
+    interaction=="Swoop"~"3", # fly within 60cm at species but not landing
+    interaction=="Chase"~"4", # in-flight pursuit may or may not displace
+    interaction=="Contact"~"5", # physical contact
+    interaction=="Fight"~"5")))# multiple physical contact
+sp.pairs_2<-sp.pairs_2 %>% relocate(rating,.after = interaction)
+sp.pairs_2<-sp.pairs_2 %>% select(-IS.wt,-RS.wt,-`Site habitat types`,-`Surrounding habitat types`)
+#
+sp.pairs_2<-sp.pairs_2 %>% 
+  group_by(Study.Area) %>% 
+  mutate(totalbuilt=sum(buildpc+artsurfacepc),
+         totalgreen=sum(canopypc+Vegpc+natsurfacepc)) %>% 
+  ungroup()
+#
+sp.pairs_2$IS.NestType<-factor(sp.pairs_2$IS.NestType)
+sp.pairs_2$RS.NestType<-factor(sp.pairs_2$RS.NestType)
+sp.pairs_2$IS.sp_lab<-factor(sp.pairs_2$IS.sp_lab)
+sp.pairs_2$RS.sp_lab<-factor(sp.pairs_2$RS.sp_lab)
+sp.pairs_2$IS.status<-factor(sp.pairs_2$IS.status)
+sp.pairs_2$RS.status<-factor(sp.pairs_2$RS.status)
+sp.pairs_2$isout<-factor(sp.pairs_2$isout,levels = c('W','L','NE'))
+sp.pairs_2$rsout<-factor(sp.pairs_2$rsout,levels = c('W','L','NE'))
+
+
+# first mean parrot sizes
+highlight<-sp.pairs_2 %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet") %>%
+  group_by(initsp) %>% 
+  summarise(RS.size=mean(IS.size))
+highlight
+
+# now look at target species distribution by size
+sp.pairs_2 %>% 
+  filter(isout!='NE') %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet"|initsp=="Long-tailed parakeet") %>%  
+  ggplot(aes(RS.size)) +
+  geom_density(aes(color=isout,fill=isout),alpha=.6)+
+  geom_vline(data=highlight,aes(xintercept=RS.size))+
+  theme_pubclean()+
+  facet_wrap(~initsp)+
+  labs(y='Interaction frequency',
+       x='Recipient body size (cm)',
+       title='Frequency of interaction by type and recipient size')
+# wins losses by rs weight----
+sp.pairs_2 %>% 
+  filter(interaction!='Neutral') %>% 
+  filter(RS.size<300) %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
+  ggplot(aes(initsp,RS.size))+
+  geom_boxplot(aes(color=isout),outlier.shape = NA)+
+  geom_point(data=highlight,aes(initsp,RS.size),shape=15,size=6,color='black')+
+  labs(y='Recipient body size (cm)',title='Initiated interactions and outcomes')+
+  #coord_cartesian(ylim = quantile(sp.pairs_2$RS.size,c(0.1,0.9)))+
+  theme_pubclean()+style180Centered+
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(vjust = -5))+
+  scale_color_manual(name='Outcome',values = c('W'='#4393c3',
+                                'L'='#d6604d'))
+
+# wins and losses by weight, per interaction species facet
+sp.pairs_2 %>% 
+  filter(interaction!='Neutral') %>% 
+  filter(RS.size<300) %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
+  ggplot(aes(interaction,RS.size))+
+  geom_boxplot(aes(color=isout),outlier.shape = NA)+
+  geom_hline(aes(yintercept=IS.size),linetype='dotted',size=.75,alpha=1)+
+  geom_point(aes(interaction,RS.size,color=isout,shape=RS.sp_lab,position_dodge()))+
+  labs(y='Recipient body size (cm)',title='Initiated interactions and outcomes')+
+  theme_pubclean()+style180Centered+
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(vjust = -5),
+        strip.text = element_text(size=12))+
+  facet_wrap(~initsp,scales = 'free_x')+
+  scale_color_manual(name='Outcome',values = c('W'='#4393c3',
+                                               'L'='#d6604d'))
+
+# as RS
+sp.pairs_2 %>% 
+  filter(interaction!='Neutral') %>% 
+  filter(IS.size<300) %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
+  ggplot(aes(interaction,RS.size))+
+  geom_boxplot(aes(color=isout),outlier.shape = NA)+
+  geom_hline(aes(yintercept=IS.size),linetype='dashed',size=.75)+
+  labs(y='Recipient body size (cm)',title='A) by species')+
+  theme_pubclean()+style180Centered+
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(vjust = -5))+
+  facet_wrap(~initsp)
+
+
+  
 
 #////////////////////////////////
 # Standardize and LM ----
