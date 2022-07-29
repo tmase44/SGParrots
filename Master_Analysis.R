@@ -1569,11 +1569,11 @@ x4 %>%
          '% initiations'='pc_inits_Agg') %>% 
   kable(align = 'lcccc') %>% 
     kable_styling(full_width = FALSE) %>% 
-  column_spec(column = 1, width = "5cm")%>% 
-  column_spec(column = 2, width = "1.7cm") %>% 
-  column_spec(column = 3, width = "1.7") %>% 
-  column_spec(column = 4, width = "1.7cm") %>% 
-  column_spec(column = 5, width = "1.7cm") %>%
+  column_spec(column = 1, width = "5cm",color = "black")%>% 
+  column_spec(column = 2, width = "1.2cm",color = "black") %>% 
+  column_spec(column = 3, width = "1.2cm",color = "black") %>% 
+  column_spec(column = 4, width = "1.2cm",color = "black") %>% 
+  column_spec(column = 5, width = "1.2cm",color = "black") %>%
   save_kable(file = "interaction_table_focal.html")
 webshot::webshot("interaction_table_focal.html", "interaction_table_focal.pdf")
 
