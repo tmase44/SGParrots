@@ -1,6 +1,6 @@
 # LOAD PACKS----
 library(pacman)
-p_load(tidyverse,vegan,lubridate,gridExtra,circlize,stringr,readxl)
+p_load(tidyverse,vegan,lubridate,gridExtra,circlize,stringr,readxl,kable,kableExtra)
 #https://color.broadbrander.com/EDCB64 
 
 # IMPORT DATA----
@@ -21,7 +21,7 @@ intchord<-Chord %>%
   #          initsp=="Red-breasted parakeet") %>%  
   group_by(initsp,recipsp,isout) %>% 
   tally() %>% 
-  filter(n>1) %>% 
+  filter(n>0) %>% 
   select(-isout)
 
 reciplist<-Chord %>% select(recipsp)
@@ -50,7 +50,7 @@ intchord<-intchord %>%
     initsp=="Javan myna"~"JM",              
     initsp=="Junglefowl"~"Jf",              
     initsp=="Large billed crow"~"LbC",        
-    initsp=="Lesser green leafbird"~"LgLB",   
+    initsp=="Lesser green leafbird"~"LgLb",   
     initsp=="Lineated barbet"~"LB",       
     initsp=="Little tern"~"LT",             
     initsp=="Long-tailed macaque"~"Mammal",     
@@ -63,7 +63,7 @@ intchord<-intchord %>%
     initsp=="Oriental pied hornbill"~"OpH",  
     initsp=="Otter"~"Mammal",                    
     initsp=="Pied triller"~"PT",             
-    initsp=="Pink necked green pigeon"~"PngP", 
+    initsp=="Pink necked green pigeon"~"PnGp", 
     initsp=="Purple heron"~"PH",             
     initsp=="Red-breasted parakeet"~"RbP",   
     initsp=="Rock dove"~"RD",               
@@ -72,10 +72,10 @@ intchord<-intchord %>%
     initsp=="Scaly breasted munia"~"SbM",     
     initsp=="Spotted dove"~"SD",            
     initsp=="Squirrel"~"Mammal",                 
-    initsp=="Stork billed kingfisher"~"SbKf",  
+    initsp=="Stork billed kingfisher"~"SbK",  
     initsp=="Sulphur crested cockatoo"~"ScC", 
     initsp=="Tanimbar corella"~"TC",         
-    initsp=="White throated kingfisher"~"WtKf",
+    initsp=="White throated kingfisher"~"WtK",
     initsp=="Yellow crested cockatoo"~"YcC",  
     initsp=="Yellow vented bulbul"~"YvB",
     initsp=="Zebra dove"~"ZD"))
@@ -101,7 +101,7 @@ intchord<-intchord %>%
     recipsp=="Javan myna"~"JM",              
     recipsp=="Junglefowl"~"Jf",              
     recipsp=="Large billed crow"~"LbC",        
-    recipsp=="Lesser green leafbird"~"LgLB",   
+    recipsp=="Lesser green leafbird"~"LgLb",   
     recipsp=="Lineated barbet"~"LB",       
     recipsp=="Little tern"~"LT",             
     recipsp=="Long-tailed macaque"~"Mammal",     
@@ -114,7 +114,7 @@ intchord<-intchord %>%
     recipsp=="Oriental pied hornbill"~"OpH",  
     recipsp=="Otter"~"Mammal",                    
     recipsp=="Pied triller"~"PT",             
-    recipsp=="Pink necked green pigeon"~"PngP", 
+    recipsp=="Pink necked green pigeon"~"PnGp", 
     recipsp=="Purple heron"~"PH",             
     recipsp=="Red-breasted parakeet"~"RbP",   
     recipsp=="Rock dove"~"RD",               
@@ -123,10 +123,10 @@ intchord<-intchord %>%
     recipsp=="Scaly breasted munia"~"SbM",     
     recipsp=="Spotted dove"~"SD",            
     recipsp=="Squirrel"~"Mammal",                 
-    recipsp=="Stork billed kingfisher"~"SbKf",  
+    recipsp=="Stork billed kingfisher"~"SbK",  
     recipsp=="Sulphur crested cockatoo"~"ScC", 
     recipsp=="Tanimbar corella"~"TC",         
-    recipsp=="White throated kingfisher"~"WtKf",
+    recipsp=="White throated kingfisher"~"WtK",
     recipsp=="Yellow crested cockatoo"~"YcC",  
     recipsp=="Yellow vented bulbul"~"YvB",
     recipsp=="Zebra dove"~"ZD"))      
@@ -153,8 +153,6 @@ levels(inchord2$IS)
              # facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5))
 #}, bg.border = NA)
 
-circos.clear()
-
 # WHOLE NETWORK----
 circos.clear()
 
@@ -179,7 +177,7 @@ grid.col=c("AGS"="grey",
    "JM"="grey",              
    "Jf"="grey",              
     "LbC"="grey",        
-   "LgLB"="grey",   
+   "LgLb"="grey",   
    "LB"="grey",       
    "LT"="grey",             
     "LtP"="grey",     
@@ -191,7 +189,7 @@ grid.col=c("AGS"="grey",
   "OpH"="grey",  
    "Mammal"="grey",                    
 "PT"="grey",             
-   "PngP"="grey", 
+   "PnGp"="grey", 
     "PH"="grey",             
    "RbP"="#994455",   
     "RD"="grey",               
@@ -199,11 +197,11 @@ grid.col=c("AGS"="grey",
    "RWp"="grey",        
    "SbM"="grey",     
 "SD"="grey",            
-"SbKf"="grey",  
-"ScC"="#EECC66", 
+"SbK"="grey",  
+"ScC"="#000000", 
 "TC"="#997700",         
-"WtKf"="grey",
- "YcC"="#6699CC",  
+"WtK"="grey",
+ "YcC"="#EECC66",  
 "YvB"="grey",
 "ZD"="grey")    
 
@@ -214,7 +212,8 @@ circos.track(track.index = 1, panel.fun = function(x, y) {
   circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index, 
               facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5))
 }, bg.border = NA)
-title(main = "Parrot interaction network")
+
+title(main = "Interaction network",cex.main=1.5,line=-1)
 
 # RBP ONLY
 rbp<-inchord2 %>% filter(IS=='RbP')
@@ -530,3 +529,8 @@ circos.track(track.index = 1, panel.fun = function(x, y) {
 }, bg.border = NA)
 title(main = "Long-tailed parakeet initiated interactions")
 
+
+# make a reference table----
+
+x<-intchord %>% 
+  data.frame()
