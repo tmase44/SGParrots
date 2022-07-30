@@ -533,4 +533,25 @@ title(main = "Long-tailed parakeet initiated interactions")
 # make a reference table----
 
 x<-intchord %>% 
-  data.frame()
+  ungroup %>% 
+  select(initsp,IS) %>% 
+  rename('Species'='initsp',
+         'Code'='IS')
+y<-intchord %>% 
+  ungroup %>% 
+  select(recipsp,RS) %>% 
+  rename('Species'='recipsp',
+         'Code'='RS')
+z<-rbind(x,y) %>% 
+  distinct(Code, .keep_all = TRUE) %>% 
+  filter(Code!='Mammal') %>% 
+  arrange(Species) %>% 
+  add_row(Species='Mammals grouped',Code='Mammal')
+
+z %>% 
+  kable(align = 'll') %>% 
+  kable_styling(full_width = FALSE) %>% 
+  save_kable(file = "ref_table.html")
+webshot::webshot("ref_table.html", "ref_table.pdf")
+
+
