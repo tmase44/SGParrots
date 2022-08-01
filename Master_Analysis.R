@@ -17,10 +17,10 @@ p_load(formattable,knitr,kableExtra, # nice tables
        circlize, # interaction networks
        Distance, # transect analysis, relative abundance, density
        readxl,writexl)
-library(Ostats)
-library(gam)
-library(GGally)
-library(psych)#
+#library(Ostats)
+#library(gam)
+#library(GGally)
+#library(psych)#
 #library(MASS)
 #detach("package:MASS", unload=TRUE)
 
@@ -45,8 +45,8 @@ Prof <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissert
 Enviro <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                      sheet = "Enviro")
 # NSS data
-NSS <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/NSS/data/NSS_parrot_data_long.xlsx", 
-                  sheet = "data")
+NSS <- read_csv("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/NSS/data/NSS_long_csv.csv")
+
 # pilot time data
  Pilot <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                     sheet = "pilottime")
@@ -209,7 +209,8 @@ Interact_2$tree_h<-as.numeric(Interact_2$tree_h)
 NSS$Site<-as.factor(NSS$Site)
 NSS$Study.Area<-as.factor(NSS$Study.Area)
 NSS$Species<-as.factor(NSS$Species)
-NSS$Year<-as.factor(NSS$Year)
+
+levels(NSS$Study.Area)
 
   # remove na
 NSS$Count<-NSS$Count %>% replace(is.na(.), 0)
@@ -773,6 +774,12 @@ style180 <-  theme(plot.title = element_text(size=20,margin = margin(0,0,25,0)),
                   axis.text.x = element_text(size=15, vjust = 0.5, hjust=1),
                   axis.text.y = element_text(size = 15))
 
+style180big <-  theme(plot.title = element_text(size=20,margin = margin(0,0,25,0)),
+                   axis.title.y = element_text(size=15,margin = margin(0,25,0,0)),
+                   axis.title.x = element_text(size=15,margin = margin(25,0,0,0)),
+                   axis.text.x = element_text(size=15, vjust = 0.5, hjust=1),
+                   axis.text.y = element_text(size = 15))
+
 style180Centered <-  theme(plot.title = element_text(size=20,margin = margin(0,0,25,0)),
                    axis.title.y = element_text(size=15,margin = margin(0,25,0,0)),
                    axis.title.x = element_text(size=15,margin = margin(25,0,0,0)),
@@ -923,8 +930,8 @@ x %>%
         strip.text = element_text(size=16),
         axis.text.x = element_text(size=14),
         axis.text.y = element_text(size=14))+
-  scale_colour_manual(values=c('Introduced'='#994455','Resident'='#997700',
-                               'Migrant/Visitor'='#000000'))+
+  scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
+                               'Migrant/Visitor'='#CCBB44'))+
   scale_shape_manual(values=c(20,21,7))
 
 # n actual & diff style
@@ -941,7 +948,7 @@ x %>% filter(Study.Area!='Changi Airport') %>%
         legend.title = element_text(size=16),
         strip.text = element_text(size=16))+
   scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
-                               'Migrant/Visitor'='#CCBB44'))+
+                               'Migrant/Visitor'='#CCBB44'))
   
 # residency summary
 x<-Composition_2 %>% 
@@ -968,7 +975,7 @@ x$Status<-factor(x$Status,levels=c('Resident','Introduced','Migrant/Visitor'))
     theme_pubclean()+
   theme(axis.title.x = element_blank())
   
-describeBy(x,x$Status)  #two grouping variables  
+
 
 # non native / introduced species are most prevalent in low biodiversity areas
 
@@ -1019,7 +1026,8 @@ Indices_2 %>%
 
 # Pop trend----
 NSS %>% 
-  filter(Species=='Red-breasted parakeet'|Species=='Rose-ringed parakeet'|Species=='Tanimbar corella') %>% 
+  filter(Species=='Red-breasted parakeet'|Species=='Rose-ringed parakeet'|
+           Species=='Tanimbar corella'|Species=='Long-tailed parakeet') %>% 
   group_by(Year,Species) %>% 
   summarise(n=sum(Count)) %>% 
   ggplot(aes(Year,n))+
@@ -1032,88 +1040,22 @@ NSS %>%
         strip.text = element_text(size=14),
         legend.position = 'none')
 
-# summary population RBP
-NSS_2<-NSS %>% 
-  replace(is.na(.), 0) %>% 
-  ungroup() %>% 
-  filter(Species=='Red-breasted parakeet'|Species=='Rose-ringed parakeet'|Species=='Tanimbar corella') %>% 
-  group_by(Year,Species) %>% 
-  summarise(n=sum(Count)) %>% ungroup() %>% 
-  group_by(Species) %>% 
-  mutate(pct_change = (n/lag(n) - 1) * 100)
-# avg growth rate
-NSS_2 %>% 
-  replace(is.na(.), 0) %>% 
-    group_by(Species) %>% 
-  summarise(mean_growth=mean(pct_change))
-# lambda
-counts = NSS_2$n
-l = counts[-1]/counts[-length(counts)]
-round(l, 2)
-#hist
-hist(l, breaks = 8, main = "Histogram of lambdas")
-# mean and SD
-mean(log(l))
-sd(log(l))
-#
-set.seed(2)
-sim.l = rlnorm(50, meanlog = mean(log(l)), sdlog = sd(log(l)))
-round(sim.l, 2)
-# Single simulation
-set.seed(2)
-time = 10 # years
-N0 = 882 # starting pop
-N = vector(length = time)
-N[1] = N0
-sim.l = rlnorm(time, meanlog = mean(log(l)), sdlog = sd(log(l)))
-for (t in 2:time) {
-  N[t] = N[t - 1] * sim.l[t - 1]
-}
-par(mar = c(4, 4, 1, 4))
-plot(1:(time), N, type = "o", las = 1, xaxt = "n")
-axis(side = 1, at = c(1, 3, 5, 7, 9,11,14), labels = c(2020, 2022, 
-                                                    2024, 2026, 2028, 2030))
-
-# multi sim
-set.seed(2)
-sims = 5
-outmat = sapply(1:sims, function(x) {
-  time = 10
-  N0 = 882
-  N = vector(length = time)
-  N[1] = N0
-  sim.l = rlnorm(time, meanlog = mean(log(l)), sdlog = sd(log(l)))
-  for (t in 2:time) {
-    N[t] = N[t - 1] * sim.l[t - 1]
-  }
-  N
-})
-par(mar = c(4, 4, 1, 4))
-matplot(1:time, outmat, type = "l", las = 1, lty = 5, ylab = "N", xaxt = "n", xlab = "Year")
-axis(side = 1, at = c(0,2,4,6,8,10), labels = c(2020, 2022, 
-                                                       2024, 2026, 2028, 2030))
-
-## MP not documented at all
-## RBP continuous growth but populations may be reaching capacity
-## RRP growth is high, potential to explode
-## TC signifcant growth but fairly stable for several years
-
 # PC / Study compare----
 
 x<-Composition_2 %>% 
   select(Study.Area,Species,max_obs) %>% 
   filter(Species=="Monk parakeet"|Species=="Red-breasted parakeet"|Species=="Tanimbar corella"|
-           Species=="Long-tailed parakeet"|Species=="Rose-ringed parakeet"|
-           Species=='Yellow crested cockatoo'|Species=='Sulphur crested cockatoo')
+           Species=="Long-tailed parakeet"|Species=="Rose-ringed parakeet")
 x<-x %>% mutate(source='Study 2022')
 
 y<-NSS %>% 
   filter(Year=='2019') %>% 
+  filter(Species=="Monk parakeet"|Species=="Red-breasted parakeet"|Species=="Tanimbar corella"|
+           Species=="Long-tailed parakeet"|Species=="Rose-ringed parakeet") %>% 
   select(Study.Area,Species,Count) %>% 
   rename(max_obs=Count) %>% 
-  filter(Study.Area=='Sengkang Riverside Park'|Study.Area=='Springleaf'|
-           Study.Area=='Changi Village'|
-           Study.Area=='Palawan Beach') %>% 
+  filter(Study.Area=='Changi Village'|Study.Area=='Sengkang Riverside Park'|
+           Study.Area=='Springleaf'| Study.Area=='Palawan Beach') %>% 
   mutate(source='NSS 2019')
 rm(z)
 z<-merge(x,y,by=c('Study.Area','Species','max_obs','source'),all=T)
@@ -1121,8 +1063,7 @@ z<-merge(x,y,by=c('Study.Area','Species','max_obs','source'),all=T)
 z$Study.Area<-factor(z$Study.Area,
                                  levels = c(
                                    'Changi Airport','Changi Village','Springleaf','Sengkang Riverside Park',
-                                   'Palawan Beach','Pasir Ris Town Park','Stirling Road'
-                                 ))
+                                   'Palawan Beach','Pasir Ris Town Park','Stirling Road'))
 
 z %>% 
   filter(Study.Area!='Changi Airport') %>% 
@@ -1138,15 +1079,15 @@ z %>%
                              "Long-tailed parakeet"='#004488',
                              "Red-breasted parakeet"='#EECC66',
                              "Rose-ringed parakeet"='#994455',
-                             "Tanimbar corella"='#997700',
-                              'Yellow crested cockatoo'='#EE99AA',
-                             'Sulphur crested cockatoo'='#000000'))
+                             "Tanimbar corella"='#997700'))+
+  guides(fill = guide_legend(nrow = 2))
 
 levels(NSS$Study.Area)
 
 NSS %>% 
   filter(Count>5) %>% 
-  filter(Species=='Red-breasted parakeet'|Species=='Tanimbar corella'|Species=='Rose-ringed parakeet') %>% 
+  filter(Species=='Red-breasted parakeet'|Species=='Tanimbar corella'|
+           Species=='Rose-ringed parakeet'|Species=='Long-tailed parakeet') %>% 
   ggplot(aes(Year,..scaled..))+
   geom_density(aes(color=Species,fill=Species),alpha=0.025)+
   labs(y='density',title = 'Roost site use over time')+
@@ -1156,7 +1097,9 @@ NSS %>%
 
 # movement----
 x<-NSS %>% 
-  replace(is.na(.), 0) %>% 
+  filter(Species=='Red-breasted parakeet'|Species=='Tanimbar corella'|
+           Species=='Rose-ringed parakeet'|Species=='Long-tailed parakeet') %>% 
+    replace(is.na(.), 0) %>% 
   group_by(Study.Area) %>% 
   mutate(site.max=sum(Count)) %>% 
   arrange(desc(site.max))
@@ -1175,47 +1118,76 @@ x<-x %>%
                                   Study.Area=='Sengkang Riverside Park'~'All other sites',
                                   Study.Area=='One North Woods'~'All other sites',
                                   Study.Area=='Lower Peirce Reservoir'~'All other sites',
-                                  Study.Area=='Bukit Timah Rd - near Caltex'~'All other sites',
+                                  Study.Area=='Bukit Timah Rd'~'All other sites',
                                   Study.Area=='Malcolm Park'~'All other sites',
                                   Study.Area=='Dakota Crescent'~'All other sites',
                                   Study.Area=='Thong Soon Green'~'All other sites',
                                   Study.Area=='Botanic Gardens'~'All other sites',
                                   Study.Area=='Brickland Road'~'All other sites',
                                   Study.Area=='Dempsey Hill'~'All other sites',
-                                  TRUE ~ as.character(Study.Area))))
+                                  Study.Area=='Chong Pang'~'All other sites',
+                                  Study.Area=='Jalan Pelikat'~'All other sites',
+                                  TRUE ~ as.character(Study.Area)),
+                               levels = c('Springleaf','Bottle Tree Park','Jurong West',
+                                          'Clementi Central','Changi Village','Windsor Park',
+                                          'Bukit Brown','Gymkhana Ave','King Albert Park',
+                                          'Mount Rosie','Neo Tiew Lane 2','Eng Neo','Tampines',
+                                          'Parsi Cemetery','Portsdown Road','Pasir Ris Park',
+                                          'Palawan Beach','Orange Grove','Bishan Park',
+                                          'All other sites')))
 
 levels(x$Study.Area.new)
 
+#x$Count[x$Count == 0] <- 1
+
 x %>% 
   filter(Count>0) %>% 
-  filter(Species=='Red-breasted parakeet'|Species=='Tanimbar corella'|Species=='Rose-ringed parakeet') %>% 
-    ggplot(aes(Year,..scaled..))+
-    geom_density(aes(color=Species,fill=Species),alpha=.2)+
-    labs(y='density',title = 'Roost site use over time')+
+  filter(Species=='Red-breasted parakeet'|Species=='Tanimbar corella'|Species=='Rose-ringed parakeet'|
+           Species=='Long-tailed parakeet') %>% 
+    ggplot(aes(x=Year,..scaled..))+
+    geom_density(aes(color=Species,fill=Species),alpha=.1)+
+    labs(y='density',title = 'Roost site overlap over time')+
     facet_wrap(~Study.Area.new)+
     theme_pubclean()+style180Centered+
-  theme(legend.text = element_text(size=14),
-        strip.text = element_text(size=12),
+  theme(plot.title = element_text(size=25),
+        legend.text = element_text(size=16),
+        strip.text = element_text(size=16),
         axis.text.x = element_text(size=12),
         axis.text.y = element_text(size=12),
         axis.title.x = element_blank())+
-  scale_fill_manual(values=c('Red-breasted parakeet'='#EE6677','Rose-ringed parakeet'='#4477AA',
-                             'Tanimbar corella'='#CCBB44'))+
-  scale_colour_manual(values=c('Red-breasted parakeet'='#EE6677','Rose-ringed parakeet'='#4477AA',
-                               'Tanimbar corella'='#CCBB44'))
+  scale_fill_manual(values=c('Red-breasted parakeet'='#EE6677','Rose-ringed parakeet'='#AA3377',
+                             'Tanimbar corella'='#CCBB44','Long-tailed parakeet'='#228833'))+
+  scale_colour_manual(values=c('Red-breasted parakeet'='#EE6677','Rose-ringed parakeet'='#AA3377',
+                               'Tanimbar corella'='#CCBB44','Long-tailed parakeet'='#228833'))
 
-# box
+
 x %>% 
   filter(Count>0) %>% 
-  filter(Species=='Red-breasted parakeet'|Species=='Tanimbar corella'|Species=='Rose-ringed parakeet') %>% 
-  ggplot(aes(Site.num,Count))+
-  stat_summary(fun.data=MinMeanSEMMax, geom="boxplot", colour="black")+
-  facet_wrap(~Species,ncol=1,nrow=3,scales = 'free_y')+
-  labs(title = 'Variation in roosting numbers over sites')
-theme_pubclean()+style180+
-  theme(strip.text = element_text(size=12))
+  filter(Species=='Red-breasted parakeet'|Species=='Tanimbar corella'|Species=='Rose-ringed parakeet'|
+           Species=='Long-tailed parakeet') %>% 
+  ggplot(aes(Year,na.rm=FALSE))+
+  geom_density(aes(x=Year,y=..count..,color=Species))+
+  labs(y='density',title = 'Roost site overlap over time')+
+  facet_wrap(~Study.Area.new)+
+  theme_pubclean()+style180Centered+
+  theme(plot.title = element_text(size=25),
+        legend.text = element_text(size=16),
+        strip.text = element_text(size=16),
+        axis.text.x = element_text(size=12),
+        axis.text.y = element_text(size=12),
+        axis.title.x = element_blank())+
+  scale_colour_manual(values=c('Red-breasted parakeet'='#EE6677','Rose-ringed parakeet'='#AA3377',
+                               'Tanimbar corella'='#CCBB44','Long-tailed parakeet'='#228833'))
 
-
+x %>% 
+  filter(Count>0) %>% 
+  filter(Species=='Red-breasted parakeet'|Species=='Tanimbar corella'|Species=='Rose-ringed parakeet'|
+           Species=='Long-tailed parakeet') %>% 
+  ggplot(aes(Year,Count,..scaled..,color=Species))+
+  geom_point()+
+  stat_smooth()+
+  facet_wrap(~Study.Area.new)
+  
 #/////////////////////////////////////////////////////////////////////////////
 #/////////////////////////////////////////////////////////////////////////////
 #======================== TOP-LINE CORRELATIONS =========================
