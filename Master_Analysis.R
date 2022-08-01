@@ -1547,6 +1547,7 @@ x4 %>%
 webshot::webshot("interaction_table_focal.html", "interaction_table_focal.pdf")
 
 # pairs table----
+rm(z)
 x <- Interact_2 %>%
   filter(initsp=='Red-breasted parakeet'|initsp=='Rose-ringed parakeet'|
            initsp=='Monk parakeet'|initsp=='Tanimbar corella') %>% 
@@ -1555,9 +1556,9 @@ x <- Interact_2 %>%
   complete(initsp, nesting(recipsp), fill = list(n = 0)) %>% 
   filter(n!='0') %>% 
   rename(parrot='initsp',othersp='recipsp',WL.P='isout',WL.O='rsout') %>% 
-  mutate(initiated=sum(n))
+  mutate(role='init')
   
-y<-Interact_2 <- Interact_2 %>%
+y<-Interact_2 %>%
   filter(recipsp=='Red-breasted parakeet'|recipsp=='Rose-ringed parakeet'|
            recipsp=='Monk parakeet'|recipsp=='Tanimbar corella') %>% 
   filter(interaction!='Neutral') %>% 
@@ -1565,16 +1566,48 @@ y<-Interact_2 <- Interact_2 %>%
   complete(initsp, nesting(recipsp), fill = list(n = 0)) %>% 
   filter(n!='0') %>% 
   rename(parrot='recipsp',othersp='initsp',WL.P='rsout',WL.O='isout') %>% 
-  relocate(2,1,4,3,5)
+  mutate(role='recip') %>% 
+  relocate(2,1,4,3,5,6)
 
 z<-rbind(x,y)
+z$role<-factor(z$role)
 z<-z %>% 
-  ungroup() %>% 
   group_by(parrot,othersp) %>% 
-  mutate(pair.ints=sum(n))
+  mutate(ints=sum(n),
+         wins=sum(n[WL.P=='W']),
+         losses=sum(n[WL.P=='L'])) %>% 
+  summarise(ints=mean(ints),
+            wins=mean(wins),
+            losses=mean(losses))
+z<-z %>% 
+  group_by(parrot,othersp) %>% 
+  mutate(wins.frq=sum(wins/ints),
+         loss.frq=sum(losses/ints))
+z<-z %>% ungroup() %>% group_by(parrot) %>% 
+  mutate(parrotints=sum(ints)) %>% 
+  group_by(parrot,othersp) %>% 
+  mutate(sp.prop=sum(ints/parrotints))
 
-
+z<-z %>% 
+  filter(sp.prop>0.05) %>% 
+  arrange(parrot,desc(ints))  
+# kabletable----
+z %>% 
+  select(-wins,-losses,-parrotints) %>% 
+  relocate(1,2,6,3,4,5) %>% 
+  mutate(across(where(is.numeric), round, 2)) %>%
+  kable(align = 'llcccc',
+        col.names = c('Focal sp.','Other sp.','Proportion','Total','% Win','% Loss')) %>% 
+  kable_styling(full_width = F) %>% 
+  column_spec(1, bold = T) %>%
+  collapse_rows(columns = 1, valign = "middle") %>% 
+  add_header_above(header=c("Top interacting species pairs"=3,
+                            "Pair Interactions"=3)) %>% 
+  kable_styling() 
   
+  save_kable(file = "interaction_table.html")
+webshot::webshot("interaction_table.html", "interaction_table.pdf")#pdf better
+
 ##########
 
 #2. ROLES----
@@ -1589,7 +1622,7 @@ ISRS %>%
   geom_text(aes(label = n),position=position_stack(vjust=.5))+ 
   scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
   labs(x='Species',y='n',title='n interactions intiated and recieved')+
-  scale_fill_manual(values=c('IS'='#994455','RS'='#EE99AA'))+
+  scale_fill_manual(va.lues=c('IS'='#994455','RS'='#EE99AA'))+
   theme_pubclean()+style180Centered
 
 # % IS RS
