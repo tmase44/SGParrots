@@ -217,7 +217,7 @@ NSS$Count<-NSS$Count %>% replace(is.na(.), 0)
 
 
 #////////////////////////////////
-# ISRS: Interact long-transform
+# ISRS: Interact long-transform----
 #///////////////////////////////
 rm(ISRS)
 # IS
@@ -304,7 +304,7 @@ ISRS$n_ints<-ISRS$n_ints%>% replace(is.na(.), 0)
 ISRS$ints_HR<-ISRS$ints_HR%>% replace(is.na(.), 0)
 
 #///////////////////////
-# Species Pairs
+# Species Pairs----
 #///////////////////////
 # includes:
 ## all species pairs per study.area
@@ -314,10 +314,9 @@ ISRS$ints_HR<-ISRS$ints_HR%>% replace(is.na(.), 0)
 rm(sp.pairs)
 # pairs for all interactions
 sp.pairs <- Interact_2 %>% 
-  select(Study.Area,initsp,recipsp,interaction,isout,rsout) %>% 
-  group_by(Study.Area,initsp,recipsp,interaction,isout,rsout) %>% 
+  select(Study.Area,initsp,recipsp,interaction,isout,rsout,nxt_cav) %>% 
+  group_by(Study.Area,initsp,recipsp,interaction,isout,rsout,nxt_cav) %>% 
   count(rsout) %>% rename(pair_ints=n)
-
 
 ## merge species traits for IS
 x<-Prof %>% select(Species,NestType,sp_lab,Avg_size,Avg_Weight,SG_status)
@@ -339,7 +338,7 @@ sp.pairs<-merge(sp.pairs,x,by.x='recipsp',by.y='Species')
 
 
 #///////////////////////
-# Indices_2
+# Indices_2----
 #///////////////////////
 
 
@@ -405,16 +404,6 @@ x<-ISRS %>%
   summarise(site.interactions=sum(n_ints))
 Indices_2<-merge(Indices_2,x,by='Study.Area')
 
-# avg tree height
-x<-Interact_2 %>%
-  select(Study.Area,tree_h,cav_h_m) %>% 
-  filter(!is.na(tree_h)) %>% 
-  filter(!is.na(cav_h_m)) %>% 
-  group_by(Study.Area) %>% 
-  summarise(meantree=mean(tree_h),
-            meancav=mean(cav_h_m))
-Indices_2<-merge(Indices_2,x,by='Study.Area')
-
 
 #//////////////////////////////////////
 # Adding Indices data to other DFs----
@@ -474,7 +463,7 @@ x<-ISRS %>%
 Composition_2<-merge(Composition_2,x,by=c('Study.Area','Species'),all=T)
 Composition_2$n_initis_xNE<-Composition_2$n_initis_xNE %>% replace(is.na(.), 0)
 #///////////////////////
-# Enviro Long Transform
+# Enviro Long Transform----
 #///////////////////////
 
 # just for charting
@@ -897,59 +886,43 @@ x<-Composition_2 %>%
                               SG_status=='N'~'Migrant/Visitor',
                               SG_status=='V'~'Migrant/Visitor')) %>% 
   filter(!is.na(max.freq))
+x<-x %>% 
+  mutate(`Species status`=factor(case_when(Species=='Red-breasted parakeet'~'Introduced Parrot',
+                                           Species=='Rose-ringed parakeet'~'Introduced Parrot',
+                                           Species=='Tanimbar corella parakeet'~'Introduced Parrot',
+                                           Species=='Monk parakeet'~'Introduced Parrot',
+                                           Species=='Sulphur crested cockatoo'~'Introduced Parrot',
+                                           Species=='Yellow crested cockatoo'~'Introduced Parrot',
+                                         TRUE ~ as.character(`Species status`))))
 x$rank<-as.character(x$rank)
-x$`Species status`<-factor(x$`Species status`,levels=c('Resident','Introduced','Migrant/Visitor'))
+x$`Species status`<-factor(x$`Species status`,levels=c('Resident','Introduced',
+                                                       'Introduced Parrot','Migrant/Visitor'))
 
-# proportional
-x %>% filter(Study.Area!='Changi Airport') %>% 
-  ggplot(aes(id,max.freq,color=`Species status`))+
-  geom_point(shape=1,alpha=1)+
-  geom_line(alpha=1,position = position_dodge(width=0.1))+
-  facet_wrap(~Study.Area)+
-  labs(title = 'Rank abundance curves',
-       x='Rank',y='Abundance (percent)')+
-  scale_x_continuous(limits = c(1, 54), 
-                     breaks = c(1,5,10,15,20,25,30,35,40,45,50,54))+
-  theme_pubclean()+styleRA+
-  scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
-                               'Migrant/Visitor'='#CCBB44'))
-# freq diff style
+
+# plot!
 x %>% 
   filter(Study.Area!='Changi Airport') %>% 
   ggplot(aes(id,max.freq,color=`Species status`))+
   geom_col(fill='white')+
-  geom_point(aes(id,max.freq,shape=NestType),size=3,color='black',alpha=.7)+
+  geom_point(aes(id,max.freq,shape=NestType),size=4,color='black',alpha=.75)+
   facet_wrap(~Study.Area)+
-  labs(title = 'Rank abundance curves',
+  labs(title = 'Rank abundance',
        x='Rank',y='Abundance (proportion)')+
   scale_x_continuous(limits = c(0, 54), 
                      breaks = c(1,5,10,15,20,25,30,35,40,45,50,54))+
   theme_pubclean()+styleRA+
-  theme(legend.text = element_text(size=14),
+  theme(plot.title = element_text(size=28),
+        legend.text = element_text(size=16),
         legend.title = element_text(size=16),
         strip.text = element_text(size=16),
         axis.text.x = element_text(size=14),
         axis.text.y = element_text(size=14))+
-  scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
-                               'Migrant/Visitor'='#CCBB44'))+
-  scale_shape_manual(values=c(20,21,7))
+  scale_colour_manual(name='Species status:',values=c('Introduced'='#EE6677','Introduced Parrot'='#228833',
+                               'Resident'='#66CCEE','Migrant/Visitor'='#CCBB44'))+
+  scale_shape_manual(name='Nest Type:',values=c(20,21,7))+
+  guides(colour = guide_legend(nrow = 2),shape=guide_legend(nrow=2))
 
-# n actual & diff style
-x %>% filter(Study.Area!='Changi Airport') %>% 
-  ggplot(aes(id,max_obs,color=`Species status`))+
-  geom_col(fill='white')+
-  facet_wrap(~Study.Area)+
-  labs(title = 'Rank abundance curves',
-       x='Rank',y='Abundance (n)')+
-  scale_x_continuous(limits = c(0, 54), 
-                     breaks = c(1,5,10,15,20,25,30,35,40,45,50,54))+
-  theme_pubclean()+styleRA+
-  theme(legend.text = element_text(size=14),
-        legend.title = element_text(size=16),
-        strip.text = element_text(size=16))+
-  scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
-                               'Migrant/Visitor'='#CCBB44'))
-  
+
 # residency summary
 x<-Composition_2 %>% 
   drop_na(SG_status) %>% 
@@ -975,8 +948,6 @@ x$Status<-factor(x$Status,levels=c('Resident','Introduced','Migrant/Visitor'))
     theme_pubclean()+
   theme(axis.title.x = element_blank())
   
-
-
 # non native / introduced species are most prevalent in low biodiversity areas
 
 ## Species table----
@@ -1220,7 +1191,7 @@ Composition_2 %>%
 #========================#
 Indices_2 %>% 
   group_by(Study.Area) %>% 
-  (built_surf=sum(buildpc+artsurfacepc)) %>% 
+  mutate(built_surf=sum(buildpc+artsurfacepc)) %>% 
   ggplot(aes(built_surf,Shannon))+
   geom_point(aes(color=Study.Area))+
   stat_poly_line(se=F)+
@@ -1230,15 +1201,12 @@ Indices_2 %>%
 x<-Indices_2 %>% 
   group_by(Study.Area) %>% 
   mutate(built_surf=sum(buildpc+artsurfacepc))
-y<-lm(Shannon~built_surf,x)
-y<-aov(Shannon~built_surf,x)
-summary(y)
-summary.aov(y)
-# R² = .894, F(1,4)=33.75,p<0.00437)
-# Urbanised land predicted reduced bird species richness (β = -38.367, p < .00437)
+summary(lm(built_surf~Shannon,x))
 
-
+# R² = .8623, F(1,5)=31.32,p<0.00252)
 ## BD and Richness declines with building and road cover
+
+
 Indices_2 %>% 
   group_by(Study.Area) %>% 
   mutate(vegcan=sum(canopypc+Vegpc)) %>% 
@@ -1247,16 +1215,12 @@ Indices_2 %>%
   stat_poly_line(se=F)+
   stat_poly_eq()+
   labs(x='Proportion greenery cover',y='Shannon')
-
-# Linear models for all land types
 x<-Indices_2 %>% 
   group_by(Study.Area) %>% 
-  mutate(builtarea=sum(buildpc+artsurfacepc),
-         greenarea=sum(canopypc+Vegpc))
-y<-lm(Shannon~buildpc,GLMdata_scale)
-summary(y)                        
-
-#xxxxxxxxxxxxxxxxxx
+  mutate(vegcan=sum(canopypc+Vegpc))
+summary(lm(vegcan~Shannon,x))
+# R² = 834, F(1,4)=25.12,p<0.00404)
+# Urbanised land predicted reduced bird species richness (β = -38.367, p < .00437)
 
 Indices_2 %>% 
   ggplot(aes(Shannon,freq.parrots))+
@@ -1267,23 +1231,32 @@ y<-aov(Richness~built_surf,x)
 
 # CAVITY / NON NATIVES
 Indices_2 %>% 
-  filter(Study.Area!='Changi Airport') %>% 
+  filter(Study.Area!='Changi Airport') %>% # no cavity data available
   group_by(Study.Area) %>% 
   ggplot(aes(cavs_canopy_sqm,freq.I))+
   geom_point(aes(color=Study.Area))+
   stat_poly_line(se=F)+
   stat_poly_eq()+
-  labs(x='Proportion urban land cover',y='Shannon')
-# lm
+  labs(x='proportion of cavities',y='introduced sp %')
 x<-Indices_2 %>% 
   filter(Study.Area!='Changi Airport')
-y<-lm(freq.I~cavs_canopy_sqm,x)
-summary(y)
+summary(lm(cavs_canopy_sqm~freq.I,x))
+# R² = 878, F(1,4)=28.77,p<0.00583)
+# Cavity density predicted invasive species abundance (β = -33.580, p < .00437
 
-# R² = .894, F(1,4)=33.75,p<0.00437)
-# Urbanised land predicted reduced bird species richness (β = -38.367, p < .00437)
 
-   
+# CAVITY / Parrots
+Indices_2 %>% 
+  filter(Study.Area!='Changi Airport') %>% # no cavity data available
+  group_by(Study.Area) %>% 
+  ggplot(aes(site.interactions,cavs_canopy_sqm))+
+  geom_point(aes(color=Study.Area))+
+  stat_poly_line(se=F)+
+  stat_poly_eq()+
+  labs(x='proportion of cavities',y='introduced sp %')
+x<-Indices_2 %>% 
+  filter(Study.Area!='Changi Airport')
+
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 #======================== INTERACTIONS ===========================
@@ -1501,7 +1474,7 @@ x4<-x3 %>%
             inits_freq=mean(initis_freq),
             n_inits_Agg=sum(n_initis_xNE),
             inits_Agg_freq=mean(initisxNE_freq)) %>% 
-    arrange(desc(n_ints))
+    arrange(desc(n_observed))
 
 # add number of wins total & wins intiated
 x<-ISRS %>% 
@@ -1520,9 +1493,17 @@ x4<-x4 %>%
   mutate('wins / all interactions'=(wins_all/n_ints),
          'wins / initiations'=(wins_init/n_inits))
 
-# all ints + all AGGRESSIVE intiations----
+# interaction tables----
+
+# to higlight
+x4<-x4 %>% arrange(desc(n_observed))
+topend<-which(x4$inits_Agg_freq >.5)
+bottomend<-which(x4$n_observed >30 &
+                   x4$inits_Agg_freq<.5 &
+                   x4$n_inits_Agg!=0)
+
 x4 %>% 
-  arrange(desc(n_ints)) %>% 
+  arrange(desc(n_observed)) %>% 
   mutate(across(where(is.numeric), round, 2)) %>%
   select(-n_inits,-inits_freq,-n_ints_Agg,-ints_Agg_freq,-wins_all,-wins_init) %>%
   rename('Status'='SG_status',
@@ -1539,6 +1520,8 @@ x4 %>%
                             "Initiated interactions only"=2,
                             "Win rate"=2)) %>% 
   kable_styling() %>% 
+  row_spec(topend,bold=F,background = '#FDDBC7') %>% 
+  row_spec(bottomend,bold=F,background = '#D1E5F0') %>% 
   save_kable(file = "interaction_table.html")
 webshot::webshot("interaction_table.html", "interaction_table.pdf")#pdf better
 
@@ -1563,58 +1546,35 @@ x4 %>%
   save_kable(file = "interaction_table_focal.html")
 webshot::webshot("interaction_table_focal.html", "interaction_table_focal.pdf")
 
+# pairs table----
+x <- Interact_2 %>%
+  filter(initsp=='Red-breasted parakeet'|initsp=='Rose-ringed parakeet'|
+           initsp=='Monk parakeet'|initsp=='Tanimbar corella') %>% 
+    filter(interaction!='Neutral') %>% 
+  count(initsp, recipsp,isout,rsout) %>%
+  complete(initsp, nesting(recipsp), fill = list(n = 0)) %>% 
+  filter(n!='0') %>% 
+  rename(parrot='initsp',othersp='recipsp',WL.P='isout',WL.O='rsout') %>% 
+  mutate(initiated=sum(n))
+  
+y<-Interact_2 <- Interact_2 %>%
+  filter(recipsp=='Red-breasted parakeet'|recipsp=='Rose-ringed parakeet'|
+           recipsp=='Monk parakeet'|recipsp=='Tanimbar corella') %>% 
+  filter(interaction!='Neutral') %>% 
+  count(initsp, recipsp,isout,rsout) %>%
+  complete(initsp, nesting(recipsp), fill = list(n = 0)) %>% 
+  filter(n!='0') %>% 
+  rename(parrot='recipsp',othersp='initsp',WL.P='rsout',WL.O='isout') %>% 
+  relocate(2,1,4,3,5)
 
-##  extract more wins and losses fro this---- 
-
- ## normalised---
-x3.norm<-x3 %>% filter(!is.na(initis_freq))
-x3.norm<-x3.norm %>% filter(!is.na(label))
-x3.norm$label<-as.factor(x3.norm$label)
-x3.norm<-x3.norm %>% ungroup() %>% 
-  mutate_if(is.numeric, funs(as.numeric(scale(.))))
-
-x3.norm %>% ggplot(aes(n_ints))+geom_histogram()# binomial
-
-y<-gam(ints_HR~s(max_obs),data=x3,family = 'poisson')
-summary(y)
-
-plot(y,rugplot = T, se = T)
-
-
-# interesting----
-x3.norm %>% 
-  filter(max_obs!=0) %>% 
-  ggplot(aes(max_obs,n_ints,color=label))+
-  geom_point(size=2)+
-  stat_poly_line(se=F)+
-  stat_poly_eq()+
-  labs(x='Observed individuals',y='Total number of interactions',
-       title = 'Total number of interactions plotted against the total number of individuals')+
-  theme_pubclean()+style180
-
-# n individuals is not a strong predictors that interactions will happen
+z<-rbind(x,y)
+z<-z %>% 
+  ungroup() %>% 
+  group_by(parrot,othersp) %>% 
+  mutate(pair.ints=sum(n))
 
 
-x3 %>% 
-  #filter(max_obs>0&n_initis>0) %>% 
-  ggplot(aes(max_obs,ints_freq))+
-  geom_point(size=4)+
-  stat_poly_line(se=F)+
-  stat_poly_eq()+
-  labs(x='Observed individuals',y='Number of / population',
-       title = 'Total number of interactions standardized by population size')+
-  theme_pubclean()+style180
-
-x3.norm<-x3 %>% filter(!is.na(initis_freq))
-x3.norm<-x3.norm %>% filter(!is.na(label))
-x3.norm$label<-as.factor(x3.norm$label)
-x3.norm<-x3.norm %>% ungroup() %>% 
-  mutate_if(is.numeric, funs(as.numeric(scale(.))))
-
-x3.norm %>% ggplot(aes(n_ints))+geom_histogram()#
-y<-gam(as.factor(ints_freq)~max_obs,data=x3,family = 'binomial')
-summary(y)
-
+  
 ##########
 
 #2. ROLES----
@@ -1777,7 +1737,7 @@ a<-Interact_2 %>%
 b<-Interact_2 %>% 
   filter(interaction!='Neutral') %>% 
   filter(nxt_cav<100) %>% 
-  #filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
   ggplot(aes(interaction,nxt_cav))+
   geom_boxplot(outlier.colour = 'red',outlier.shape = 1,outlier.size = 2)+
   geom_jitter(width=0.2,height=1.5,alpha=0.2,size=3,shape=20,color='#0077BB')+
@@ -1791,7 +1751,7 @@ b<-Interact_2 %>%
 c<-Interact_2 %>% 
   filter(interaction!='Neutral') %>% 
   filter(nxt_cav<100) %>% 
-  #filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet") %>%  
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet") %>%  
   ggplot(aes(Study.Area,nxt_cav))+
   geom_boxplot(outlier.colour = 'red',outlier.shape = 1,outlier.size = 2)+
   geom_jitter(width=0.2,height=1.5,alpha=0.2,size=3,shape=20,color='#0077BB')+
@@ -1804,7 +1764,7 @@ c<-Interact_2 %>%
 d<-Interact_2 %>% 
   filter(interaction!='Neutral') %>% 
   filter(nxt_cav<100) %>% 
-  #filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet") %>%  
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet") %>%  
   ggplot(aes(isout,nxt_cav))+
   geom_boxplot(outlier.colour = 'red',outlier.shape = 1,outlier.size = 2)+
   geom_jitter(width=0.2,height=1.5,alpha=0.2,size=3,shape=20,color='#0077BB')+
@@ -1817,6 +1777,60 @@ d<-Interact_2 %>%
 
 grid.arrange(a,b,c,d,top=textGrob("Interaction distance from cavity or roost",
                                   gp=gpar(fontsize=22),vjust=0.2))
+
+
+# another way
+sp.pairs %>% 
+  filter(Study.Area!='Changi Airport') %>% 
+  filter(interaction!='Neutral') %>% 
+  filter(nxt_cav<100) %>% 
+  filter(RS.sp_lab=='N'|RS.sp_lab=='NN'|RS.sp_lab=='NNP') %>% 
+    ggplot(aes(as.factor(cavs_canopy_sqm),nxt_cav))+
+  geom_boxplot()+
+  theme_pubclean()+
+  style180Centered
+  
+# % cavity nesters
+sp.pairs %>% 
+  filter(interaction!='Neutral') %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet") %>%  
+  filter(nxt_cav<100) %>% 
+  ggplot(aes(factor(cav.sp.freq),nxt_cav))+
+  geom_boxplot(outlier.colour = 'red',outlier.shape = 1,outlier.size = 2)+
+  geom_jitter(width=0.1,height=1.5,alpha=0.45,size=4.5,shape=20,color='#0077BB')+
+  labs(y='Distance from cavity or roost (metres)',title='xx')+
+  theme_pubclean()+style180Centered+
+  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(vjust = -5))
+
+sp.pairs %>% 
+  filter(interaction!='Neutral') %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet") %>%  
+  filter(nxt_cav<100) %>% 
+  ggplot(aes(factor(freq.I),nxt_cav))+
+  geom_boxplot(outlier.colour = 'red',outlier.shape = 1,outlier.size = 2)+
+  geom_jitter(width=0.1,height=1.5,alpha=0.45,size=4.5,shape=20,color='#0077BB')+
+  labs(y='Distance from cavity or roost (metres)',title='xx')+
+  theme_pubclean()+style180Centered+
+  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(vjust = -5))
+
+# cavity density
+sp.pairs %>% 
+  filter(interaction!='Neutral') %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet") %>%  
+  filter(nxt_cav<100) %>% 
+  ggplot(aes(factor(cavs_canopy_sqm),nxt_cav))+
+  geom_boxplot(outlier.colour = 'red',outlier.shape = 1,outlier.size = 2)+
+  geom_jitter(width=0.1,height=1.5,alpha=0.45,size=4.5,shape=20,color='#0077BB')+
+  labs(y='Distance from cavity or roost (metres)',title='xx')+
+  theme_pubclean()+style180Centered+
+  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(vjust = -5))
+
 
 # SE distance----
 # DO NOT USE - MEAN ONLY FOR NORMAL DISTRIBS. MEDIAN FOR THIS
@@ -1922,6 +1936,7 @@ sp.pairs_2$isout<-factor(sp.pairs_2$isout,levels = c('W','L','NE'))
 sp.pairs_2$rsout<-factor(sp.pairs_2$rsout,levels = c('W','L','NE'))
 
 
+
 # first mean parrot sizes
 highlight<-sp.pairs_2 %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet") %>%
@@ -1995,9 +2010,6 @@ sp.pairs_2 %>%
                                                'L'='#d6604d'))+
   scale_shape_manual(name='Grouping',values=c('M'=20,'N'=1,'NN'=22,'NNP'=2))+
   scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))
-  
-
-
   
 
 #////////////////////////////////
