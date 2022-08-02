@@ -397,6 +397,13 @@ x<-Composition_2 %>%
   summarise(cav.sp.freq=sum(max.freq))
 Indices_2<-merge(Indices_2,x,by='Study.Area')
 
+# and number
+x<-Composition_2 %>% 
+  filter(NestType=='Cavity') %>% 
+  group_by(Study.Area) %>% 
+  summarise(n.cavnester=sum(max_obs))
+Indices_2<-merge(Indices_2,x,by='Study.Area')
+
 # total interactions per site
 x<-ISRS %>% 
   filter(role=='IS') %>% 
@@ -688,10 +695,6 @@ ISRS %>% group_by(Species,outcome) %>%
 ## less than alpha 0.05 = not normal
 ## not less than alpha 0.05 = normal
 shapiro.test(Indices_2$site.interactions) # normal
-shapiro.test(Indices_2$Neutral) # normal
-shapiro.test(Indices_2$Swoop) # normal
-shapiro.test(Indices_2$Displace) # normal
-shapiro.test(Indices_2$Threat) # normal
 shapiro.test(Indices_2$Richness) # normal
 shapiro.test(Indices_2$Shannon) # normal
 shapiro.test(Indices_2$canopypc) # normal
@@ -701,6 +704,8 @@ kurtosis(Indices_2$canopypc)
 skewness(Indices_2$Richness)
 kurtosis(Indices_2$Richness)
 # indices and survey site data are normally distributed
+shapiro.test(Indices_2$site.interactions) # normal, just about
+
 
 shapiro.test(ISRS$interaction) # not normal
 shapiro.test(ISRS$ints_HR) # not normal
@@ -809,20 +814,7 @@ Indices %>%
     geom_text_repel(aes(label=Study.Area),
                   nudge_y = 1.6,segment.color = NA,color='black',size=5)+
   theme_pubclean()+style180
-
-# Simpson / Richness
-Indices %>% 
-  ggplot(aes(x=Simpson,y=Richness)) +
-  geom_point(size=5,color='#4477AA')+
-  labs(title = 'Alpha biodiversity indices',
-       x = 'Simpson Index', y='Species Richness')+
-  geom_text_repel(aes(label=Study.Area),
-                  nudge_y = 1.6,segment.color = NA,color='#555555',size=5)+
-  theme_pubclean()+style180
-
-
-  # Table form
-formattable(Indices) 
+ 
 
 ## Changi and Stirling/QT have the lowest BD and richness scoring
 ## highly urbanised areas 
@@ -835,7 +827,144 @@ formattable(Indices)
 
 ## Sengkang / PRTP are managed urban parks but quite rich in vegatation. 
 ## food resources are plentiful
+# shannon x density----
+Composition_2 %>% 
+  filter(Study.Area!='Changi Airport') %>% 
+  mutate(status=case_when(SG_status=='I'~'Introduced',
+                          SG_status=='R'~'Resident',
+                          SG_status=='M'~'Migrant/Visitor',
+                          SG_status=='N'~'Migrant/Visitor',
+                          SG_status=='V'~'Migrant/Visitor')) %>% 
+  ggplot(aes(Shannon,..scaled..)) +
+  geom_density(aes(fill = status,color=status), alpha = 0.2) +
+  labs(x = 'Species diversity (Shannon)', y='Density',
+       title = 'Species group occurrence across sites')+
+  theme_pubclean()+style180+
+  theme(legend.title=element_blank())+
+  scale_x_continuous(limits = c(2.5,3.7),
+                     breaks = c(2.6,2.8,3.0,3.2,3.2,3.4,3.6))+
+  scale_fill_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
+                             'Migrant/Visitor'='#CCBB44'))+
+  scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
+                               'Migrant/Visitor'='#CCBB44'))
+# built area
+Composition_2 %>% 
+  filter(Study.Area!='Changi Airport') %>% 
+  mutate(status=case_when(SG_status=='I'~'Introduced',
+                          SG_status=='R'~'Resident',
+                          SG_status=='M'~'Migrant/Visitor',
+                          SG_status=='N'~'Migrant/Visitor',
+                          SG_status=='V'~'Migrant/Visitor')) %>% 
+  group_by(Study.Area) %>% 
+  mutate(buildarea=sum(buildpc+artsurfacepc),
+         vegarea=sum(canopypc+Vegpc+natsurfacepc)) %>% ungroup () %>% 
+  ggplot(aes(buildarea,..scaled..)) +
+  geom_density(aes(fill = status,color=status), alpha = 0.2) +
+  labs(x = 'Built area', y='Density',
+       title = 'Species density across build area gradient')+
+  theme_pubclean()+style180+
+  theme(legend.title=element_blank())+
+  scale_fill_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
+                             'Migrant/Visitor'='#CCBB44'))+
+  scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
+                               'Migrant/Visitor'='#CCBB44'))
+# vegtated area
+Composition_2 %>% 
+  filter(Study.Area!='Changi Airport') %>% 
+  mutate(status=case_when(SG_status=='I'~'Introduced',
+                          SG_status=='R'~'Resident',
+                          SG_status=='M'~'Migrant/Visitor',
+                          SG_status=='N'~'Migrant/Visitor',
+                          SG_status=='V'~'Migrant/Visitor')) %>% 
+  group_by(Study.Area) %>% 
+  mutate(buildarea=sum(buildpc+artsurfacepc),
+         vegarea=sum(canopypc+Vegpc+natsurfacepc)) %>% ungroup () %>% 
+  ggplot(aes(vegarea,..scaled..)) +
+  geom_density(aes(fill = status,color=status), alpha = 0.2) +
+  labs(x = 'Vegetated area', y='Density',
+       title = 'Species density across build area gradient')+
+  theme_pubclean()+style180+
+  theme(legend.title=element_blank())+
+  scale_fill_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
+                             'Migrant/Visitor'='#CCBB44'))+
+  scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
+                               'Migrant/Visitor'='#CCBB44'))
 
+# linear reggos simple lm model nothing more is needed here
+Composition_2 %>% 
+  #filter(Study.Area!='Changi Airport') %>% 
+  group_by(Study.Area) %>% 
+  mutate(buildarea=sum(buildpc+artsurfacepc),
+         vegarea=sum(canopypc+Vegpc+natsurfacepc)) %>% ungroup () %>% 
+  ggplot(aes(vegarea,freq.I)) +
+  geom_line()+
+  geom_point()+
+  stat_poly_eq(aes(color='red',size=10))+
+  theme_pubclean()+
+  style180+
+  labs(title = 'Introduced species frequency along the natural area cover gradient')
+
+Composition_2 %>% 
+  #filter(Study.Area!='Changi Airport') %>% 
+  group_by(Study.Area) %>% 
+  mutate(buildarea=sum(buildpc+artsurfacepc),
+         vegarea=sum(canopypc+Vegpc+natsurfacepc)) %>% ungroup () %>% 
+  ggplot(aes(buildarea,freq.I)) +
+  geom_line()+
+  geom_point()+
+  stat_poly_eq(aes(color='red',size=10))+
+  theme_pubclean()+
+  style180+
+  labs(title = 'Introduced species frequency along the built area gradient')
+
+# Species assemblages diverge signifcantly as urban area increases
+Composition_2 %>% 
+  filter(!is.na(freq.I)) %>% 
+  group_by(Study.Area) %>% 
+  mutate(site.sptotal=sum(max_obs)) %>% 
+  group_by(Study.Area,SG_status) %>% 
+  mutate(status.prop=sum(max_obs/site.sptotal)) %>% 
+  filter(Study.Area!='Changi Airport') %>% 
+  mutate(status=case_when(SG_status=='I'~'Introduced',
+                          SG_status=='R'~'Resident',
+                          SG_status=='M'~'Migrant/Visitor',
+                          SG_status=='N'~'Migrant/Visitor',
+                          SG_status=='V'~'Migrant/Visitor')) %>% 
+  filter(status!='Migrant/Visitor') %>% 
+  group_by(Study.Area) %>% 
+  mutate(buildarea=sum(buildpc+artsurfacepc),
+         vegarea=sum(canopypc+Vegpc+natsurfacepc)) %>% 
+  ggplot(aes(buildarea,status.prop,color=status)) +
+  geom_line(color=NA)+
+  geom_smooth(se=F)+
+  geom_jitter(aes(buildarea,status.prop,shape=sp_lab),size=3,alpha=.5)+
+  stat_poly_eq()+
+  theme_pubclean()+
+  style180
+# and with vegetated area
+Composition_2 %>% 
+  filter(!is.na(freq.I)) %>% 
+  group_by(Study.Area) %>% 
+  mutate(site.sptotal=sum(max_obs)) %>% 
+  group_by(Study.Area,SG_status) %>% 
+  mutate(status.prop=sum(max_obs/site.sptotal)) %>% 
+  filter(Study.Area!='Changi Airport') %>% 
+  mutate(status=case_when(SG_status=='I'~'Introduced',
+                          SG_status=='R'~'Resident',
+                          SG_status=='M'~'Migrant/Visitor',
+                          SG_status=='N'~'Migrant/Visitor',
+                          SG_status=='V'~'Migrant/Visitor')) %>% 
+  filter(status!='Migrant/Visitor') %>% 
+  group_by(Study.Area) %>% 
+  mutate(buildarea=sum(buildpc+artsurfacepc),
+         vegarea=sum(canopypc+Vegpc+natsurfacepc)) %>% 
+  ggplot(aes(vegarea,status.prop,color=status)) +
+  geom_line(color=NA)+
+  geom_smooth(se=F)+
+  geom_jitter(aes(vegarea,status.prop,shape=sp_lab),size=3,alpha=.5)+
+  stat_poly_eq()+
+  theme_pubclean()+
+  style180
 
 ## Beta----
 # Sorensen index
@@ -900,29 +1029,7 @@ x$`Species status`<-factor(x$`Species status`,levels=c('Resident','Introduced',
 
 
 # plot!
-x %>% 
-  filter(Study.Area!='Changi Airport') %>% 
-  ggplot(aes(id,max.freq,color=`Species status`))+
-  geom_col(fill='white')+
-  geom_point(aes(id,max.freq,shape=NestType),size=3,color='black',alpha=.75)+
-  facet_wrap(~Study.Area)+
-  labs(title = 'Rank abundance',
-       x='Rank',y='Abundance (proportion)')+
-  scale_x_continuous(limits = c(0, 54), 
-                     breaks = c(1,5,10,15,20,25,30,35,40,45,50,54))+
-  theme_pubclean()+styleRA+
-  theme(plot.title = element_text(size=28),
-        legend.text = element_text(size=16),
-        legend.title = element_text(size=16),
-        strip.text = element_text(size=16),
-        axis.text.x = element_text(size=14),
-        axis.text.y = element_text(size=14))+
-  scale_colour_manual(name='Species status:',values=c('Introduced'='#EE6677','Introduced Parrot'='#228833',
-                               'Resident'='#66CCEE','Migrant/Visitor'='#CCBB44'))+
-  scale_shape_manual(name='Nest Type:',values=c(20,21,7))+
-  guides(colour = guide_legend(nrow = 2),shape=guide_legend(nrow=2))
 
-# filled version
 x %>% 
   filter(Study.Area!='Changi Airport') %>% 
   ggplot(aes(id,max.freq))+
@@ -988,13 +1095,16 @@ x %>%
     kable_styling()
 
 ## Profile table----
-Indices_2 %>% 
+x<-Indices_2 %>% 
   group_by(Study.Area) %>% 
-  mutate('Built area'=sum(buildpc+artsurfacepc), #28
-         'Natural area'=sum(canopypc+Vegpc+natsurfacepc), #29
-         'Water area'=sum(waterpc+mangrovepc)) %>%  #30
-  select(1,3,5,6,28,29,30,
-         17,19,18,16,27) %>% 
+  mutate('Built area'=sum(buildpc+artsurfacepc), #24
+         'Natural area'=sum(canopypc+Vegpc+natsurfacepc), #25
+         'Water area'=sum(waterpc+mangrovepc), #26
+         'Cavity/Individual'=sum(n_cavity/n.cavnester)) #26
+x %>% 
+  select(1,2,3,5,6,
+         24,25,26,
+         17,19,21,16,27,23) %>% 
   mutate(across(where(is.numeric), round, 2)) %>% 
   rename(" "=Study.Area,
          'Survey area'='Site habitat types',
@@ -1003,16 +1113,27 @@ Indices_2 %>%
          '% cavity-nester spp.'=cav.sp.freq,
          '% parrot-spp.'=freq.parrots,
          'Cavities/sqm'=cavs_canopy_sqm,
-         'Interspecific interactions'=n_ints
+         'Interspecific interactions'=site.interactions
          ) %>% 
   arrange(desc(Shannon)) %>% 
-  kable(align = 'lcllcccccccc') %>% 
-  add_header_above(header=c(" "=2,
+  kable(align = 'lccllccccccccc') %>% 
+  add_header_above(header=c(" "=3,
                             "Habitat description"=2,
                             "Land-use"=3,
                             "Occupying species"=3,
-                            " "=2)) %>% 
-  kable_styling()
+                            " "=3)) %>% 
+  kable_styling() %>%   
+  save_kable(file = "site_profiles.html")
+webshot::webshot("site_profiles.html", "site_profiles.pdf")#pdf better
+
+
+# relevant regressions----
+summary(lm(Richness~`Built area`,
+           data=x))
+
+summary(lm(cav.sp.freq~buildpc+
+             Vegpc,
+           data=Composition_2))
 
 #/////////////////////////////////////////////////////////////////////////////
 #/////////////////////////////////////////////////////////////////////////////
@@ -1176,70 +1297,75 @@ x %>%
 #======================== TOP-LINE CORRELATIONS =========================
 #/////////////////////////////////////////////////////////////////////////////
 #/////////////////////////////////////////////////////////////////////////////
-# shannon x density----
-Composition_2 %>% 
-  group_by(Shannon) %>% 
-  filter(Study.Area!='Changi Airport') %>% 
-  mutate(status=case_when(SG_status=='I'~'Introduced',
-                          SG_status=='R'~'Resident',
-                          SG_status=='M'~'Migrant/Visitor',
-                          SG_status=='N'~'Migrant/Visitor',
-                          SG_status=='V'~'Migrant/Visitor')) %>% 
-  ggplot(aes(Shannon,..scaled..)) +
-  geom_density(aes(fill = status,color=status), alpha = 0.2) +
-  labs(x = 'Species diversity (Shannon)', y='Density',
-       title = 'Species occurrence across sites')+
-  theme_pubclean()+style180+
-  theme(legend.title=element_blank())+
-  scale_x_continuous(limits = c(2.5,3.7),
-                     breaks = c(2.6,2.8,3.0,3.2,3.2,3.4,3.6))+
-    scale_fill_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
-                             'Migrant/Visitor'='#CCBB44'))+
-  scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
-                               'Migrant/Visitor'='#CCBB44'))
-  
+
+
+ 
+#========================#
+# VARIANCE & DISTRIBUTIONS----
+#========================#
+
+# VAR < MEAN =  quasibinomial = glm
+# VAR > MEAN = negative bionomial = glm.nb,data is overdispersed
+
+# variances
+mean(Indices_2$buildpc);var(Indices_2$buildpc) # quasibinomial     
+mean(Indices_2$Vegpc);var(Indices_2$Vegpc) # quasibinomial 
+mean(Indices_2$canopypc);var(Indices_2$canopypc) # quasibinomial 
+mean(Indices_2$Shannon);var(Indices_2$Shannon) # quasibinomial 
+
+
+mean(Indices_2$Richness);var(Indices_2$Richness) #negative bin. 
+mean(Indices_2$cavs_canopy_sqm);var(Indices_2$cavs_canopy_sqm) # nb
+mean(Indices_2$cav.sp.freq);var(Indices_2$cav.sp.freq) #nb
+mean(Indices_2$site.interactions);var(Indices_2$site.interactions) #nb
+mean(Indices_2$freq.parrots);var(Indices_2$freq.parrots) #nb
+mean(Indices_2$n_cavity);var(Indices_2$n_cavity) #nb
+
+
+ 
 #========================#
 # SITE----
 #========================#
-Indices_2 %>% 
+x<-Indices_2 %>% 
   group_by(Study.Area) %>% 
   mutate(built_surf=sum(buildpc+artsurfacepc)) %>% 
+  mutate(vegcan=sum(natsurfacepc+Vegpc))
+
+x %>% 
   ggplot(aes(built_surf,Shannon))+
   geom_point(aes(color=Study.Area))+
   stat_poly_line(se=F)+
   stat_poly_eq()+
   labs(x='Proportion urban land cover',y='Shannon')
+
 # lm
-x<-Indices_2 %>% 
-  group_by(Study.Area) %>% 
-  mutate(built_surf=sum(buildpc+artsurfacepc))
+
 summary(lm(built_surf~Shannon,x))
+summary(lm(Shannon~natsurfacepc+buildpc+artsurfacepc,Indices_2))
 
 # R² = .8623, F(1,5)=31.32,p<0.00252)
 ## BD and Richness declines with building and road cover
+#or glm
+summary(glm(built_surf~Shannon, data = x,family = quasipoisson()))
+  # 0.002515 ** 
 
-
-Indices_2 %>% 
-  group_by(Study.Area) %>% 
-  mutate(vegcan=sum(canopypc+Vegpc)) %>% 
+x %>% 
   ggplot(aes(vegcan,Shannon))+
   geom_point(aes(color=Study.Area))+
   stat_poly_line(se=F)+
   stat_poly_eq()+
   labs(x='Proportion greenery cover',y='Shannon')
-x<-Indices_2 %>% 
-  group_by(Study.Area) %>% 
-  mutate(vegcan=sum(canopypc+Vegpc))
-summary(lm(vegcan~Shannon,x))
+
+summary(lm(Shannon~canopypc+vegcan,x))
 # R² = 834, F(1,4)=25.12,p<0.00404)
 # Urbanised land predicted reduced bird species richness (β = -38.367, p < .00437)
+summary(glm(vegcan~Shannon, data = x,family = quasipoisson()))
+# same result
 
-Indices_2 %>% 
-  ggplot(aes(Shannon,freq.parrots))+
-  geom_point(aes(color=Study.Area))+
-  stat_poly_line(se=F)+
-  stat_poly_eq()
-y<-aov(Richness~built_surf,x)
+
+summary(glm(max_obs~canopypc+Vegpc+waterpc+buildpc,Composition_2,family = quasipoisson()))
+
+
 
 # CAVITY / NON NATIVES
 Indices_2 %>% 
@@ -1255,19 +1381,36 @@ x<-Indices_2 %>%
 summary(lm(cavs_canopy_sqm~freq.I,x))
 # R² = 878, F(1,4)=28.77,p<0.00583)
 # Cavity density predicted invasive species abundance (β = -33.580, p < .00437
+summary(glm(cavs_canopy_sqm~freq.I, data = x))
+
 
 
 # CAVITY / Parrots
 Indices_2 %>% 
   filter(Study.Area!='Changi Airport') %>% # no cavity data available
   group_by(Study.Area) %>% 
-  ggplot(aes(site.interactions,cavs_canopy_sqm))+
+  ggplot(aes(cavs_canopy_sqm,site.interactions))+
   geom_point(aes(color=Study.Area))+
   stat_poly_line(se=F)+
-  stat_poly_eq()+
-  labs(x='proportion of cavities',y='introduced sp %')
+  stat_poly_eq()
 x<-Indices_2 %>% 
   filter(Study.Area!='Changi Airport')
+
+Indices_2 %>% 
+  filter(Study.Area!='Changi Airport'&Study.Area!='Pasir Ris Town Park') %>% # no cavity data available
+  group_by(Study.Area) %>% 
+  ggplot(aes(n.cavnester,site.interactions))+
+  geom_point(aes(color=Study.Area))+
+  stat_poly_line(se=F)+
+  stat_poly_eq()
+x<-Indices_2 %>% 
+  filter(Study.Area!='Changi Airport'&Study.Area!='Pasir Ris Town Park')
+
+mean(Indices_2$site.interactions);var(Indices_2$site.interactions)
+  
+summary(glm(n.cavnester~site.interactions, data = x, family = quasipoisson()))
+# negative bionomial model fits better
+summary(glm.nb(n.cavnester~site.interactions, data = x))
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
