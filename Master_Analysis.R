@@ -889,7 +889,7 @@ x<-Composition_2 %>%
 x<-x %>% 
   mutate(`Species status`=factor(case_when(Species=='Red-breasted parakeet'~'Introduced Parrot',
                                            Species=='Rose-ringed parakeet'~'Introduced Parrot',
-                                           Species=='Tanimbar corella parakeet'~'Introduced Parrot',
+                                           Species=='Tanimbar corella'~'Introduced Parrot',
                                            Species=='Monk parakeet'~'Introduced Parrot',
                                            Species=='Sulphur crested cockatoo'~'Introduced Parrot',
                                            Species=='Yellow crested cockatoo'~'Introduced Parrot',
@@ -904,7 +904,7 @@ x %>%
   filter(Study.Area!='Changi Airport') %>% 
   ggplot(aes(id,max.freq,color=`Species status`))+
   geom_col(fill='white')+
-  geom_point(aes(id,max.freq,shape=NestType),size=4,color='black',alpha=.75)+
+  geom_point(aes(id,max.freq,shape=NestType),size=3,color='black',alpha=.75)+
   facet_wrap(~Study.Area)+
   labs(title = 'Rank abundance',
        x='Rank',y='Abundance (proportion)')+
@@ -919,6 +919,31 @@ x %>%
         axis.text.y = element_text(size=14))+
   scale_colour_manual(name='Species status:',values=c('Introduced'='#EE6677','Introduced Parrot'='#228833',
                                'Resident'='#66CCEE','Migrant/Visitor'='#CCBB44'))+
+  scale_shape_manual(name='Nest Type:',values=c(20,21,7))+
+  guides(colour = guide_legend(nrow = 2),shape=guide_legend(nrow=2))
+
+# filled version
+x %>% 
+  filter(Study.Area!='Changi Airport') %>% 
+  ggplot(aes(id,max.freq))+
+  geom_col(aes(fill=`Species status`,color=`Species status`))+
+  geom_point(aes(id,max.freq,shape=NestType),size=3,color='black',alpha=.75)+
+  facet_wrap(~Study.Area)+
+  labs(title = 'Rank abundance',
+       x='Rank',y='Abundance (proportion)')+
+  scale_x_continuous(limits = c(0, 54), 
+                     breaks = c(1,5,10,15,20,25,30,35,40,45,50,54))+
+  theme_pubclean()+styleRA+
+  theme(plot.title = element_text(size=28),
+        legend.text = element_text(size=16),
+        legend.title = element_text(size=16),
+        strip.text = element_text(size=16),
+        axis.text.x = element_text(size=14),
+        axis.text.y = element_text(size=14))+
+  scale_fill_manual(name='Species status:',values=c('Introduced'='#EE99AA','Introduced Parrot'='#EECC66',
+                                                      'Resident'='#6699CC','Migrant/Visitor'='#DDDDDD'))+
+  scale_color_manual(name='Species status:',values=c('Introduced'='#EE99AA','Introduced Parrot'='#EECC66',
+                                                    'Resident'='#6699CC','Migrant/Visitor'='#DDDDDD'))+
   scale_shape_manual(name='Nest Type:',values=c(20,21,7))+
   guides(colour = guide_legend(nrow = 2),shape=guide_legend(nrow=2))
 
@@ -1082,7 +1107,6 @@ x<-x %>%
   mutate(Study.Area.new=factor(case_when(Study.Area=='Nanyang Avenue'~'All other sites',
                                   Study.Area=='Buona Vista'~'All other sites',
                                   Study.Area=='Elias Road'~'All other sites',
-                                  Study.Area=='Bottletree Park'~'All other sites',
                                   Study.Area=='Choa Chu Kang'~'All other sites',
                                   Study.Area=='Yishun Street 11'~'All other sites',
                                   Study.Area=='Pasir Ris Heights'~'All other sites',
@@ -1098,7 +1122,11 @@ x<-x %>%
                                   Study.Area=='Dempsey Hill'~'All other sites',
                                   Study.Area=='Chong Pang'~'All other sites',
                                   Study.Area=='Jalan Pelikat'~'All other sites',
-                                  TRUE ~ as.character(Study.Area)),
+                                  Study.Area=='Braddell View'~'All other sites',
+                                  Study.Area=='Hindhede Park'~'All other sites',
+                                  Study.Area=='Pasir Ris St 52'~'All other sites',
+                                  Study.Area=='Sembawang'~'All other sites',
+                                 TRUE ~ as.character(Study.Area)),
                                levels = c('Springleaf','Bottle Tree Park','Jurong West',
                                           'Clementi Central','Changi Village','Windsor Park',
                                           'Bukit Brown','Gymkhana Ave','King Albert Park',
@@ -1107,58 +1135,42 @@ x<-x %>%
                                           'Palawan Beach','Orange Grove','Bishan Park',
                                           'All other sites')))
 
+# optional species adjustment
+x<-x %>% 
+  mutate(Species2=(case_when(Species=='Rose-ringed parakeet'~'Other',
+                                   Species=='Tanimbar corella'~'Other',
+                                   TRUE ~ as.character(Species))))
+x$Species2<-as.factor(x$Species2)
+x$Species2<-x$Species2 %>% factor(c('Long-tailed parakeet','Red-breasted parakeet','Other'))
+                        
+
 levels(x$Study.Area.new)
-
-#x$Count[x$Count == 0] <- 1
-
+levels(x$Species2)
+ #THE PLOT
 x %>% 
   filter(Count>0) %>% 
-  filter(Species=='Red-breasted parakeet'|Species=='Tanimbar corella'|Species=='Rose-ringed parakeet'|
-           Species=='Long-tailed parakeet') %>% 
-    ggplot(aes(x=Year,..scaled..))+
-    geom_density(aes(color=Species,fill=Species),alpha=.1)+
-    labs(y='density',title = 'Roost site overlap over time')+
-    facet_wrap(~Study.Area.new)+
-    theme_pubclean()+style180Centered+
-  theme(plot.title = element_text(size=25),
-        legend.text = element_text(size=16),
-        strip.text = element_text(size=16),
-        axis.text.x = element_text(size=12),
-        axis.text.y = element_text(size=12),
-        axis.title.x = element_blank())+
-  scale_fill_manual(values=c('Red-breasted parakeet'='#EE6677','Rose-ringed parakeet'='#AA3377',
-                             'Tanimbar corella'='#CCBB44','Long-tailed parakeet'='#228833'))+
-  scale_colour_manual(values=c('Red-breasted parakeet'='#EE6677','Rose-ringed parakeet'='#AA3377',
-                               'Tanimbar corella'='#CCBB44','Long-tailed parakeet'='#228833'))
-
-
-x %>% 
-  filter(Count>0) %>% 
-  filter(Species=='Red-breasted parakeet'|Species=='Tanimbar corella'|Species=='Rose-ringed parakeet'|
-           Species=='Long-tailed parakeet') %>% 
-  ggplot(aes(Year,na.rm=FALSE))+
-  geom_density(aes(x=Year,y=..count..,color=Species))+
+  ggplot(aes(x=Year))+
+  geom_density(aes(fill=Species2,color=Species2),alpha=.25,position='dodge',bins = 8)+
+  facet_wrap(~Study.Area.new,scales='free_y')+
+  theme_pubclean()+style180+
   labs(y='density',title = 'Roost site overlap over time')+
-  facet_wrap(~Study.Area.new)+
-  theme_pubclean()+style180Centered+
   theme(plot.title = element_text(size=25),
         legend.text = element_text(size=16),
+        legend.title = element_blank(),
         strip.text = element_text(size=16),
         axis.text.x = element_text(size=12),
         axis.text.y = element_text(size=12),
         axis.title.x = element_blank())+
-  scale_colour_manual(values=c('Red-breasted parakeet'='#EE6677','Rose-ringed parakeet'='#AA3377',
-                               'Tanimbar corella'='#CCBB44','Long-tailed parakeet'='#228833'))
-
-x %>% 
-  filter(Count>0) %>% 
-  filter(Species=='Red-breasted parakeet'|Species=='Tanimbar corella'|Species=='Rose-ringed parakeet'|
-           Species=='Long-tailed parakeet') %>% 
-  ggplot(aes(Year,Count,..scaled..,color=Species))+
-  geom_point()+
-  stat_smooth()+
-  facet_wrap(~Study.Area.new)
+  scale_fill_manual(values=c('Red-breasted parakeet'='#CC3311',
+                             'Long-tailed parakeet'='#009988',
+                             'Other'='#dddddd'))+
+  scale_colour_manual(values=c('Red-breasted parakeet'='#CC3311',
+                               'Long-tailed parakeet'='#009988',
+                               'Other'='#bbbbbb'))
+ 
   
+  
+
 #/////////////////////////////////////////////////////////////////////////////
 #/////////////////////////////////////////////////////////////////////////////
 #======================== TOP-LINE CORRELATIONS =========================
