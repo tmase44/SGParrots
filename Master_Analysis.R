@@ -21,7 +21,7 @@ p_load(formattable,knitr,kableExtra, # nice tables
 #library(gam)
 #library(GGally)
 #library(psych)#
-#library(MASS)
+library(MASS)
 #detach("package:MASS", unload=TRUE)
 
 
@@ -861,7 +861,7 @@ Composition_2 %>%
   ggplot(aes(buildarea,..scaled..)) +
   geom_density(aes(fill = status,color=status), alpha = 0.2) +
   labs(x = 'Built area', y='Density',
-       title = 'Species density across build area gradient')+
+       title = 'Species distribution across build area gradient')+
   theme_pubclean()+style180+
   theme(legend.title=element_blank())+
   scale_fill_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
@@ -882,7 +882,7 @@ Composition_2 %>%
   ggplot(aes(vegarea,..scaled..)) +
   geom_density(aes(fill = status,color=status), alpha = 0.2) +
   labs(x = 'Vegetated area', y='Density',
-       title = 'Species density across build area gradient')+
+       title = 'Species distribution across build area gradient')+
   theme_pubclean()+style180+
   theme(legend.title=element_blank())+
   scale_fill_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
@@ -899,7 +899,8 @@ Composition_2 %>%
   ggplot(aes(vegarea,freq.I)) +
   geom_line()+
   geom_point()+
-  stat_poly_eq(aes(color='red',size=10))+
+  stat_cor(method = 'kendall',color='red')+
+  #stat_poly_eq(aes(color='red',size=10))+
   theme_pubclean()+
   style180+
   labs(title = 'Introduced species frequency along the natural area cover gradient')
@@ -916,6 +917,28 @@ Composition_2 %>%
   theme_pubclean()+
   style180+
   labs(title = 'Introduced species frequency along the built area gradient')
+
+# corr
+#https://www.researchgate.net/publication/263221496_Dynamics_of_Nutrient_Contents_Phosphorus_Nitrogen_in_Water_Sediment_and_Plants_After_Restoration_of_Connectivity_in_Side-Channels_of_the_River_Rhine/figures?lo=1
+#https://www.researchgate.net/publication/345728052_Assessing_functional_redundancy_in_Eurasian_small_mammal_assemblages_across_multiple_traits_and_biogeographic_extents/figures?lo=1
+#https://www.researchgate.net/publication/49806081_Male_mate_location_behaviour_and_encounter_sites_in_a_community_of_tropical_butterflies_Taxonomic_and_site_associations_and_distinctions/figures?lo=1 
+
+x<-Composition_2 %>% 
+  #filter(!is.na(freq.I)) %>% 
+  #filter(Study.Area!='Changi Airport') %>% 
+  mutate(status=case_when(SG_status=='I'~'Introduced',
+                          SG_status=='R'~'Resident',
+                          SG_status=='M'~'Migrant/Visitor',
+                          SG_status=='N'~'Migrant/Visitor',
+                          SG_status=='V'~'Migrant/Visitor')) %>% 
+  group_by(Study.Area) %>% 
+  mutate(buildarea=sum(buildpc+artsurfacepc),
+         vegarea=sum(canopypc+Vegpc+natsurfacepc))
+# kendall
+cor.test(formula=~freq.I+vegarea,
+         data=x,
+         #subset = status == 'Introduced',
+         method='kendall')
 
 # Species assemblages diverge signifcantly as urban area increases
 Composition_2 %>% 
@@ -937,10 +960,12 @@ Composition_2 %>%
   ggplot(aes(buildarea,status.prop,color=status)) +
   geom_line(color=NA)+
   geom_smooth(se=F)+
-  geom_jitter(aes(buildarea,status.prop,shape=sp_lab),size=3,alpha=.5)+
-  stat_poly_eq()+
+  stat_cor(label.y.npc="top",label.x.npc="left",method = 'kendall')+
+  #stat_poly_eq()+
   theme_pubclean()+
   style180
+### In case of very small p-values, the convention is to write it as p<0.001
+
 # and with vegetated area
 Composition_2 %>% 
   filter(!is.na(freq.I)) %>% 
