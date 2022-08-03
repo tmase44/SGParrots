@@ -3,7 +3,6 @@
 #============================  MASTER ANALYSIS   =============================
 #/////////////////////////////////////////////////////////////////////////////#
 
-
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 #============================= LOAD PACKS ==================================  
@@ -19,9 +18,9 @@ p_load(formattable,knitr,kableExtra, # nice tables
        readxl,writexl)
 #library(Ostats)
 #library(gam)
-#library(GGally)
+library(GGally)
 #library(psych)#
-library(MASS)
+#library(MASS)
 #detach("package:MASS", unload=TRUE)
 
 
@@ -51,7 +50,9 @@ NSS <- read_csv("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertati
  Pilot <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                     sheet = "pilottime")
 
-
+# Kendall
+Kendall<-read_excel('kendall.xlsx')
+ 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 #============================ ALPHA BD INDICES ============================= 
@@ -827,7 +828,7 @@ Indices %>%
 
 ## Sengkang / PRTP are managed urban parks but quite rich in vegatation. 
 ## food resources are plentiful
-# shannon x density----
+## shannon x density----
 Composition_2 %>% 
   filter(Study.Area!='Changi Airport') %>% 
   mutate(status=case_when(SG_status=='I'~'Introduced',
@@ -847,149 +848,178 @@ Composition_2 %>%
                              'Migrant/Visitor'='#CCBB44'))+
   scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
                                'Migrant/Visitor'='#CCBB44'))
-# built area
-Composition_2 %>% 
-  filter(Study.Area!='Changi Airport') %>% 
-  mutate(status=case_when(SG_status=='I'~'Introduced',
-                          SG_status=='R'~'Resident',
-                          SG_status=='M'~'Migrant/Visitor',
-                          SG_status=='N'~'Migrant/Visitor',
-                          SG_status=='V'~'Migrant/Visitor')) %>% 
-  group_by(Study.Area) %>% 
-  mutate(buildarea=sum(buildpc+artsurfacepc),
-         vegarea=sum(canopypc+Vegpc+natsurfacepc)) %>% ungroup () %>% 
-  ggplot(aes(buildarea,..scaled..)) +
-  geom_density(aes(fill = status,color=status), alpha = 0.2) +
-  labs(x = 'Built area', y='Density',
-       title = 'Species distribution across build area gradient')+
-  theme_pubclean()+style180+
-  theme(legend.title=element_blank())+
-  scale_fill_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
-                             'Migrant/Visitor'='#CCBB44'))+
-  scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
-                               'Migrant/Visitor'='#CCBB44'))
-# vegtated area
-Composition_2 %>% 
-  filter(Study.Area!='Changi Airport') %>% 
-  mutate(status=case_when(SG_status=='I'~'Introduced',
-                          SG_status=='R'~'Resident',
-                          SG_status=='M'~'Migrant/Visitor',
-                          SG_status=='N'~'Migrant/Visitor',
-                          SG_status=='V'~'Migrant/Visitor')) %>% 
-  group_by(Study.Area) %>% 
-  mutate(buildarea=sum(buildpc+artsurfacepc),
-         vegarea=sum(canopypc+Vegpc+natsurfacepc)) %>% ungroup () %>% 
-  ggplot(aes(vegarea,..scaled..)) +
-  geom_density(aes(fill = status,color=status), alpha = 0.2) +
-  labs(x = 'Vegetated area', y='Density',
-       title = 'Species distribution across build area gradient')+
-  theme_pubclean()+style180+
-  theme(legend.title=element_blank())+
-  scale_fill_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
-                             'Migrant/Visitor'='#CCBB44'))+
-  scale_colour_manual(values=c('Introduced'='#EE6677','Resident'='#4477AA',
-                               'Migrant/Visitor'='#CCBB44'))
 
-# linear reggos simple lm model nothing more is needed here
-Composition_2 %>% 
-  #filter(Study.Area!='Changi Airport') %>% 
-  group_by(Study.Area) %>% 
-  mutate(buildarea=sum(buildpc+artsurfacepc),
-         vegarea=sum(canopypc+Vegpc+natsurfacepc)) %>% ungroup () %>% 
-  ggplot(aes(vegarea,freq.I)) +
-  geom_line()+
-  geom_point()+
-  stat_cor(method = 'kendall',color='red')+
-  #stat_poly_eq(aes(color='red',size=10))+
-  theme_pubclean()+
-  style180+
-  labs(title = 'Introduced species frequency along the natural area cover gradient')
-
-Composition_2 %>% 
-  #filter(Study.Area!='Changi Airport') %>% 
-  group_by(Study.Area) %>% 
-  mutate(buildarea=sum(buildpc+artsurfacepc),
-         vegarea=sum(canopypc+Vegpc+natsurfacepc)) %>% ungroup () %>% 
-  ggplot(aes(buildarea,freq.I)) +
-  geom_line()+
-  geom_point()+
-  stat_poly_eq(aes(color='red',size=10))+
-  theme_pubclean()+
-  style180+
-  labs(title = 'Introduced species frequency along the built area gradient')
-
+# Kendall Tau----
 # corr
 #https://www.researchgate.net/publication/263221496_Dynamics_of_Nutrient_Contents_Phosphorus_Nitrogen_in_Water_Sediment_and_Plants_After_Restoration_of_Connectivity_in_Side-Channels_of_the_River_Rhine/figures?lo=1
 #https://www.researchgate.net/publication/345728052_Assessing_functional_redundancy_in_Eurasian_small_mammal_assemblages_across_multiple_traits_and_biogeographic_extents/figures?lo=1
 #https://www.researchgate.net/publication/49806081_Male_mate_location_behaviour_and_encounter_sites_in_a_community_of_tropical_butterflies_Taxonomic_and_site_associations_and_distinctions/figures?lo=1 
-
-x<-Composition_2 %>% 
-  #filter(!is.na(freq.I)) %>% 
-  #filter(Study.Area!='Changi Airport') %>% 
-  mutate(status=case_when(SG_status=='I'~'Introduced',
-                          SG_status=='R'~'Resident',
-                          SG_status=='M'~'Migrant/Visitor',
-                          SG_status=='N'~'Migrant/Visitor',
-                          SG_status=='V'~'Migrant/Visitor')) %>% 
-  group_by(Study.Area) %>% 
-  mutate(buildarea=sum(buildpc+artsurfacepc),
-         vegarea=sum(canopypc+Vegpc+natsurfacepc))
-# kendall
-cor.test(formula=~freq.I+vegarea,
-         data=x,
-         #subset = status == 'Introduced',
-         method='kendall')
-
-# Species assemblages diverge signifcantly as urban area increases
-Composition_2 %>% 
-  filter(!is.na(freq.I)) %>% 
-  group_by(Study.Area) %>% 
-  mutate(site.sptotal=sum(max_obs)) %>% 
-  group_by(Study.Area,SG_status) %>% 
-  mutate(status.prop=sum(max_obs/site.sptotal)) %>% 
-  filter(Study.Area!='Changi Airport') %>% 
-  mutate(status=case_when(SG_status=='I'~'Introduced',
-                          SG_status=='R'~'Resident',
-                          SG_status=='M'~'Migrant/Visitor',
-                          SG_status=='N'~'Migrant/Visitor',
-                          SG_status=='V'~'Migrant/Visitor')) %>% 
-  filter(status!='Migrant/Visitor') %>% 
-  group_by(Study.Area) %>% 
-  mutate(buildarea=sum(buildpc+artsurfacepc),
-         vegarea=sum(canopypc+Vegpc+natsurfacepc)) %>% 
-  ggplot(aes(buildarea,status.prop,color=status)) +
-  geom_line(color=NA)+
-  geom_smooth(se=F)+
-  stat_cor(label.y.npc="top",label.x.npc="left",method = 'kendall')+
-  #stat_poly_eq()+
-  theme_pubclean()+
-  style180
 ### In case of very small p-values, the convention is to write it as p<0.001
 
-# and with vegetated area
-Composition_2 %>% 
+
+# table
+Kendall %>% 
+  select(-p.value) %>% 
+  kable() %>% 
+  kable_styling(full_width = F,
+                row_spec())
+
+# some modifications
+  # no need to standarise
+x<-Composition_2 %>% 
   filter(!is.na(freq.I)) %>% 
-  group_by(Study.Area) %>% 
-  mutate(site.sptotal=sum(max_obs)) %>% 
-  group_by(Study.Area,SG_status) %>% 
-  mutate(status.prop=sum(max_obs/site.sptotal)) %>% 
-  filter(Study.Area!='Changi Airport') %>% 
+filter(Study.Area!='Changi Airport') %>% 
   mutate(status=case_when(SG_status=='I'~'Introduced',
                           SG_status=='R'~'Resident',
                           SG_status=='M'~'Migrant/Visitor',
                           SG_status=='N'~'Migrant/Visitor',
                           SG_status=='V'~'Migrant/Visitor')) %>% 
-  filter(status!='Migrant/Visitor') %>% 
   group_by(Study.Area) %>% 
   mutate(buildarea=sum(buildpc+artsurfacepc),
          vegarea=sum(canopypc+Vegpc+natsurfacepc)) %>% 
+  group_by(Study.Area) %>% 
+  mutate(site.sptotal=sum(max_obs)) %>% 
+  group_by(Study.Area,SG_status) %>% 
+  mutate(status.prop=sum(max_obs/site.sptotal)) #%>% 
+  # ungroup() %>% 
+  # mutate_if(is.numeric, funs(as.numeric(scale(.))))
+
+# Overall correlation----
+library(GGally)
+# Convert data to numeric
+corr.site <- x %>% ungroup() %>% 
+  mutate_if(is.numeric, funs(as.numeric(scale(.))))
+corr.site<-x %>% select(-8,-11,-14,-15,-18,-22,-23,-45)
+#corr.site <- data.frame(lapply(corr.site, as.integer))
+corr.site<-corr.site %>% select(-TrophicNiche,-ForagingNiche,-IUCN_status,
+                                -SG_abundance,-sp_lab,-NestType,-Avg_size,-Species,
+                                -status.prop)
+
+# Plot 
+ggcorr(corr.site,
+       method = c('pairwise','kendall'),
+       nbreaks = 6,
+       hjust = 0.8,
+       label = TRUE,
+       digits=1,
+       label_size = 3,
+       color = "grey50",
+       low="#2166AC", 
+       mid="#ffffff",
+       high="#B2182B",
+       layout.exp = 2)+
+  theme_pubclean()
+## BLUE == NEGATIVE CORR.
+## RED == POSITIVE CORR
+
+
+### vegtated area
+x %>% 
+  ggplot(aes(vegarea,Richness)) +
+  geom_line(color=NA)+
+  geom_point(position=position_jitter(width = 7, height = 2), alpha=.7, shape=21)+
+  xlim(10,40)+
+  ylim(20,60)+
+  stat_cor(method = 'kendall',color='#228833',
+           label.y.npc=1,label.x.npc=0)+
+  geom_smooth(method='loess',color='#228833')+
+  #stat_poly_eq(aes(color='red',size=10))+
+  theme_pubclean()+
+  style180+
+  labs(title = 'Assemblage richness along the natural area cover gradient')
+
+### built area
+x %>% 
+  ggplot(aes(buildarea,Richness)) +
+  geom_line(color=NA)+
+  geom_point(position=position_jitter(width = 1.5, height = 3), alpha=.7, shape=21)+
+  xlim(2,18)+
+  ylim(20,60)+
+  stat_cor(method = 'kendall',color='#4477AA',
+           label.y.npc=1,label.x.npc=.7)+
+  geom_smooth(method='loess',color='#4477AA')+
+  theme_pubclean()+
+  style180+
+  labs(title = 'Assemblage richness along the built area gradient')
+
+# o represents individual species in assemblages across sites varying in 
+# urban / vegetated area
+
+# built by introduction status
+x %>% 
+  filter(status!='Migrant/Visitor') %>% 
+  ggplot(aes(buildarea,status.prop,color=status)) +
+  geom_line(color=NA)+
+  geom_jitter(width = 1.2,height=.02,alpha=.2)+
+  xlim(2,18)+
+  geom_smooth(se=T,alpha=.2)+
+  stat_cor(method = 'kendall',
+           label.y.npc=1,label.x.npc=.1)+
+  theme_pubclean()+
+  style180+
+  scale_color_manual(name='Species status:',values=c('Introduced'='#994455',
+                                                    'Resident'='#004488'))
+
+cor.test(formula=~status.prop+buildarea,
+         data=x,
+         subset = status == 'Introduced',
+         method='kendall',exact=F)
+cor.test(formula=~status.prop+buildarea,
+         data=x,
+         subset = status == 'Resident',
+         method='kendall',exact=F)
+
+# and with vegetated area
+x %>% 
+  filter(status!='Migrant/Visitor') %>% 
   ggplot(aes(vegarea,status.prop,color=status)) +
   geom_line(color=NA)+
-  geom_smooth(se=F)+
-  geom_jitter(aes(vegarea,status.prop,shape=sp_lab),size=3,alpha=.5)+
-  stat_poly_eq()+
+  geom_jitter(width = 3,height=.03,alpha=.2)+
+  xlim(10,40)+
+    geom_smooth(se=T,alpha=.2)+
+  stat_cor(method = 'kendall',
+           label.y.npc=1,label.x.npc=.1)+
   theme_pubclean()+
-  style180
+  style180+
+  scale_color_manual(name='Species status:',values=c('Introduced'='#994455',
+                                                     'Resident'='#004488'))
+
+# parrots only built area
+x2<-x %>% 
+  mutate(status=factor(case_when(Species=='Red-breasted parakeet'~'Introduced Parrot',
+                                 Species=='Rose-ringed parakeet'~'Introduced Parrot',
+                                 Species=='Tanimbar corella'~'Introduced Parrot',
+                                 Species=='Monk parakeet'~'Introduced Parrot',
+                                 Species=='Sulphur crested cockatoo'~'Introduced Parrot',
+                                 Species=='Yellow crested cockatoo'~'Introduced Parrot',
+                                 TRUE ~ as.character(status))))
+ x2 %>% 
+  filter(status=='Introduced Parrot') %>% 
+  ggplot(aes(buildarea,status.prop,color=status)) +
+  geom_line(color=NA)+
+  geom_jitter(width = 2,height=.05,alpha=.7)+
+  xlim(2,18)+
+  geom_smooth(method='loess',alpha=.2)+
+  stat_cor(method = 'kendall',
+           label.y.npc=1,label.x.npc=.1)+
+  theme_pubclean()+
+  style180+
+  scale_color_manual(name='Species status:',values=c('Introduced Parrot'='#997700'))
+
+# parrots only veg area
+x2 %>% 
+  filter(status=='Introduced Parrot') %>% 
+  ggplot(aes(vegarea,status.prop,color=status)) +
+  geom_line(color=NA)+
+  geom_jitter(width = 2,height=.05,alpha=.7)+
+  xlim(10,40)+
+  geom_smooth(method='loess',alpha=.2)+
+  stat_cor(method = 'kendall',
+           label.y.npc=1,label.x.npc=.1)+
+  theme_pubclean()+
+  style180+
+  scale_color_manual(name='Species status:',values=c('Introduced Parrot'='#997700'))
+
 
 ## Beta----
 # Sorensen index
@@ -1151,7 +1181,6 @@ x %>%
   save_kable(file = "site_profiles.html")
 webshot::webshot("site_profiles.html", "site_profiles.pdf")#pdf better
 
-
 # relevant regressions----
 summary(lm(Richness~`Built area`,
            data=x))
@@ -1226,16 +1255,6 @@ z %>%
 
 levels(NSS$Study.Area)
 
-NSS %>% 
-  filter(Count>5) %>% 
-  filter(Species=='Red-breasted parakeet'|Species=='Tanimbar corella'|
-           Species=='Rose-ringed parakeet'|Species=='Long-tailed parakeet') %>% 
-  ggplot(aes(Year,..scaled..))+
-  geom_density(aes(color=Species,fill=Species),alpha=0.025)+
-  labs(y='density',title = 'Roost site use over time')+
-  facet_wrap(~Study.Area,ncol=1,nrow=3,scales='free')+
-  theme_pubclean()+style180+
-  theme(legend.position = 'none')
 
 # movement----
 x<-NSS %>% 
@@ -1772,6 +1791,9 @@ z<-z %>%
   filter(sp.prop>0.05) %>% 
   arrange(parrot,desc(ints))  
 # kabletable----
+#devtools::install_github(repo="haozhu233/kableExtra", ref="a6af5c0")
+#update.packages("cli")
+install.packages(c("processx", "callr"), type = "source")
 z %>% 
   select(-wins,-losses,-parrotints) %>% 
   relocate(1,2,6,3,4,5) %>% 
@@ -2430,27 +2452,15 @@ GLMdata_scale %>%
 #//////////////////////////////////
 library(GGally)
 # Convert data to numeric
-corr.site <- data.frame(lapply(GLMdata_scale, as.integer))
-corr.site<-corr.site %>% select(Richness,Shannon,rating,site.interactions,cav.sp.freq,freq.I,freq.parrots,
-                                n_cavity,cavs_canopy_sqm,canopypc,Vegpc,natsurfacepc,buildpc,
-                                artsurfacepc,waterpc,mangrovepc) %>% 
-  rename('Shannon index'=Shannon,
-         'Total interactions/site'=site.interactions,
-         'pc cavity nester spp.'=cav.sp.freq,
-         'pc introduced spp.'=freq.I,
-         'pc parrot spp.'=freq.parrots,
-         'n cavities/site'=n_cavity,
-         'cavity density/sqm'=cavs_canopy_sqm,
-         'pc canopy cover'=canopypc,
-         'pc vegetation cover'=Vegpc,
-         'pc natural surface cover'=natsurfacepc,
-         'pc buildings'=buildpc,
-         'pc artificial surface'=artsurfacepc,
-         'pc waterbodies'=waterpc,
-         'pc mangroves'=mangrovepc)
+corr.site <- x %>% ungroup() %>% 
+  mutate_if(is.numeric, funs(as.numeric(scale(.))))
+corr.site<-corr.site %>% select(-8,-11,-14,-15,-18,-22,-23,-45)
+corr.site <- data.frame(lapply(corr.site, as.integer))
+
+
 # Plot 
 ggcorr(corr.site,
-       method = c("pairwise", "spearman"),
+       method = c('pairwise','kendall'),
        nbreaks = 6,
        hjust = 0.8,
        label = TRUE,
@@ -2459,7 +2469,8 @@ ggcorr(corr.site,
        low="#2166AC", 
        mid="#F7F7F7",
        high="#B2182B",
-       layout.exp = 2)+
+       layout.exp = 2,
+       digits=3)+
   theme_pubclean()
 
 ## aggressive interactions positively correlated with number & density of cavities, and greater urban area
@@ -2477,11 +2488,11 @@ ggcorr(corr.site,
 #//////////////////////////////////
 
 # Convert data to numeric
-corr <- data.frame(lapply(GLMdata_scale, as.integer))
+corr <- data.frame(lapply(x, as.integer))
 corr<-corr %>% select(-IS.wt,-RS.wt,-Site.habitat.types,-Surrounding.habitat.types)
 # Plot 
 ggcorr(corr,
-method = c("pairwise", "spearman"),
+method = "kendall",
 nbreaks = 6,
 hjust = 0.8,
 label = TRUE,
