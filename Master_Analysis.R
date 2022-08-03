@@ -900,9 +900,14 @@ corr.site<-corr.site %>% select(-8,-11,-14,-15,-18,-22,-23,-45)
 corr.site<-corr.site %>% select(-TrophicNiche,-ForagingNiche,-IUCN_status,
                                 -SG_abundance,-sp_lab,-NestType,-Avg_size,-Species,
                                 -status.prop,-SG_status,-Study.Area,-all_obs,
-                                -max_obs,max.freq,-Simpson,-n.I,-n.parrots,-n.cavnester,
-                                -n_ints_xNE,-n_initis_xNE)
-library(GGally)
+                                -max_obs,-max.freq,-Simpson,-n.I,-n.parrots,-n.cavnester,
+                                -n_ints_xNE,-n_initis_xNE,-site.sptotal,-areaHa,
+                                -n_initis,-n_ints)
+corr.site<-corr.site %>% 
+  relocate(vegarea,Vegpc,canopypc,natsurfacepc,waterpc,mangrovepc,
+           buildarea,buildpc,artsurfacepc,n_cavity,cavs_canopy_sqm,Richness,Shannon,
+           freq.I,freq.parrots,cav.sp.freq,site.interactions)
+#library(GGally)
 # Plot 
 ggcorr(corr.site,
        method = c('pairwise','kendall'),
@@ -913,17 +918,17 @@ ggcorr(corr.site,
        digits=3,
        label_size = 3,
        color = "grey50",
-       low="#2166AC", 
+       low="#B2182B", 
        mid="#ffffff",
-       high="#B2182B",
+       high="#2166AC",
        name='tau',
        legend.size = 12,
        legend.position = 'right')
 
 ggtable(corr.site)
 
-## BLUE == NEGATIVE CORR.
-## RED == POSITIVE CORR
+## BLUE == POS CORR.
+## RED == NEG CORR
 
 
 ### vegtated area
@@ -955,6 +960,10 @@ x %>%
   style180+
   labs(title = 'Assemblage richness along the built area gradient')
 
+cor.test(formula=~Richness+n_cavity,
+         data=x,
+         method='kendall',exact=F)
+
 # o represents individual species in assemblages across sites varying in 
 # urban / vegetated area
 
@@ -973,13 +982,17 @@ x %>%
   scale_color_manual(name='Species status:',values=c('Introduced'='#994455',
                                                     'Resident'='#004488'))
 
-cor.test(formula=~status.prop+buildarea,
+cor.test(formula=~status.prop+canopypc,
          data=x,
          subset = status == 'Introduced',
          method='kendall',exact=F)
-cor.test(formula=~status.prop+buildarea,
+cor.test(formula=~status.prop+canopypc,
          data=x,
          subset = status == 'Resident',
+         method='kendall',exact=F)
+cor.test(formula=~status.prop+canopypc,
+         data=x2,
+         subset = status == 'Introduced Parrot',
          method='kendall',exact=F)
 
 # and with vegetated area
