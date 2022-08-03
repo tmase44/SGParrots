@@ -856,13 +856,19 @@ Composition_2 %>%
 #https://www.researchgate.net/publication/49806081_Male_mate_location_behaviour_and_encounter_sites_in_a_community_of_tropical_butterflies_Taxonomic_and_site_associations_and_distinctions/figures?lo=1 
 ### In case of very small p-values, the convention is to write it as p<0.001
 
-
-# table
+#table  
 Kendall %>% 
-  select(-p.value) %>% 
-  kable() %>% 
-  kable_styling(full_width = F,
-                row_spec())
+  select(-p.value,-method) %>% 
+  mutate(across(where(is.numeric), round, 3)) %>%
+    kable(align = 'lllcc',
+        col.names = c('Measure 1','Measure 2','Subset','estimate (τb)', 'Z')) %>% 
+  kable_styling(full_width = F) %>% 
+  add_header_above(header=c("Results Table: Kendalls Tau coefficients"=5),
+                   font_size = 15) %>% 
+  collapse_rows(columns = c(1,2), valign = "middle") 
+   save_kable(file = "kendall1.html")
+webshot::webshot("kendall1.html", "kendall1.pdf")#pdf better
+
 
 # some modifications
   # no need to standarise
@@ -885,30 +891,37 @@ filter(Study.Area!='Changi Airport') %>%
   # mutate_if(is.numeric, funs(as.numeric(scale(.))))
 
 # Overall correlation----
-library(GGally)
+
 # Convert data to numeric
 corr.site <- x %>% ungroup() %>% 
   mutate_if(is.numeric, funs(as.numeric(scale(.))))
-corr.site<-x %>% select(-8,-11,-14,-15,-18,-22,-23,-45)
+corr.site<-corr.site %>% select(-8,-11,-14,-15,-18,-22,-23,-45)
 #corr.site <- data.frame(lapply(corr.site, as.integer))
 corr.site<-corr.site %>% select(-TrophicNiche,-ForagingNiche,-IUCN_status,
                                 -SG_abundance,-sp_lab,-NestType,-Avg_size,-Species,
-                                -status.prop)
-
+                                -status.prop,-SG_status,-Study.Area,-all_obs,
+                                -max_obs,max.freq,-Simpson,-n.I,-n.parrots,-n.cavnester,
+                                -n_ints_xNE,-n_initis_xNE)
+library(GGally)
 # Plot 
 ggcorr(corr.site,
        method = c('pairwise','kendall'),
-       nbreaks = 6,
-       hjust = 0.8,
-       label = TRUE,
-       digits=1,
+       cor_matrix = NULL,
+       label=T,
+       nbreaks = 6, #or 6
+       hjust = 0.9,
+       digits=3,
        label_size = 3,
        color = "grey50",
        low="#2166AC", 
        mid="#ffffff",
        high="#B2182B",
-       layout.exp = 2)+
-  theme_pubclean()
+       name='tau',
+       legend.size = 12,
+       legend.position = 'right')
+
+ggtable(corr.site)
+
 ## BLUE == NEGATIVE CORR.
 ## RED == POSITIVE CORR
 
@@ -950,7 +963,7 @@ x %>%
   filter(status!='Migrant/Visitor') %>% 
   ggplot(aes(buildarea,status.prop,color=status)) +
   geom_line(color=NA)+
-  geom_jitter(width = 1.2,height=.02,alpha=.2)+
+  geom_jitter(width = 1.2,height=.02,alpha=.5,shape=21)+
   xlim(2,18)+
   geom_smooth(se=T,alpha=.2)+
   stat_cor(method = 'kendall',
@@ -974,7 +987,7 @@ x %>%
   filter(status!='Migrant/Visitor') %>% 
   ggplot(aes(vegarea,status.prop,color=status)) +
   geom_line(color=NA)+
-  geom_jitter(width = 3,height=.03,alpha=.2)+
+  geom_jitter(width = 3,height=.03,alpha=.5,shape=21)+
   xlim(10,40)+
     geom_smooth(se=T,alpha=.2)+
   stat_cor(method = 'kendall',
@@ -1157,9 +1170,11 @@ x<-Indices_2 %>%
          'Water area'=sum(waterpc+mangrovepc), #26
          'Cavity/Individual'=sum(n_cavity/n.cavnester)) #26
 x %>% 
-  select(1,2,3,5,6,
-         24,25,26,
-         17,19,21,16,27,23) %>% 
+  select(Study.Area,Richness,Shannon,
+         `Site habitat types`,`Surrounding habitat types`,
+         `Built area`,`Natural area`,`Water area`,
+         freq.I,cav.sp.freq,freq.parrots,
+         cavs_canopy_sqm,`Cavity/Individual`,site.interactions) %>% 
   mutate(across(where(is.numeric), round, 2)) %>% 
   rename(" "=Study.Area,
          'Survey area'='Site habitat types',
@@ -1177,7 +1192,7 @@ x %>%
                             "Land-use"=3,
                             "Occupying species"=3,
                             " "=3)) %>% 
-  kable_styling() %>%   
+  kable_styling() 
   save_kable(file = "site_profiles.html")
 webshot::webshot("site_profiles.html", "site_profiles.pdf")#pdf better
 
@@ -1741,7 +1756,7 @@ x4 %>%
   column_spec(column = 2, width = "1.2cm",color = "black") %>% 
   column_spec(column = 3, width = "1.2cm",color = "black") %>% 
   column_spec(column = 4, width = "1.2cm",color = "black") %>% 
-  column_spec(column = 5, width = "1.2cm",color = "black") %>%
+  column_spec(column = 5, width = "1.2cm",color = "black") %>% 
   save_kable(file = "interaction_table_focal.html")
 webshot::webshot("interaction_table_focal.html", "interaction_table_focal.pdf")
 
@@ -1791,9 +1806,11 @@ z<-z %>%
   filter(sp.prop>0.05) %>% 
   arrange(parrot,desc(ints))  
 # kabletable----
+#install.packages('devtools')
+#detach("package:kableExtra", unload=TRUE)
 #devtools::install_github(repo="haozhu233/kableExtra", ref="a6af5c0")
-#update.packages("cli")
-install.packages(c("processx", "callr"), type = "source")
+#library(kableExtra)
+
 z %>% 
   select(-wins,-losses,-parrotints) %>% 
   relocate(1,2,6,3,4,5) %>% 
@@ -1805,10 +1822,9 @@ z %>%
   collapse_rows(columns = 1, valign = "middle") %>% 
   add_header_above(header=c("Top interacting species pairs"=3,
                             "Pair Interactions"=3)) %>% 
-  kable_styling() 
-  
-  save_kable(file = "interaction_table.html")
-webshot::webshot("interaction_table.html", "interaction_table.pdf")#pdf better
+  kable_styling() %>% 
+  save_kable(file = "pairs_table.html")
+webshot::webshot("pairs_table.html", "pairs_table.pdf")#pdf better
 
 ##########
 
