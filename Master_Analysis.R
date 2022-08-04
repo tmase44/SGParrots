@@ -613,6 +613,7 @@ ISRS %>%
 #///////////////////
 int_pairs <- Interact_2 %>%
   #filter(interaction!='Neutral') %>% 
+  group_by(Study.Area) %>% 
   count(initsp, recipsp) %>%
   complete(initsp, nesting(recipsp), fill = list(n = 0)) %>% 
   filter(n!='0') %>% 
@@ -628,11 +629,21 @@ int_pairs2 <- int_pairs %>%
   mutate(Var = map2_chr(initsp, recipsp, ~toString(sort(c(.x, .y))))) %>%
   distinct(Var, .keep_all = TRUE) %>%
   select(-Var)
-int_pairs2
+int_pairs2 <-int_pairs2 %>% arrange(Study.Area,recipsp)
 
+# CORRELATION max obs and network size
+
+asite<-c('cv','cv','stir','skrp','skrp','prtp','prtp','prtp','pal','sl','sl')
+bsp<-c('tc','rbp','tc','rbp','rrp','mp','rbp','rrp','tc','rbp','rrp')
+cpop<-c(23,52,23,61,15,18,6,11,25,25,5)
+dpairs<-c(15,14,16,9,16,16,3,9,11,16,15)
+e<-data.frame(asite,bsp,cpop,dpairs)
+
+cor.test(formula=~dpairs+cpop,
+         data=e,
+         method='kendall',exact=F)
 
 # non native parrots excluded
-# ~ Top recipients
   # Javan myna, LTP, house crow, LTP OPH, YCC, AGS, YVBB, Oriole,
   # Flameback, dollarbird ===
 int_pairs %>% 

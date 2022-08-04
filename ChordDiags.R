@@ -246,10 +246,23 @@ z<-rbind(x,y) %>%
   filter(Code!='Mammal') %>% 
   arrange(Species) %>% 
   add_row(Species='Mammals grouped',Code='Mammal')
+dim(z)
+42/3
 
-z %>% 
+z1<-z[1:14, ]
+z2<-z[15:28, ]
+z3<-z[29:42, ]
+z4<-cbind(z1,z2,z3)
+
+z4 %>% 
   kable(align = 'll') %>% 
   kable_styling(full_width = FALSE) %>% 
+  column_spec(column = 2, width = "3cm") %>% 
+  column_spec(column = 4, width = "3cm") %>% 
+  column_spec(column = 6, width = "3cm") %>% 
+  add_header_above(header=c("Network reference table: species codes"=6),
+                   font_size = 16,
+                   align='l') %>% 
   save_kable(file = "ref_table.html")
 webshot::webshot("ref_table.html", "ref_table.pdf")
 
