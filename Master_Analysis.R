@@ -114,7 +114,7 @@ Indices <- rownames_to_column(Indices, "Study.Area")
 # Sorensen index----
 #===================#
 #Calculating Sorensen index
-sorensen<-designdist(Comp.alpha, method="(2∗J)/(A+B)", terms=c("binary"))
+sorensen<-designdist(Comp.alpha, method="(2*J)/(A+B)", terms=c("binary"))
 sorensen<-round(sorensen,3)
 sorensen
 
@@ -367,6 +367,22 @@ x<-Composition_2 %>%
   filter(SG_status=='I') %>% 
   group_by(Study.Area) %>% 
   summarise(n.I=sum(max_obs))
+Indices_2<-merge(Indices_2,x,by='Study.Area')
+
+# Total native "R" species proportion
+x<-Composition_2 %>% 
+  filter(SG_status=='R') %>% 
+  group_by(Study.Area,Species) %>% 
+  summarise(freq=mean(max.freq)) %>% 
+  group_by(Study.Area) %>% 
+  summarise(freq.R=sum(freq))
+Indices_2<-merge(Indices_2,x,by='Study.Area')
+
+# Total native "R" species number
+x<-Composition_2 %>% 
+  filter(SG_status=='R') %>% 
+  group_by(Study.Area) %>% 
+  summarise(n.R=sum(max_obs))
 Indices_2<-merge(Indices_2,x,by='Study.Area')
 
 # Parrot proportion
@@ -854,18 +870,19 @@ Composition_2 %>%
 #https://www.researchgate.net/publication/263221496_Dynamics_of_Nutrient_Contents_Phosphorus_Nitrogen_in_Water_Sediment_and_Plants_After_Restoration_of_Connectivity_in_Side-Channels_of_the_River_Rhine/figures?lo=1
 #https://www.researchgate.net/publication/345728052_Assessing_functional_redundancy_in_Eurasian_small_mammal_assemblages_across_multiple_traits_and_biogeographic_extents/figures?lo=1
 #https://www.researchgate.net/publication/49806081_Male_mate_location_behaviour_and_encounter_sites_in_a_community_of_tropical_butterflies_Taxonomic_and_site_associations_and_distinctions/figures?lo=1 
+# *** https://www.researchgate.net/publication/357655320_Kendall_Transformation_A_Robust_Representation_of_Continuous_Data_for_Information_Theory 
+
 ### In case of very small p-values, the convention is to write it as p<0.001
 
 #table  
 Kendall %>% 
-  select(-p.value,-method) %>% 
   mutate(across(where(is.numeric), round, 3)) %>%
     kable(align = 'lllcc',
-        col.names = c('Measure 1','Measure 2','Subset','estimate (τb)', 'Z')) %>% 
+        col.names = c('Measure 1','Measure 2','Subset','estimate (τb)','p', 'Z')) %>% 
   kable_styling(full_width = F) %>% 
-  add_header_above(header=c("Results Table: Kendalls Tau coefficients"=5),
+  add_header_above(header=c("Results Table: Kendalls Tau coefficients"=6),
                    font_size = 15) %>% 
-  collapse_rows(columns = c(1,2), valign = "middle") 
+  collapse_rows(columns = c(1,2,3), valign = "middle") 
    save_kable(file = "kendall1.html")
 webshot::webshot("kendall1.html", "kendall1.pdf")#pdf better
 
@@ -895,18 +912,18 @@ filter(Study.Area!='Changi Airport') %>%
 # Convert data to numeric
 corr.site <- x %>% ungroup() %>% 
   mutate_if(is.numeric, funs(as.numeric(scale(.))))
-corr.site<-corr.site %>% select(-8,-11,-14,-15,-18,-22,-23,-45)
+corr.site<-corr.site %>% select(-8,-11,-14,-15,-18,-22,-23,-47)
 #corr.site <- data.frame(lapply(corr.site, as.integer))
 corr.site<-corr.site %>% select(-TrophicNiche,-ForagingNiche,-IUCN_status,
                                 -SG_abundance,-sp_lab,-NestType,-Avg_size,-Species,
                                 -status.prop,-SG_status,-Study.Area,-all_obs,
-                                -max_obs,-max.freq,-Simpson,-n.I,-n.parrots,-n.cavnester,
+                                -max_obs,-max.freq,-Simpson,-n.cavnester,
                                 -n_ints_xNE,-n_initis_xNE,-site.sptotal,-areaHa,
-                                -n_initis,-n_ints)
+                                -n_initis,-n_ints,)
 corr.site<-corr.site %>% 
   relocate(vegarea,Vegpc,canopypc,natsurfacepc,waterpc,mangrovepc,
-           buildarea,buildpc,artsurfacepc,n_cavity,cavs_canopy_sqm,Richness,Shannon,
-           freq.I,freq.parrots,cav.sp.freq,site.interactions)
+           buildarea,buildpc,artsurfacepc,n_cavity,cavs_canopy_sqm,Richness,Shannon,freq.R,n.R,
+           freq.I,n.I,freq.parrots,n.parrots,cav.sp.freq,site.interactions)
 #library(GGally)
 # Plot 
 ggcorr(corr.site,
@@ -981,18 +998,23 @@ x %>%
   style180+
   scale_color_manual(name='Species status:',values=c('Introduced'='#994455',
                                                     'Resident'='#004488'))
-
-cor.test(formula=~status.prop+canopypc,
+## left = dependent
+## right = independent (explanatory)
+# resident
+cor.test(formula=~n.R+cavs_canopy_sqm,
          data=x,
-         subset = status == 'Introduced',
          method='kendall',exact=F)
-cor.test(formula=~status.prop+canopypc,
+#introduced 
+cor.test(formula=~n.I+cavs_canopy_sqm,
          data=x,
-         subset = status == 'Resident',
          method='kendall',exact=F)
-cor.test(formula=~status.prop+canopypc,
-         data=x2,
-         subset = status == 'Introduced Parrot',
+#parrots
+cor.test(formula=~n.parrots+cavs_canopy_sqm,
+         data=x,
+         method='kendall',exact=F)
+#Richness
+cor.test(formula=~Richness+cavs_canopy_sqm,
+         data=x,
          method='kendall',exact=F)
 
 # and with vegetated area
