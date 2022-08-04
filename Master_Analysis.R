@@ -877,12 +877,18 @@ Composition_2 %>%
 #table  
 Kendall %>% 
   mutate(across(where(is.numeric), round, 3)) %>%
-    kable(align = 'lllcc',
-        col.names = c('Measure 1','Measure 2','Subset','estimate (τb)','p', 'Z')) %>% 
+    unite(`estimate τb`,`estimate τb`:p.,remove=FALSE) %>% 
+  mutate(`estimate τb` = str_replace(`estimate τb`, "_", " ")) %>% 
+  select(-p.,-z) %>% 
+  pivot_wider(names_from = `Var 1`,values_from = `estimate τb`) %>%  
+  rename(" "="Var 2") %>% 
+  kable(align = 'lccccc') %>% 
   kable_styling(full_width = F) %>% 
-  add_header_above(header=c("Results Table: Kendalls Tau coefficients"=6),
+  add_header_above(header=c(" "=1,
+                            "Results Table: Kendalls Tau coefficients"=5),
                    font_size = 15) %>% 
-  collapse_rows(columns = c(1,2,3), valign = "middle") 
+  column_spec(column = 1, width = "4.5cm",color = "black")%>% 
+  column_spec(column = c(2,3,4,5,6), width = "3cm") %>% 
    save_kable(file = "kendall1.html")
 webshot::webshot("kendall1.html", "kendall1.pdf")#pdf better
 
@@ -949,7 +955,7 @@ ggtable(corr.site)
 
 
 ### vegtated area
-x %>% 
+a<-x %>% 
   ggplot(aes(vegarea,Richness)) +
   geom_line(color=NA)+
   geom_point(position=position_jitter(width = 7, height = 2), alpha=.7, shape=21)+
@@ -960,11 +966,13 @@ x %>%
   geom_smooth(method='loess',color='#228833')+
   #stat_poly_eq(aes(color='red',size=10))+
   theme_pubclean()+
-  style180+
-  labs(title = 'Assemblage richness along the natural area cover gradient')
-
+  style180+  
+  theme(plot.title = element_text(size=16))+
+  labs(title = 'A)',
+       x='Green area proportion',
+       y='Richness')
 ### built area
-x %>% 
+b<-x %>% 
   ggplot(aes(buildarea,Richness)) +
   geom_line(color=NA)+
   geom_point(position=position_jitter(width = 1.5, height = 3), alpha=.7, shape=21)+
@@ -975,99 +983,90 @@ x %>%
   geom_smooth(method='loess',color='#4477AA')+
   theme_pubclean()+
   style180+
-  labs(title = 'Assemblage richness along the built area gradient')
+  theme(plot.title = element_text(size=16))+
+  labs(title = 'B)',
+       x='Urban area proportion',
+       y='Richness')
 
-cor.test(formula=~Richness+n_cavity,
-         data=x,
-         method='kendall',exact=F)
 
 # o represents individual species in assemblages across sites varying in 
 # urban / vegetated area
 
-# built by introduction status
-x %>% 
-  filter(status!='Migrant/Visitor') %>% 
-  ggplot(aes(buildarea,status.prop,color=status)) +
+# built by introduction status 35,37,39
+d<-x %>% 
+  ungroup() %>% 
+  select(buildarea,n.I,n.R,n.parrots) %>% 
+  pivot_longer(cols=c(n.I,n.R,n.parrots),names_to = 'class', values_to = 'counts') %>% 
+  ggplot(aes(buildarea,counts,color=class)) +
   geom_line(color=NA)+
-  geom_jitter(width = 1.2,height=.02,alpha=.5,shape=21)+
+  geom_jitter(width = 2,height=6,alpha=.5,shape=21)+
   xlim(2,18)+
   geom_smooth(se=T,alpha=.2)+
   stat_cor(method = 'kendall',
-           label.y.npc=1,label.x.npc=.1)+
+           label.y.npc=1,label.x.npc=0,
+           digits=3)+
   theme_pubclean()+
   style180+
-  scale_color_manual(name='Species status:',values=c('Introduced'='#994455',
-                                                    'Resident'='#004488'))
+  theme(plot.title = element_text(size=16))+
+  scale_color_manual(name='Species status:',
+                     labels=c('Introduced','Resident','Introduced parrot'),
+                     values=c('n.I'='#994455',
+                                                    'n.R'='#004488',
+                                                    'n.parrots'='#997700'))+
+  labs(title = 'D)',
+       x='Urban area proportion',
+       y='Abundance')
+
+
+# and with vegetated area
+c<-x %>% 
+  ungroup() %>% 
+  select(vegarea,n.I,n.R,n.parrots) %>% 
+  pivot_longer(cols=c(n.I,n.R,n.parrots),names_to = 'class', values_to = 'counts') %>% 
+  ggplot(aes(vegarea,counts,color=class)) +
+  geom_line(color=NA)+
+  geom_jitter(width = 7,height=2,alpha=.5,shape=21)+
+  xlim(10,40)+
+  geom_smooth(se=T,alpha=.2)+
+  stat_cor(method = 'kendall',
+           label.y.npc=1,label.x.npc=0,
+           digits = 3)+
+  theme_pubclean()+
+  style180+
+  theme(plot.title = element_text(size=16))+
+  scale_color_manual(name='Species status:',
+                     labels=c('Introduced','Resident','Introduced parrot'),
+                     values=c('n.I'='#994455',
+                              'n.R'='#004488',
+                              'n.parrots'='#997700'))+
+  labs(title = 'C)',
+       x='Green area proportion',
+       y='Abundance')
+# kendall plots
+grid.arrange(a,b,c,d,
+             top=textGrob("Interaction distance from cavity or roost",
+                                  gp=gpar(fontsize=22),vjust=0.2))
+
+# corrs
+
 ## left = dependent
 ## right = independent (explanatory)
 # resident
-cor.test(formula=~n.R+cavs_canopy_sqm,
+cor.test(formula=~n.I+n.R,
          data=x,
          method='kendall',exact=F)
 #introduced 
-cor.test(formula=~n.I+cavs_canopy_sqm,
+cor.test(formula=~site.interactions+Vegpc,
          data=x,
          method='kendall',exact=F)
 #parrots
-cor.test(formula=~n.parrots+cavs_canopy_sqm,
+cor.test(formula=~site.interactions+vegarea,
          data=x,
          method='kendall',exact=F)
 #Richness
-cor.test(formula=~Richness+cavs_canopy_sqm,
+cor.test(formula=~site.interactions+canopypc,
          data=x,
          method='kendall',exact=F)
-
-# and with vegetated area
-x %>% 
-  filter(status!='Migrant/Visitor') %>% 
-  ggplot(aes(vegarea,status.prop,color=status)) +
-  geom_line(color=NA)+
-  geom_jitter(width = 3,height=.03,alpha=.5,shape=21)+
-  xlim(10,40)+
-    geom_smooth(se=T,alpha=.2)+
-  stat_cor(method = 'kendall',
-           label.y.npc=1,label.x.npc=.1)+
-  theme_pubclean()+
-  style180+
-  scale_color_manual(name='Species status:',values=c('Introduced'='#994455',
-                                                     'Resident'='#004488'))
-
-# parrots only built area
-x2<-x %>% 
-  mutate(status=factor(case_when(Species=='Red-breasted parakeet'~'Introduced Parrot',
-                                 Species=='Rose-ringed parakeet'~'Introduced Parrot',
-                                 Species=='Tanimbar corella'~'Introduced Parrot',
-                                 Species=='Monk parakeet'~'Introduced Parrot',
-                                 Species=='Sulphur crested cockatoo'~'Introduced Parrot',
-                                 Species=='Yellow crested cockatoo'~'Introduced Parrot',
-                                 TRUE ~ as.character(status))))
- x2 %>% 
-  filter(status=='Introduced Parrot') %>% 
-  ggplot(aes(buildarea,status.prop,color=status)) +
-  geom_line(color=NA)+
-  geom_jitter(width = 2,height=.05,alpha=.7)+
-  xlim(2,18)+
-  geom_smooth(method='loess',alpha=.2)+
-  stat_cor(method = 'kendall',
-           label.y.npc=1,label.x.npc=.1)+
-  theme_pubclean()+
-  style180+
-  scale_color_manual(name='Species status:',values=c('Introduced Parrot'='#997700'))
-
-# parrots only veg area
-x2 %>% 
-  filter(status=='Introduced Parrot') %>% 
-  ggplot(aes(vegarea,status.prop,color=status)) +
-  geom_line(color=NA)+
-  geom_jitter(width = 2,height=.05,alpha=.7)+
-  xlim(10,40)+
-  geom_smooth(method='loess',alpha=.2)+
-  stat_cor(method = 'kendall',
-           label.y.npc=1,label.x.npc=.1)+
-  theme_pubclean()+
-  style180+
-  scale_color_manual(name='Species status:',values=c('Introduced Parrot'='#997700'))
-
 
 ## Beta----
 # Sorensen index
@@ -1750,6 +1749,7 @@ topend<-which(x4$inits_Agg_freq >.5)
 bottomend<-which(x4$n_observed >30 &
                    x4$inits_Agg_freq<.5 &
                    x4$n_inits_Agg!=0)
+
 
 x4 %>% 
   arrange(desc(n_observed)) %>% 
