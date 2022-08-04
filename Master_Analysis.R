@@ -967,8 +967,7 @@ a<-x %>%
   #stat_poly_eq(aes(color='red',size=10))+
   theme_pubclean()+
   style180+  
-  theme(plot.title = element_text(size=16))+
-  labs(title = 'A)',
+  labs(subtitle = 'A)',
        x='Green area proportion',
        y='Richness')
 ### built area
@@ -983,8 +982,7 @@ b<-x %>%
   geom_smooth(method='loess',color='#4477AA')+
   theme_pubclean()+
   style180+
-  theme(plot.title = element_text(size=16))+
-  labs(title = 'B)',
+  labs(subtitle = 'B)',
        x='Urban area proportion',
        y='Richness')
 
@@ -999,7 +997,7 @@ d<-x %>%
   pivot_longer(cols=c(n.I,n.R,n.parrots),names_to = 'class', values_to = 'counts') %>% 
   ggplot(aes(buildarea,counts,color=class)) +
   geom_line(color=NA)+
-  geom_jitter(width = 2,height=6,alpha=.5,shape=21)+
+  geom_jitter(width = 2,height=7,alpha=.5,shape=21)+
   xlim(2,18)+
   geom_smooth(se=T,alpha=.2)+
   stat_cor(method = 'kendall',
@@ -1007,13 +1005,12 @@ d<-x %>%
            digits=3)+
   theme_pubclean()+
   style180+
-  theme(plot.title = element_text(size=16))+
   scale_color_manual(name='Species status:',
                      labels=c('Introduced','Resident','Introduced parrot'),
                      values=c('n.I'='#994455',
                                                     'n.R'='#004488',
                                                     'n.parrots'='#997700'))+
-  labs(title = 'D)',
+  labs(subtitle = 'D)',
        x='Urban area proportion',
        y='Abundance')
 
@@ -1025,7 +1022,7 @@ c<-x %>%
   pivot_longer(cols=c(n.I,n.R,n.parrots),names_to = 'class', values_to = 'counts') %>% 
   ggplot(aes(vegarea,counts,color=class)) +
   geom_line(color=NA)+
-  geom_jitter(width = 7,height=2,alpha=.5,shape=21)+
+  geom_jitter(width = 4,height=7,alpha=.5,shape=21)+
   xlim(10,40)+
   geom_smooth(se=T,alpha=.2)+
   stat_cor(method = 'kendall',
@@ -1033,19 +1030,18 @@ c<-x %>%
            digits = 3)+
   theme_pubclean()+
   style180+
-  theme(plot.title = element_text(size=16))+
   scale_color_manual(name='Species status:',
                      labels=c('Introduced','Resident','Introduced parrot'),
                      values=c('n.I'='#994455',
                               'n.R'='#004488',
                               'n.parrots'='#997700'))+
-  labs(title = 'C)',
+  labs(subtitle = 'C)',
        x='Green area proportion',
        y='Abundance')
 # kendall plots
 grid.arrange(a,b,c,d,
-             top=textGrob("Interaction distance from cavity or roost",
-                                  gp=gpar(fontsize=22),vjust=0.2))
+             top=textGrob("Change in richness and abundance over land-use gradients",
+                                  gp=gpar(fontsize=18),vjust=0.3))
 
 # corrs
 
