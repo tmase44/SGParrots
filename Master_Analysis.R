@@ -1899,107 +1899,7 @@ z %>%
   save_kable(file = "pairs_table.html")
 webshot::webshot("pairs_table.html", "pairs_table.pdf")#pdf better
 
-##########
 
-#2. ROLES----
-# n IS RS
-ISRS %>%
-  filter(interaction!='Neutral') %>% 
-  filter(sp_lab=='NNP'|Species=='Long-tailed parakeet') %>%  
-  group_by(Species,role) %>% 
-  summarise(n=sum(n_ints)) %>% 
-  ggplot(aes(reorder(Species,-n),n,fill=role))+
-  geom_col(position = 'stack')+ 
-  geom_text(aes(label = n),position=position_stack(vjust=.5))+ 
-  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
-  labs(x='Species',y='n',title='n interactions intiated and recieved')+
-  scale_fill_manual(va.lues=c('IS'='#994455','RS'='#EE99AA'))+
-  theme_pubclean()+style180Centered
-
-# % IS RS
-ISRS %>%  
-  filter(interaction!='Neutral') %>% 
-  filter(sp_lab=='NNP'|Species=='Long-tailed parakeet') %>%  
-  group_by(Species,role) %>% 
-  summarise(n=sum(n_ints)) %>%
-  filter(n!=0) %>%
-  mutate(freq=n/sum(n)*100) %>% 
-  ggplot(aes(reorder(Species,-n),freq,fill=role))+
-  geom_col(position = 'fill')+theme_minimal()+
-  geom_text(aes(label = round(freq,1)),position=position_fill(vjust=.5))+ 
-  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
-  labs(x='Species',y='Proprotion of interactions',title='Proportion aggressive interactions intiated and recieved')+
-  scale_fill_manual(values=c('IS'='#994455','RS'='#EE99AA'))+
-  theme_pubclean()+style180Centered
-
-# 3. W/L/NE summary----
-# n W/L/NE all ints
-
-ISRS %>% 
-  group_by(Species,outcome) %>% 
-  filter(interaction!='Neutral') %>% 
-  filter(sp_lab=='NNP'|Species=='Long-tailed parakeet') %>%  
-  summarise(n=sum(n_ints)) %>% 
-  filter(n!=0) %>% 
-  ggplot(aes(reorder(Species,-n),n,fill=outcome))+
-  geom_col(position = 'stack')+ 
-  geom_text(aes(label = n),position=position_stack(vjust=.5))+ 
-  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
-  labs(x='Species',y='Number of interactions',title='Wins and Losses')+
-  scale_fill_manual(values=c('W'='#4393c3','L'='#d6604d'))+
-  theme_pubclean()+style180Centered
-
-# % W/L/NE all ints
-ISRS %>% 
-  group_by(Species,outcome) %>% 
-  filter(interaction!='Neutral') %>% 
-  filter(sp_lab=='NNP'|Species=='Long-tailed parakeet') %>%  
-  summarise(n=sum(n_ints)) %>%
-  mutate(freq=n/sum(n)*100) %>% 
-  ggplot(aes(reorder(Species,-n),freq,fill=outcome))+
-  geom_col(position = 'fill')+
-  geom_text(aes(label = round(freq,1)),position=position_fill(vjust=.5))+ 
-  scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
-  labs(x='Species',y='Proportion of interactions',title='Wins and Losses')+
-  scale_fill_manual(values=c('W'='#4393c3','L'='#d6604d'))+
-  theme_pubclean()+style180Centered
-
-
-ISRS %>% 
-  filter(outcome!="NE") %>% 
-  filter(Species=="Monk parakeet"|Species=="Tanimbar corella"|Species=="Rose-ringed parakeet"|Species=="Red-breasted parakeet"|Species=="Long-tailed parakeet") %>%  
-    group_by(Species,role,outcome) %>% 
-  summarise(n=sum(n_ints)) %>%
-  mutate(freq=n/sum(n)*100) %>% 
-  ggplot(aes(reorder(Species,-n),freq,fill=outcome))+
-  geom_col(position = 'fill')+
-  geom_text(aes(label = round(freq,1)),position=position_fill(vjust=.5))+ 
-  scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
-  labs(x='Species',y='%',title='Proportion wins, losses and neutral outcomes')+
-  scale_fill_manual(values=c('W'='#4393c3','L'='#d6604d'))+
-  facet_wrap(~role)
-
-ISRS %>% 
-  filter(outcome!="NE") %>% 
-  filter(Species=="Monk parakeet"|Species=="Tanimbar corella"|Species=="Rose-ringed parakeet"|Species=="Red-breasted parakeet"|Species=="Long-tailed parakeet") %>%  
-  group_by(Species,outcome) %>% 
-  summarise(n=sum(n_ints)) %>%
-  mutate(freq=n/sum(n)*100) %>% 
-  ggplot(aes(reorder(Species,-n),freq,fill=outcome))+
-  geom_col(position = 'fill')+
-  geom_text(aes(label = round(freq,1)),position=position_fill(vjust=.5))+ 
-  scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
-  labs(x='Species',y='%',title='Proportion wins, losses and neutral outcomes')+
-  scale_fill_manual(values=c('W'='#4393c3','L'='#d6604d'))
-
-# actual n ints----
-ISRS %>% 
-  filter(role=='IS') %>% group_by(Species) %>% 
-  #filter(Species=="Monk parakeet"|Species=="Tanimbar corella"|Species=="Rose-ringed parakeet"|Species=="Red-breasted parakeet"|Species=="Long-tailed parakeet") %>%  
-  ggplot(aes(interaction,n_ints))+geom_col(width=0.95)+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ylim(0,40)+
-  theme(legend.position = 'none')+labs(y='n_ints',x='interaction',title='Interaction distribution: positively skewed')#+
-  #facet_wrap(~Species)
 
 # relative freq (%)
 ISRS %>% 
@@ -2045,7 +1945,7 @@ Interact_2 %>%
 # distance from nest----
 
 # by spp. box
-a<-Interact_2 %>% 
+Interact_2 %>% 
   filter(interaction!='Neutral') %>% 
   filter(nxt_cav<100) %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
@@ -2058,7 +1958,7 @@ a<-Interact_2 %>%
   theme(axis.title.x = element_blank(),
         plot.title = element_text(vjust = -5))
 # by interaction
-b<-Interact_2 %>% 
+Interact_2 %>% 
   filter(interaction!='Neutral') %>% 
   filter(nxt_cav<100) %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
@@ -2072,7 +1972,7 @@ b<-Interact_2 %>%
         axis.title.y = element_blank(),
         plot.title = element_text(vjust = -5))
 # by study Area box
-c<-Interact_2 %>% 
+Interact_2 %>% 
   filter(interaction!='Neutral') %>% 
   filter(nxt_cav<100) %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet") %>%  
@@ -2085,7 +1985,7 @@ c<-Interact_2 %>%
   theme(axis.title.x = element_blank(),
         plot.title = element_text(vjust = -5))
 # by outcome
-d<-Interact_2 %>% 
+Interact_2 %>% 
   filter(interaction!='Neutral') %>% 
   filter(nxt_cav<100) %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet") %>%  
@@ -2198,30 +2098,11 @@ Interact_2 %>%
   scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
   facet_wrap(~initsp)
 
-# negative bionomial reg
-x<-ISRS %>% filter(!is.na(interaction))
-str(ISRS)
-mean(ISRS$n_ints);var(ISRS$n_ints)
-# mean and variance are nowhere close so poisson is not usable
-## data = overdispersed
 
-x %>% 
-  ggplot(aes(n_ints))+
-  geom_bar()+facet_wrap(~Study.Area)
-# data firs poisson distribution
-x %>% 
-  ggplot(aes(n_ints))+
-  geom_bar()+facet_wrap(~NestType)
-# data firs poisson distribution
-x %>% 
-  ggplot(aes(n_ints))+
-  geom_bar()+facet_wrap(~Species)
-# data firs poisson distribution
 
-# actual model
-y<-glm.nb(site.interactions ~ sp_lab, data = x)
-summary(y)
-##////////////////////////////////////////////////////////
+#////////////////////////////////////////////////////////
+# Size differences 
+#////////////////////////////////////////////////////////
 
 # species pairs analysis----
 top_one_RS.size <- quantile(sp.pairs$RS.size, .99)
@@ -2318,57 +2199,15 @@ sp.pairs_2 %>%
   theme_pubclean()+style180Centered+
   scale_x_discrete(labels = function(initsp2) str_wrap(initsp2, width = 15))+
     theme(axis.title.x = element_blank(),
-        plot.title = element_text(vjust = -5),
-        legend.key.size = unit(1,'cm'))+
+          plot.title = element_text(vjust = -5),
+          legend.key.size = unit(1,'cm'))+
   scale_color_manual(name='Outcome',values = c('W'='#4393c3',
-                                'L'='#d6604d'))
+                                               'L'='#d6604d'))
 
-# wins and losses by weight, per interaction species facet----
-sp.pairs_2 %>% 
-  filter(interaction!='Neutral') %>% 
-  filter(RS.size<300) %>% 
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
-  ggplot(aes(interaction,RS.size))+
-  geom_boxplot(aes(color=isout),outlier.shape = NA)+
-  geom_hline(aes(yintercept=IS.size),linetype='dotted',size=.75,alpha=1)+
-  geom_point(aes(interaction,RS.size,group=isout,color=isout,shape=RS.sp_lab),size=3,position = position_dodge(width = .8))+
-  labs(y='Recipient body size (cm)',title='Initiated interactions and outcomes')+
-  theme_pubclean()+style180Centered+
-  theme(axis.title.x = element_blank(),
-        plot.title = element_text(vjust = -5),
-        strip.text = element_text(size=12))+
-  facet_wrap(~initsp,scales = 'free_x')+
-  scale_color_manual(name='Outcome',values = c('W'='#4393c3',
-                                               'L'='#d6604d'))+
-  scale_shape_manual(name='Grouping',values=c('M'=20,'N'=1,'NN'=22,'NNP'=2))
 
-# ... by site----
-sp.pairs_2 %>% 
-  filter(interaction!='Neutral') %>% 
-  filter(RS.size<300) %>% 
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
-  ggplot(aes(Study.Area,RS.size))+
-  geom_boxplot(aes(color=isout),outlier.shape = NA)+
-  geom_hline(aes(yintercept=IS.size),linetype='dotted',size=.75,alpha=1)+
-  geom_point(aes(Study.Area,RS.size,group=isout,color=isout,shape=RS.sp_lab),size=3,position = position_dodge(width = .8))+
-  labs(y='Recipient body size (cm)',title='Initiated interactions and outcomes by site')+
-  theme_pubclean()+style180Centered+
-  theme(axis.title.x = element_blank(),
-        plot.title = element_text(vjust = -5),
-        strip.text = element_text(size=12))+
-  facet_wrap(~initsp,scales = 'free_x')+
-  scale_color_manual(name='Outcome',values = c('W'='#4393c3',
-                                               'L'='#d6604d'))+
-  scale_shape_manual(name='Grouping',values=c('M'=20,'N'=1,'NN'=22,'NNP'=2))+
-  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))
-  
 
 #////////////////////////////////
-# Standardize and LM ----
-#////////////////////////////////
-
-#////////////////////////////////
-## with sp.pairs ----
+## GLM with sp.pairs ----
 #////////////////////////////////
 
 #https://www.guru99.com/r-generalized-linear-model.html
