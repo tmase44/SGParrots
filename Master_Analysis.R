@@ -779,7 +779,6 @@ ISRS$Species2 = str_wrap(ISRS$Species, width = 10)
 Enviro_2$Study.Area2 = str_wrap(Enviro_2$Study.Area, width = 10)
 Interact_2$Study.Area2 = str_wrap(Interact_2$Study.Area, width = 10)
 sp.pairs$Study.Area2 = str_wrap(sp.pairs$Study.Area, width = 10)
-sp.pairs_2$Study.Area2 = str_wrap(sp.pairs_2$Study.Area, width = 10)
 
 
 # title styling
@@ -1518,29 +1517,54 @@ summary(glm.nb(n.cavnester~site.interactions, data = x))
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
-# obs / ints point
-Composition_2 %>% 
-  filter(Study.Area!='Changi Airport'|Species!='Javan myna') %>% 
-  group_by(Species) %>% 
-  summarise(max_obs=sum(max_obs),
-            n_ints=sum(n_ints)) %>% 
-  ggplot(aes(max_obs,n_ints,color=Species))+
-  geom_jitter(height = 6,alpha=.8,size=3)+
-  coord_trans(x='log10')+
-  theme_pubclean()+
-  labs(x='Individuals observed',y='Total number of interactions',
-       title = 'Total observations and interactions')+
-  scale_colour_manual(values=c('Red-breasted parakeet'='#CC3311',
-                             'Monk parakeet'='#009988',
-                             'Rose-ringed parakeet'='#EE3377',
-                             'Tanimbar corella'='#EE7733',
-                             'Yellow crested cockatoo'='#33BBEE',
-                             'Sulphur crested cockatoo'='#0077BB'))+
-  scale_y_continuous(limits = c(0, 300), oob = scales::squish)+style180
-# majority of all observed sp. in study areas were not in parrot interaction networks
 
 #/////////////////////////
 # THIS ONE
+# with parrots
+Composition_2 %>% 
+  filter(Study.Area!='Changi Airport'|Species!='Javan myna') %>% 
+  group_by(Species,NestType) %>% 
+  summarise(max_obs=sum(max_obs),
+            n_ints=sum(n_ints)) %>% 
+  filter(n_ints>1) %>% 
+  filter(max_obs>0) %>% 
+  ggplot(aes(max_obs,n_ints))+
+  geom_jitter(aes(max_obs,n_ints,shape=NestType),height = 4,width=1,alpha=.8,color='black',size=3)+
+  #coord_trans(x='log10')+
+  geom_smooth(method='gam',alpha=.3,color='#0077BB')+
+  stat_regline_equation(label.y = 285, aes(label = ..rr.label..),size=6,color='#0077BB')+
+  stat_regline_equation(label.y = 295, aes(label = ..eq.label..),size=6,color='#0077BB')+
+  theme_pubclean()+
+  theme(legend.text = element_text(size=14))+
+  labs(x='Individuals observed',y='Total number of interactions',
+       title = 'Interactions relative to total abundance')+
+  geom_text_repel(data=Composition_2 %>% 
+                    filter(Study.Area!='Changi Airport'|Species!='Javan myna') %>% 
+                    group_by(Species) %>% 
+                    summarise(max_obs=sum(max_obs),
+                              n_ints=sum(n_ints)) %>% 
+                    filter(n_ints>18) %>% 
+                    filter(max_obs>5),aes(label=Species),
+                  nudge_y=4,size=4.5,
+                  box.padding = 0.5, max.overlaps = Inf)+
+  scale_y_continuous(limits = c(0, 300), oob = scales::squish)+style180+
+  scale_shape_manual(values=c(20,21,7))
+
+x<-Composition_2 %>% 
+  filter(Study.Area!='Changi Airport'|Species!='Javan myna') %>% 
+  group_by(Species,NestType) %>% 
+  summarise(max_obs=sum(max_obs),
+            n_ints=sum(n_ints)) %>% 
+  filter(n_ints>1) %>% 
+  filter(max_obs>0)
+
+#library(mgcv)
+summary(lm(max_obs~n_ints, data=x,method = 'qr'))
+##y<-(gam(max_obs~n_ints, data=x))
+#summary(y)
+#plot.gam(y)
+# r2 = .801, deviance explained = 84.7, p = ***, f=17.56
+
   # sp involved in parrot interaction networks
 Composition_2 %>% 
   filter(Study.Area!='Changi Airport'|Species!='Javan myna') %>% 
@@ -1552,14 +1576,15 @@ Composition_2 %>%
   filter(n_ints>1) %>% 
   filter(max_obs>0) %>% 
   ggplot(aes(max_obs,n_ints))+
-  geom_jitter(aes(max_obs,n_ints,shape=NestType),height = 4,width=1,alpha=.8,color='black',size=3)+
+  geom_jitter(aes(max_obs,n_ints,shape=NestType),height = 4,width=1,alpha=.8,size=3)+
   #coord_trans(x='log10')+
-  stat_poly_eq()+
-  stat_poly_line()+
+  geom_smooth(method='gam',alpha=.3,color='#0077BB')+
+  stat_regline_equation(label.y = 185, aes(label = ..rr.label..),size=6,color='#0077BB')+
+  stat_regline_equation(label.y = 195, aes(label = ..eq.label..),size=6,color='#0077BB')+
   theme_pubclean()+
   theme(legend.text = element_text(size=14))+
   labs(x='Individuals observed',y='Total number of interactions',
-       title = 'Aggressive interactions within focal species network')+
+       title = 'Interactions : total abundance without focal species')+
   geom_text_repel(data=Composition_2 %>% 
                     filter(Study.Area!='Changi Airport'|Species!='Javan myna') %>% 
                     filter(Species!="Monk parakeet"&Species!="Tanimbar corella"&
@@ -1577,13 +1602,19 @@ Composition_2 %>%
 x<-Composition_2 %>% 
   filter(Study.Area!='Changi Airport'|Species!='Javan myna') %>% 
   filter(Species!="Monk parakeet"&Species!="Tanimbar corella"&
-           Species!="Rose-ringed parakeet"&Species!="Red-breasted parakeet")  %>%
-  group_by(Species) %>% 
+           Species!="Rose-ringed parakeet"&Species!="Red-breasted parakeet") %>%
+  group_by(Species,NestType) %>% 
   summarise(max_obs=sum(max_obs),
-            n_ints=sum(n_ints))
-# dependent = n ints
-y<-lm(n_ints~max_obs,x)
-  summary(y)
+            n_ints=sum(n_ints)) %>% 
+  filter(n_ints>1) %>% 
+  filter(max_obs>0)
+
+summary(lm(max_obs~n_ints, data=x,method = 'qr'))
+
+#summary.gam(gam(max_obs~n_ints, data=x))
+# r2 = .781, deviance explained = 83.2, p = ***, f=14.74
+#histogram(residuals.gam(gam(max_obs~n_ints, data=x)))
+
 
 # species within the regular interaction network
 ## of the focal non-native parrots
@@ -2190,6 +2221,7 @@ x %>%
 # actual model
 y<-glm.nb(site.interactions ~ sp_lab, data = x)
 summary(y)
+##////////////////////////////////////////////////////////
 
 # species pairs analysis----
 top_one_RS.size <- quantile(sp.pairs$RS.size, .99)
@@ -2228,6 +2260,9 @@ sp.pairs_2$RS.status<-factor(sp.pairs_2$RS.status)
 sp.pairs_2$isout<-factor(sp.pairs_2$isout,levels = c('W','L','NE'))
 sp.pairs_2$rsout<-factor(sp.pairs_2$rsout,levels = c('W','L','NE'))
 
+# nice labels
+sp.pairs_2$Study.Area2 = str_wrap(sp.pairs_2$Study.Area, width = 10)
+sp.pairs_2$initsp2 = str_wrap(sp.pairs_2$initsp, width = 15)
 
 
 # first mean parrot sizes
@@ -2250,6 +2285,25 @@ sp.pairs_2 %>%
        x='Recipient body size (cm)',
        title='Frequency of interaction by type and recipient size')
 
+#//// THIS ONE////
+# all intiated by size diff----
+sp.pairs_2 %>% 
+  filter(interaction!='Neutral') %>%
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
+  ggplot(aes(initsp,size_diff))+
+  geom_boxplot(size=1,outlier.color = NA)+
+  geom_jitter(aes(initsp,size_diff),alpha=.5,shape=21,size=2,
+              position = position_jitter(height = 4,width = .1))+
+  geom_hline(aes(yintercept=0),linetype='dashed',alpha=1,color='#878787')+
+  labs(y='Recipient size difference (cm)',title='Initiated interactions by size difference')+
+  theme_pubclean()+style180Centered+
+  scale_x_discrete(labels = function(initsp2) str_wrap(initsp2, width = 15))+
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(vjust = -5),
+        legend.key.size = unit(1,'cm'))+
+  scale_color_manual(name='Outcome',values = c('W'='#4393c3',
+                                               'L'='#d6604d'))
+
 # wins losses by rs weight----
 #//// THIS ONE////
 sp.pairs_2 %>% 
@@ -2262,28 +2316,12 @@ sp.pairs_2 %>%
   geom_hline(aes(yintercept=0),linetype='dashed',alpha=1,color='#878787')+
   labs(y='Recipient size difference (cm)',title='Initiated interactions and outcomes by size difference')+
   theme_pubclean()+style180Centered+
-  theme(axis.title.x = element_blank(),
+  scale_x_discrete(labels = function(initsp2) str_wrap(initsp2, width = 15))+
+    theme(axis.title.x = element_blank(),
         plot.title = element_text(vjust = -5),
         legend.key.size = unit(1,'cm'))+
   scale_color_manual(name='Outcome',values = c('W'='#4393c3',
                                 'L'='#d6604d'))
-#//// AND THIS ONE////
-# all intiated by size diff----
-sp.pairs_2 %>% 
-  filter(interaction!='Neutral') %>%
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
-  ggplot(aes(initsp,size_diff))+
-  geom_boxplot(size=1,outlier.color = NA)+
-  geom_jitter(aes(initsp,size_diff),alpha=.5,shape=21,size=2,
-              position = position_jitter(height = 4,width = .1))+
-  geom_hline(aes(yintercept=0),linetype='dashed',alpha=1,color='#878787')+
-  labs(y='Recipient size difference (cm)',title='Initiated interactions by size difference')+
-  theme_pubclean()+style180Centered+
-  theme(axis.title.x = element_blank(),
-        plot.title = element_text(vjust = -5),
-        legend.key.size = unit(1,'cm'))+
-  scale_color_manual(name='Outcome',values = c('W'='#4393c3',
-                                               'L'='#d6604d'))
 
 # wins and losses by weight, per interaction species facet----
 sp.pairs_2 %>% 
