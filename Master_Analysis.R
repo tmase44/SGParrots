@@ -2200,7 +2200,7 @@ sp.pairs_2 <-sp.pairs %>%
   filter(IS.size<top_one_IS.size)
 rm(top_one_IS.size)
 rm(top_one_RS.size)
-#ranking for the normalization
+#ranking 
 sp.pairs_2<-sp.pairs_2 %>% 
   mutate(rating=factor(case_when(
     interaction=="Neutral"~"0", # no aggression
@@ -2249,21 +2249,41 @@ sp.pairs_2 %>%
   labs(y='Interaction frequency',
        x='Recipient body size (cm)',
        title='Frequency of interaction by type and recipient size')
+
 # wins losses by rs weight----
+#//// THIS ONE////
 sp.pairs_2 %>% 
-  filter(interaction!='Neutral') %>% 
-  filter(RS.size<300) %>% 
+  filter(interaction!='Neutral') %>%
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
-  ggplot(aes(initsp,RS.size))+
-  geom_boxplot(aes(color=isout),outlier.shape = NA)+
-  geom_point(data=highlight,aes(initsp,RS.size),shape=15,size=6,color='black')+
-  labs(y='Recipient body size (cm)',title='Initiated interactions and outcomes')+
-  #coord_cartesian(ylim = quantile(sp.pairs_2$RS.size,c(0.1,0.9)))+
+  ggplot(aes(initsp,size_diff))+
+  geom_boxplot(aes(color=isout),size=1,outlier.color = NA)+
+  geom_jitter(aes(initsp,size_diff,color=isout),alpha=.7,shape=21,size=2,
+              position = position_jitterdodge(jitter.height = 4,jitter.width = .25))+
+  geom_hline(aes(yintercept=0),linetype='dashed',alpha=1,color='#878787')+
+  labs(y='Recipient size difference (cm)',title='Initiated interactions and outcomes by size difference')+
   theme_pubclean()+style180Centered+
   theme(axis.title.x = element_blank(),
-        plot.title = element_text(vjust = -5))+
+        plot.title = element_text(vjust = -5),
+        legend.key.size = unit(1,'cm'))+
   scale_color_manual(name='Outcome',values = c('W'='#4393c3',
                                 'L'='#d6604d'))
+#//// AND THIS ONE////
+# all intiated by size diff----
+sp.pairs_2 %>% 
+  filter(interaction!='Neutral') %>%
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
+  ggplot(aes(initsp,size_diff))+
+  geom_boxplot(size=1,outlier.color = NA)+
+  geom_jitter(aes(initsp,size_diff),alpha=.5,shape=21,size=2,
+              position = position_jitter(height = 4,width = .1))+
+  geom_hline(aes(yintercept=0),linetype='dashed',alpha=1,color='#878787')+
+  labs(y='Recipient size difference (cm)',title='Initiated interactions by size difference')+
+  theme_pubclean()+style180Centered+
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(vjust = -5),
+        legend.key.size = unit(1,'cm'))+
+  scale_color_manual(name='Outcome',values = c('W'='#4393c3',
+                                               'L'='#d6604d'))
 
 # wins and losses by weight, per interaction species facet----
 sp.pairs_2 %>% 
