@@ -1942,163 +1942,46 @@ Interact_2 %>%
 # RRP
   ## also more often than other species to fight / contact 
 
-# distance from nest----
+# DISTANCE from nest----
+## merge species traits for IS
+x<-Prof %>% select(Species,NestType,sp_lab,Avg_size,Avg_Weight,SG_status)
+x<-x %>% rename(IS.NestType=NestType,
+                IS.sp_lab=sp_lab,
+                IS.size=Avg_size,
+                IS.wt=Avg_Weight,
+                IS.status=SG_status) 
+Interact_3<-merge(Interact_2,x,by.x='initsp',by.y='Species')
+## merge species traits for RS
+x<-Prof %>% select(Species,NestType,sp_lab,Avg_size,Avg_Weight,SG_status)
+x<-x %>% rename(RS.NestType=NestType,
+                RS.sp_lab=sp_lab,
+                RS.size=Avg_size,
+                RS.wt=Avg_Weight,
+                RS.status=SG_status) 
+Interact_3<-merge(Interact_2,x,by.x='recipsp',by.y='Species')
+
 
 # by spp. box
-Interact_2 %>% 
+Interact_3 %>% 
   filter(interaction!='Neutral') %>% 
   filter(nxt_cav<100) %>% 
+  filter(!is.na(RS.NestType)) %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
-  ggplot(aes(initsp,nxt_cav))+
-  geom_boxplot(outlier.colour = 'red',outlier.shape = 1,outlier.size = 2)+
-  geom_jitter(width=0.2,height=1.5,alpha=0.2,size=3,shape=20,color='#0077BB')+
-    labs(y='Distance from cavity or roost (metres)',title='A) by species')+
-  theme_pubclean()+style180Centered+
-  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
-  theme(axis.title.x = element_blank(),
-        plot.title = element_text(vjust = -5))
-# by interaction
-Interact_2 %>% 
-  filter(interaction!='Neutral') %>% 
-  filter(nxt_cav<100) %>% 
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
-  ggplot(aes(interaction,nxt_cav))+
-  geom_boxplot(outlier.colour = 'red',outlier.shape = 1,outlier.size = 2)+
-  geom_jitter(width=0.2,height=1.5,alpha=0.2,size=3,shape=20,color='#0077BB')+
-  labs(y='Distance from cavity or roost (metres)',title='B) by interaction type')+
-  theme_pubclean()+style180Centered+
-  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        plot.title = element_text(vjust = -5))
-# by study Area box
-Interact_2 %>% 
-  filter(interaction!='Neutral') %>% 
-  filter(nxt_cav<100) %>% 
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet") %>%  
-  ggplot(aes(Study.Area,nxt_cav))+
-  geom_boxplot(outlier.colour = 'red',outlier.shape = 1,outlier.size = 2)+
-  geom_jitter(width=0.2,height=1.5,alpha=0.2,size=3,shape=20,color='#0077BB')+
-  labs(y='Distance from cavity or roost (metres)',title='C) by site')+
-  theme_pubclean()+style180Centered+
-  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
-  theme(axis.title.x = element_blank(),
-        plot.title = element_text(vjust = -5))
-# by outcome
-Interact_2 %>% 
-  filter(interaction!='Neutral') %>% 
-  filter(nxt_cav<100) %>% 
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet") %>%  
-  ggplot(aes(isout,nxt_cav))+
-  geom_boxplot(outlier.colour = 'red',outlier.shape = 1,outlier.size = 2)+
-  geom_jitter(width=0.2,height=1.5,alpha=0.2,size=3,shape=20,color='#0077BB')+
-  labs(y='Distance from cavity or roost (metres)',title='D) by outcome')+
-  theme_pubclean()+style180Centered+
-  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        plot.title = element_text(vjust = -5))
-
-grid.arrange(a,b,c,d,top=textGrob("Interaction distance from cavity or roost",
-                                  gp=gpar(fontsize=22),vjust=0.2))
-
-
-# another way
-sp.pairs %>% 
-  filter(Study.Area!='Changi Airport') %>% 
-  filter(interaction!='Neutral') %>% 
-  filter(nxt_cav<100) %>% 
-  filter(RS.sp_lab=='N'|RS.sp_lab=='NN'|RS.sp_lab=='NNP') %>% 
-    ggplot(aes(as.factor(cavs_canopy_sqm),nxt_cav))+
-  geom_boxplot()+
-  theme_pubclean()+
-  style180Centered
+    ggplot(aes(initsp,nxt_cav))+
+  geom_boxplot(aes(color=RS.NestType),outlier.colour = NA)+
+  geom_jitter(aes(initsp,nxt_cav,color=RS.NestType),alpha=.9,shape=21,size=2,
+              position = position_jitterdodge(jitter.height = 3,jitter.width = .15))+
   
-# % cavity nesters
-sp.pairs %>% 
-  filter(interaction!='Neutral') %>% 
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet") %>%  
-  filter(nxt_cav<100) %>% 
-  ggplot(aes(factor(cav.sp.freq),nxt_cav))+
-  geom_boxplot(outlier.colour = 'red',outlier.shape = 1,outlier.size = 2)+
-  geom_jitter(width=0.1,height=1.5,alpha=0.45,size=4.5,shape=20,color='#0077BB')+
-  labs(y='Distance from cavity or roost (metres)',title='xx')+
+  labs(y='Distance from cavity or roost (metres)',title='Interaction proximity to roost/cavity')+
   theme_pubclean()+style180Centered+
   scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
   theme(axis.title.x = element_blank(),
-        plot.title = element_text(vjust = -5))
-
-sp.pairs %>% 
-  filter(interaction!='Neutral') %>% 
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet") %>%  
-  filter(nxt_cav<100) %>% 
-  ggplot(aes(factor(freq.I),nxt_cav))+
-  geom_boxplot(outlier.colour = 'red',outlier.shape = 1,outlier.size = 2)+
-  geom_jitter(width=0.1,height=1.5,alpha=0.45,size=4.5,shape=20,color='#0077BB')+
-  labs(y='Distance from cavity or roost (metres)',title='xx')+
-  theme_pubclean()+style180Centered+
-  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
-  theme(axis.title.x = element_blank(),
-        plot.title = element_text(vjust = -5))
-
-# cavity density
-sp.pairs %>% 
-  filter(interaction!='Neutral') %>% 
-  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet") %>%  
-  filter(nxt_cav<100) %>% 
-  ggplot(aes(factor(cavs_canopy_sqm),nxt_cav))+
-  geom_boxplot(outlier.colour = 'red',outlier.shape = 1,outlier.size = 2)+
-  geom_jitter(width=0.1,height=1.5,alpha=0.45,size=4.5,shape=20,color='#0077BB')+
-  labs(y='Distance from cavity or roost (metres)',title='xx')+
-  theme_pubclean()+style180Centered+
-  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
-  theme(axis.title.x = element_blank(),
-        plot.title = element_text(vjust = -5))
-
-
-# SE distance----
-# DO NOT USE - MEAN ONLY FOR NORMAL DISTRIBS. MEDIAN FOR THIS
-## calc1
-x <-Interact_2$nxt_cav
-std_mean <- function(x) sd(x)/sqrt(length(x))
-std_mean(x)
-## calc2
-se<-std <- function(x) sd(x)/sqrt(length(x))
-median(Interact_2$nxt_cav)
-se(Interact_2$nxt_cav)
-# error bars
-x<-Interact_2 %>% 
-  filter(Study.Area!='Changi Airport') %>% 
-  filter(nxt_cav<100) %>% 
-  group_by(Study.Area) %>% 
-  mutate(se=(sd(nxt_cav)/sqrt(length((nxt_cav))))) %>% 
-  summarise(mean=mean(nxt_cav),
-            se=mean(se)) 
-# function for a boxplot
-MinMeanSEMMax <- function(x) {
-  v <- c(min(x), mean(x) - sd(x)/sqrt(length(x)), mean(x), mean(x) + sd(x)/sqrt(length(x)), max(x))
-  names(v) <- c("ymin", "lower", "middle", "upper", "ymax")
-  v
-}
-# line for plot
-stat_summary(fun.data=MinMeanSEMMax, geom="boxplot", colour="black")+
+        plot.title = element_text(vjust = -5),
+        axis.text.y = element_text(size=14))+ # maybe remove this 
+  scale_y_continuous(breaks=c(0,5,10,15,20,40,60,80))+
+  scale_color_manual(name='Nest type:',values=c('Cavity'='#228833','Cavity-optional'='#CCBB44',
+                                                     'Non-cavity'='#EE6677'))
   
-
-
-## means se boxplot
-Interact_2 %>% 
-  filter(Study.Area!='Changi Airport') %>% 
-  filter(nxt_cav<100) %>% 
-  ggplot(aes(Study.Area,nxt_cav))+
-  stat_summary(fun.data=MinMeanSEMMax, geom="boxplot", colour="black")+
-  labs(title = 'Interaction distance from nest / roost',
-       y = 'Distance (metres)')+
-  theme_pubclean()+style180Centered+
-  theme(axis.title.x = element_blank())+
-  scale_x_discrete(labels = function(species2) str_wrap(species2, width = 10))+
-  facet_wrap(~initsp)
-
-
 
 #////////////////////////////////////////////////////////
 # Size differences 
@@ -2167,7 +2050,7 @@ sp.pairs_2 %>%
        title='Frequency of interaction by type and recipient size')
 
 #//// THIS ONE////
-# all intiated by size diff----
+# SIZE DIFFERENCE----
 sp.pairs_2 %>% 
   filter(interaction!='Neutral') %>%
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
@@ -2204,6 +2087,15 @@ sp.pairs_2 %>%
   scale_color_manual(name='Outcome',values = c('W'='#4393c3',
                                                'L'='#d6604d'))
 
+sp.pairs_2 %>% 
+  select(initsp,size_diff) %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
+  ungroup() %>% 
+  group_by(initsp) %>% 
+  summarise_at(vars(size_diff),
+               list(min=min, Q1=~quantile(., probs = 0.25),
+                    median=median, Q3=~quantile(., probs = 0.75),
+                    max=max))
 
 
 #////////////////////////////////
