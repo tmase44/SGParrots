@@ -2013,13 +2013,13 @@ Interact_3 %>%
                     median=median, Q3=~quantile(., probs = 0.75),
                     max=max))
   
-Interact_3 %>% 
+y<-Interact_3 %>% 
   filter(interaction!='Neutral') %>% 
   filter(nxt_cav<100) %>% 
   filter(!is.na(RS.NestType)) %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
   ungroup() %>% 
-  group_by(initsp,RS.NestType) %>% 
+  group_by(initsp,nxt_cav,RS.NestType) %>% 
   count(RS.NestType)
 
 
