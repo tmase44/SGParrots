@@ -2088,7 +2088,8 @@ sp.pairs_2 %>%
                                                'L'='#d6604d'))
 
 sp.pairs_2 %>% 
-  select(initsp,size_diff) %>% 
+  filter(interaction!='Neutral') %>%
+    select(initsp,size_diff) %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
   ungroup() %>% 
   group_by(initsp) %>% 
