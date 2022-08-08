@@ -1833,6 +1833,25 @@ x4 %>%
   save_kable(file = "interaction_table_focal.html")
 webshot::webshot("interaction_table_focal.html", "interaction_table_focal.pdf")
 
+## all ranked by interactions / individual
+x4 %>% 
+  arrange(desc(inits_Agg_freq)) %>% 
+  filter(`wins / initiations`>0) %>% 
+  mutate(across(where(is.numeric), round, 2)) %>%
+  select(-n_inits,-inits_freq,-n_ints_Agg,-ints_Agg_freq,-wins_all,-wins_init,
+         -SG_status,-NestType,-n_observed,-n_ints,-n_inits_Agg,
+         -`wins / all interactions`,-ints_freq) %>%
+  rename('Initiations / individuals'='inits_Agg_freq') %>% 
+  replace(is.na(.), 0) %>% 
+  kable(align = 'lcc') %>% 
+  kable_styling(full_width = F) %>% 
+  column_spec(column = 1, width = "3.7cm")%>% 
+  column_spec(column = 2, width = ".5cm") %>% 
+  column_spec(column = 3, width = ".5cm") %>% 
+  add_header_above(header=c("Initiator network"=3),align = 'l') %>% 
+  save_kable(file = "interaction_table_short.html")
+webshot::webshot("interaction_table_short.html", "interaction_table_short.pdf")#pdf better
+
 # pairs table----
 rm(z)
 x <- Interact_2 %>%
