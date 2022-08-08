@@ -1843,12 +1843,12 @@ x4 %>%
          -`wins / all interactions`,-ints_freq) %>%
   rename('Initiations / individuals'='inits_Agg_freq') %>% 
   replace(is.na(.), 0) %>% 
-  kable(align = 'lcc') %>% 
+  kable(format = 'html',align = 'lcc') %>% 
   kable_styling(full_width = F) %>% 
   column_spec(column = 1, width = "3.7cm")%>% 
   column_spec(column = 2, width = ".5cm") %>% 
   column_spec(column = 3, width = ".5cm") %>% 
-  add_header_above(header=c("Initiator network"=3),align = 'l') %>% 
+  add_header_above(header=c("Initiator network"=3),align = 'l') %>%
   save_kable(file = "interaction_table_short.html")
 webshot::webshot("interaction_table_short.html", "interaction_table_short.pdf")#pdf better
 
@@ -2000,8 +2000,45 @@ Interact_3 %>%
   scale_y_continuous(breaks=c(0,5,10,15,20,40,60,80))+
   scale_color_manual(name='Nest type:',values=c('Cavity'='#228833','Cavity-optional'='#CCBB44',
                                                      'Non-cavity'='#EE6677'))
-  
 
+Interact_3 %>% 
+  filter(interaction!='Neutral') %>% 
+  filter(nxt_cav<100) %>% 
+  filter(!is.na(RS.NestType)) %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
+  ungroup() %>% 
+  group_by(initsp) %>% 
+  summarise_at(vars(nxt_cav),
+               list(min=min, Q1=~quantile(., probs = 0.25),
+                    median=median, Q3=~quantile(., probs = 0.75),
+                    max=max))
+  
+Interact_3 %>% 
+  filter(interaction!='Neutral') %>% 
+  filter(nxt_cav<100) %>% 
+  filter(!is.na(RS.NestType)) %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
+  ungroup() %>% 
+  group_by(initsp,RS.NestType) %>% 
+  count(RS.NestType)
+
+
+# <fct>                 <chr>           <int>
+# 1 Monk parakeet         Cavity             39 59%
+# 2 Monk parakeet         Non-cavity         27
+
+# 3 Red-breasted parakeet Cavity             67 70%
+# 4 Red-breasted parakeet Cavity-optional     4
+# 5 Red-breasted parakeet Non-cavity         20
+
+# 6 Rose-ringed parakeet  Cavity             58 73%
+# 7 Rose-ringed parakeet  Cavity-optional     4
+# 8 Rose-ringed parakeet  Non-cavity         17
+
+# 9 Tanimbar corella      Cavity             90 47%
+# 10 Tanimbar corella      Cavity-optional    12
+# 11 Tanimbar corella      Non-cavity         90 
+  
 #////////////////////////////////////////////////////////
 # Size differences 
 #////////////////////////////////////////////////////////
