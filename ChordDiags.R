@@ -140,7 +140,21 @@ inchord2<-intchord %>% ungroup %>%
 inchord2$IS<-factor(inchord2$IS,
                     levels = c('YcC','TC','ScC','RrP','MP','RbP','OpH','LtP',
                                'OD','SbK','LbC','HC','AK','JM','BnO'))
-inchord2$RS<-factor(inchord2$RS)
+inchord2 %>%  
+  select(RS,n) %>%
+  ungroup() %>% 
+  group_by(RS) %>%
+  summarise(n=sum(n)) %>% 
+  arrange(desc(n)) %>% 
+  print(n=42)
+
+inchord2$RS<-factor(inchord2$RS,
+                    levels = c('JM','RbP','HC','TC','LtP','OpH','RD', 'AGS', 
+                               'RrP', 'MP','ScC','YvB','BnO','CK','AK','OD','Mammal',
+                               'SD','BtSb','LbC','CF','CHM','CM','YcC','HS',
+                               'PnGp','Jf','LB','LgLb', 'LT','OmR','RWp','BtB',
+                               'CHE','GH','GhFe',
+                               'ObSb','OwB', 'PH', 'PT','SbK','WtK'))
 levels(inchord2$IS)
 levels(inchord2$RS)
 inchord3<-inchord2 %>% 
@@ -200,7 +214,7 @@ grid.col=c("AGS"="grey",
    "LB"="grey",       
    "LT"="grey",             
     "LtP"="#6059A9",     
-   "MP"="#F19903",           
+   "MP"="#F4A582",           
    "ObSb"="grey",    
    "OwB"="grey",     
   "OD"="#5568B8",      
@@ -210,17 +224,17 @@ grid.col=c("AGS"="grey",
 "PT"="grey",             
    "PnGp"="grey", 
     "PH"="grey",             
-   "RbP"="#E7B503",   
+   "RbP"="#FDDBC7",   
     "RD"="grey",               
-   "RrP"="#F6790B",     
+   "RrP"="#F67E4B",     
    "RWp"="grey",        
    "SbM"="grey",     
 "SD"="grey",            
 "SbK"="#4E79C5",  
-"ScC"="#F94902", 
-"TC"="#E40515",         
+"ScC"="#D6604D", 
+"TC"="#DD3D2D",         
 "WtK"="grey",
- "YcC"="#A80003",  
+ "YcC"="#A50026",  
 "YvB"="grey",
 "ZD"="grey")    
 circos.clear()
@@ -231,8 +245,7 @@ chordDiagram(inchord3,
              directional = 1,
              direction.type = c('arrows','diffHeight'),
              link.arr.type = "big.arrow",
-             #link.sort = F, 
-             #link.decreasing = F,
+             link.arr.length = 0.05,
              big.gap = 20,
              annotationTrackHeight = c(0.03, 0.01),
              preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
