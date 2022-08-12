@@ -133,15 +133,29 @@ intchord<-intchord %>%
     recipsp=="Yellow vented bulbul"~"YvB",
     recipsp=="Zebra dove"~"ZD"))      
 
-inchord2<-intchord %>% ungroup %>% select(IS,RS,n)
+inchord2<-intchord %>% ungroup %>% 
+  select(IS,RS,n) %>% 
+  arrange(desc(n))
 
-inchord2$IS<-as.factor(inchord2$IS)
-inchord2$RS<-as.factor(inchord2$RS)
+inchord2$IS<-factor(inchord2$IS,
+                    levels = c('YcC','TC','ScC','RrP','MP','RbP','OpH','LtP',
+                               'OD','SbK','LbC','HC','AK','JM','BnO'))
+inchord2$RS<-factor(inchord2$RS)
 levels(inchord2$IS)
 levels(inchord2$RS)
 inchord3<-inchord2 %>% 
   group_by(IS,RS) %>% 
   summarise(n=sum(n))
+
+#ranking check
+intchord %>% 
+  ungroup %>% 
+  select(initsp,n) %>% 
+  group_by(initsp) %>% 
+  summarise(ints=sum(n)) %>% 
+  arrange(desc(ints))
+
+levels(inchord3$IS)
 
 # CHORD SPECIES----
 #https://r-graph-gallery.com/chord-diagram.html
@@ -164,7 +178,7 @@ circos.clear()
 
 # color scheme
 grid.col=c("AGS"="grey",
-    "AK"="grey",
+    "AK"="#549EB3",
     "BnO"="grey",
     "BtB"="grey",
     "BtSb"="grey",
@@ -177,45 +191,49 @@ grid.col=c("AGS"="grey",
    "CTb"="grey",
     "GhFe"="grey",
    "GH"="grey",               
-    "HC"="grey",               
+    "HC"="#4E96BC",               
    "HS"="grey",          
-   "JM"="grey",              
+   "JM"="#59A5A9",              
    "Jf"="grey",              
-    "LbC"="grey",        
+    "LbC"="#4D8AC6",        
    "LgLb"="grey",   
    "LB"="grey",       
    "LT"="grey",             
-    "LtP"="grey",     
-   "MP"="#004488",           
+    "LtP"="#6059A9",     
+   "MP"="#F19903",           
    "ObSb"="grey",    
    "OwB"="grey",     
-  "OD"="grey",      
+  "OD"="#5568B8",      
    "OmR"="grey",    
-  "OpH"="grey",  
+  "OpH"="#6F4C9B",  
    "Mammal"="grey",                    
 "PT"="grey",             
    "PnGp"="grey", 
     "PH"="grey",             
-   "RbP"="#994455",   
+   "RbP"="#E7B503",   
     "RD"="grey",               
-   "RrP"="#EE99AA",     
+   "RrP"="#F6790B",     
    "RWp"="grey",        
    "SbM"="grey",     
 "SD"="grey",            
-"SbK"="grey",  
-"ScC"="#000000", 
-"TC"="#997700",         
+"SbK"="#4E79C5",  
+"ScC"="#F94902", 
+"TC"="#E40515",         
 "WtK"="grey",
- "YcC"="#EECC66",  
+ "YcC"="#A80003",  
 "YvB"="grey",
 "ZD"="grey")    
-
+circos.clear()
+circos.par(start.degree = 90)
 chordDiagram(inchord3,
              grid.col=grid.col,
              annotationTrack = "grid",
              directional = 1,
              direction.type = c('arrows','diffHeight'),
              link.arr.type = "big.arrow",
+             #link.sort = F, 
+             #link.decreasing = F,
+             big.gap = 20,
              annotationTrackHeight = c(0.03, 0.01),
              preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(inchord2))))))
 # above removes the labels, 
