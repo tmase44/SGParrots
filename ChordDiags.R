@@ -260,6 +260,23 @@ circos.track(track.index = 1,
 
 title(main = "Interaction network",cex.main=1.5,line=-1)
 
+# inchrd 3 recip summ
+
+inchord3 %>% 
+  group_by(RS) %>% 
+  summarise(sum(n))
+
+# 658 ints
+  # JM 129 INT
+  # HC 64 INT
+  # LTP 44 RES
+  # OPH 36 RES
+  # RD 36 INT
+  # AGS 21 RES
+# 330 = 50%
+  # INT = 34%
+  # RES = 26%
+
 
 # make a reference table----
 
