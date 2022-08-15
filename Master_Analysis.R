@@ -1208,7 +1208,7 @@ x<-Indices_2 %>%
   mutate('Built area'=sum(buildpc+artsurfacepc), #24
          'Natural area'=sum(canopypc+Vegpc+natsurfacepc), #25
          'Water area'=sum(waterpc+mangrovepc), #26
-         'Cavity/Individual'=sum(n_cavity/n.cavnester)) #26
+         'Cavity/Individual'=sum(n_cavity/n.cavnester)*2) #26
 x %>% 
   select(Study.Area,Richness,Shannon,
          `Site habitat types`,`Surrounding habitat types`,
