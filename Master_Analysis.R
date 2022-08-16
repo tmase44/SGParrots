@@ -523,251 +523,251 @@ Composition_2$Study.Area<-factor(Composition_2$Study.Area,
 ISRS$Species<-as.character(ISRS$Species) 
 ISRS$Species<-factor(ISRS$Species) 
 
-#/////////////////////////////////////////////////////////////////////////////
-#/////////////////////////////////////////////////////////////////////////////
-#============================= DATA SUMMARIES =============================
-#/////////////////////////////////////////////////////////////////////////////
-#/////////////////////////////////////////////////////////////////////////////
-
-x<-Composition %>% select(Study.Area) %>% n_distinct()
-y<-Composition %>% group_by(Study.Area) %>% summarise(n=max(Surveyno)) %>% 
-  ungroup() %>% summarise(sum(n)*1.5)
-sprintf('%s sites were surveyed for a total of %s hours',x,y)
-
-# 5 sites were surveyed. 
-# Each site was surveyed for a total of 15 hours.
-# Equal effort per site and species.
-# Sites were selected based on NSS Parrot Count data to provide 
-#   equal effort to each focal species.
-
-#//////////////////////
-# Composition summaries ----
-#//////////////////////
-# https://www.nparks.gov.sg/biodiversity/wildlife-in-singapore/species-list/bird
-
-a<-nrow(Composition)
-b<-Composition %>% filter(Study.Area!='Changi Airport') %>%select(Species) %>% n_distinct()
-c<-round((b/407)*100,2)
-sprintf('%s individuals observed in total',a)
-sprintf('%s distinct species observed, equal to %s%% of avian species in Singapore',b,c)
-
-# number by status
-Comp.max %>% ungroup() %>% filter(Study.Area!='Changi Airport') %>%  summarise(n=sum(max_obs))
-
-Composition_2 %>% filter(Study.Area!='Changi Airport') %>%filter(SG_status=='R')%>% 
-  select(Species) %>% n_distinct()
-Composition_2 %>%  filter(Study.Area!='Changi Airport') %>%filter(SG_status=='R')%>%
-  select(Species,max_obs) %>% summarise(n=sum(max_obs))
-Composition_2 %>%  filter(Study.Area!='Changi Airport') %>%filter(SG_status=='I')%>%
-  select(Species) %>% n_distinct()
-Composition_2 %>% filter(Study.Area!='Changi Airport') %>%filter(SG_status=='I')%>% 
-  select(Species,max_obs) %>% summarise(n=sum(max_obs))
-Composition_2 %>% filter(SG_status=='N'|SG_status=='M'|SG_status=='V')%>% filter(Study.Area!='Changi Airport') %>%
-  select(Species) %>% n_distinct()
-Composition_2 %>% filter(SG_status=='N'|SG_status=='M'|SG_status=='V')%>% filter(Study.Area!='Changi Airport') %>%
-  select(Species,max_obs) %>% summarise(n=sum(max_obs))
-
-x<-Composition_2 %>% 
-  filter(Study.Area!='Changi Airport') %>% 
-  filter(!is.na(max_obs)) %>% 
-  select(Species,SG_status,max_obs) %>%
-  group_by(Species,SG_status) %>% 
-  summarise(n=mean(max_obs)) %>% arrange(desc(n))
-
-Composition_2 %>% filter(NestType=='Cavity')%>% filter(sp_lab=='NNP')%>% filter(Study.Area!='Changi Airport') %>%
-  select(Species) %>% n_distinct()
-Composition_2 %>% filter(NestType=='Cavity')%>% filter(Study.Area!='Changi Airport') %>%
-  select(Species,max_obs) %>% summarise(n=sum(max_obs))
-
-Composition_2 %>% filter(NestType=='Non-cavity')%>% filter(Study.Area!='Changi Airport') %>%
-  select(Species) %>% n_distinct()
-Composition_2 %>% filter(NestType=='Non-cavity')%>% filter(Study.Area!='Changi Airport') %>%
-  select(Species,max_obs) %>% summarise(n=sum(max_obs))
-
-Composition_2 %>% filter(NestType=='Cavity-optional')%>% filter(Study.Area!='Changi Airport') %>%
-  select(Species) %>% n_distinct()
-Composition_2 %>% filter(NestType=='Cavity-optional')%>% filter(Study.Area!='Changi Airport') %>%
-  select(Species,max_obs) %>% summarise(n=sum(max_obs))
-
-#//////////////////////
-# Interaction summaries----
-#//////////////////////
-d<-Interact %>% count(initsp) %>% summarise(sum(n))
-e<-Interact %>% filter(rsout!='NE') %>% count(initsp) %>% summarise(sum(n))
-f<-round((e/d)*100,2)
-sprintf('%s observed interactions, of which %s [%s%%] were aggressive',d,e,f)
-
-g<-Interact %>% summarise(n_distinct(initsp))
-h<-round((g/b)*100,2)
-i<-Interact %>% summarise(n_distinct(recipsp))
-j<-round((i/b)*100,2)
-sprintf('%s distinct initiator species, %s%% of the observed species pool',g,h)
-sprintf('%s distinct initiator species, %s%% of the observed species pool',i,j)
-
-ISRS %>% 
-  filter(role=='IS'|role=='RS') %>% 
-  summarise(n_distinct(Species))
-51/90
-#////////////////////
-# Interaction pairs----
-#///////////////////
-int_pairs <- Interact_2 %>%
-  #filter(interaction!='Neutral') %>% 
-  group_by(Study.Area) %>% 
-  count(initsp, recipsp) %>%
-  complete(initsp, nesting(recipsp), fill = list(n = 0)) %>% 
-  filter(n!='0') %>% 
-  arrange(desc(n))
-int_pairs %>% print(n=20) # top 10 interaction pairs
-x<-nrow(int_pairs)
-sprintf('%s unique species pairs were observed interacting',x)
-
-int_pairs$initsp<-as.character(int_pairs$initsp)
-int_pairs$recipsp<-as.character(int_pairs$recipsp)
-
-int_pairs2 <- int_pairs %>%
-  mutate(Var = map2_chr(initsp, recipsp, ~toString(sort(c(.x, .y))))) %>%
-  distinct(Var, .keep_all = TRUE) %>%
-  select(-Var)
-int_pairs2 <-int_pairs2 %>% arrange(Study.Area,recipsp)
-
-# CORRELATION max obs and network size
-
-asite<-c('cv','cv','stir','skrp','skrp','prtp','prtp','prtp','pal','sl','sl')
-bsp<-c('tc','rbp','tc','rbp','rrp','mp','rbp','rrp','tc','rbp','rrp')
-cpop<-c(23,52,23,61,15,18,6,11,25,25,5)
-dpairs<-c(15,14,16,9,16,16,3,9,11,16,15)
-e<-data.frame(asite,bsp,cpop,dpairs)
-
-cor.test(formula=~dpairs+cpop,
-         data=e,
-         method='kendall',exact=F)
-
-# non native parrots excluded
-  # Javan myna, LTP, house crow, LTP OPH, YCC, AGS, YVBB, Oriole,
-  # Flameback, dollarbird ===
-int_pairs %>% 
-  group_by(recipsp) %>% summarise(n=sum(n)) %>% 
-  mutate(freq=n/sum(n)*100) %>% arrange(desc(freq)) %>% 
-  print(n=30)
-
-sp.pairs %>% 
-  select(initsp,recipsp,IS.sp_lab,RS.sp_lab,pair_ints) %>% 
-  ungroup() %>% 
-  filter(IS.sp_lab=='NNP'&RS.sp_lab=='NNP') %>%
-  summarise(n=sum(pair_ints))
-  
-
-#////////////////////////
-# Cavity Nesters in focus----
-#////////////////////////
-x<-ISRS %>% 
-  ungroup() %>% 
-  filter(NestType=='Cavity') %>% 
-  summarise(n=n_distinct(Species)) %>% summarise(sum(n))
-y<-ISRS %>% 
-  ungroup() %>% 
-  filter(NestType=='Cavity') %>% filter(role=='IS') %>% 
-  summarise(n=n_distinct(Species)) %>% summarise(sum(n))
-y2<-ISRS %>% ungroup() %>% 
-  filter(SG_status!='I')  %>%  
-  summarise(n=sum(n_ints))
-y3<-round((y2/d)*100,2)
-z<-round((x/b)*100,2)
-z2<-round((y/b)*100,2)
-sprintf('%s cavity nesting species involved in interactions, representing %s%% of the species pool',x,z)
-sprintf('%s cavity nesters intiated %s [%s%%] of all interactions, despite only accounting for %s%% of the species pool',y,y2,y3,z2)
-
-ISRS %>% filter(NestType=='Cavity') %>% ungroup() %>% 
-  count(Species,NestType) %>% arrange(desc(n))
-# List of cavity nesters involved in interactions
-
-y4<-ISRS %>% ungroup() %>% 
-  filter(role=='IS') %>% filter(NestType=='Cavity') %>%  
-  filter(Species=='Red-breasted parakeet'|Species=='Rose-ringed parakeet'|
-           Species=='Tanimbar corella'|Species=='Monk parakeet'|
-           Species=='Yellow crested cockatoo'|Species=='Sulphur crested cockatoo') %>% 
-  summarise(n=sum(n_ints))
-y5<-round((y4/d)*100,2)
-sprintf('Focal non native parrots initiated %s [%s%%] of all interactions',y4,y5)
-
-
-rm(a,b,c,d,e,f,g,h,i,j,x,y,z,y2,y3,y4,y5,z2)
-
-
-#============================#
-# 9.d. Interaction Detail----
-#============================#
-ISRS %>% group_by(interaction) %>% 
-  filter(role=='IS') %>% filter(interaction!='Neutral') %>% 
-  summarise(n=sum(n_ints)) %>% mutate(freq=n/sum(n)*100)
-
-ISRS %>% group_by(Species) %>%
-  filter(interaction!='Neutral') %>% 
-  summarise(n=sum(n_ints)) %>% mutate(freq=n/sum(n)*100) %>% arrange(desc(n))
-
-ISRS %>% group_by(Species,outcome) %>%
-  filter(interaction!='Neutral') %>% 
-  summarise(n=sum(n_ints)) %>% mutate(freq=n/sum(n)*100)%>% 
-  filter(outcome=='W') %>% arrange(desc(n))
-
-ISRS %>% group_by(Species,outcome) %>%
-  filter(interaction!='Neutral') %>% filter(role=='IS') %>% 
-  summarise(n=sum(n_ints)) %>% mutate(freq=n/sum(n)*100)%>% 
-  filter(outcome=='W') %>% arrange(desc(n))
-
-#/////////////////////////
-# Test for normality----
-
-# Shapiro-wilk for small samples
-## less than alpha 0.05 = not normal
-## not less than alpha 0.05 = normal
-shapiro.test(Indices_2$site.interactions) # normal
-shapiro.test(Indices_2$Richness) # normal
-shapiro.test(Indices_2$Shannon) # normal
-shapiro.test(Indices_2$canopypc) # normal
-shapiro.test(Indices_2$cavs_canopy_sqm) # normal, just about
-skewness(Indices_2$canopypc)
-kurtosis(Indices_2$canopypc)
-skewness(Indices_2$Richness)
-kurtosis(Indices_2$Richness)
-# indices and survey site data are normally distributed
-shapiro.test(Indices_2$site.interactions) # normal, just about
-
-
-shapiro.test(ISRS$interaction) # not normal
-shapiro.test(ISRS$ints_HR) # not normal
-shapiro.test(sp.pairs$pair_ints) # not-normal
-x<-Composition %>% sample_n(100)
-shapiro.test(x$distance)  # not-normal
-x<-Comp.max %>% filter(Study.Area!='Changi Airport')
-ggplot(x,aes(max_obs))+geom_histogram() # not normal
-x<-sp.pairs %>% ungroup() %>% 
-  group_by(initsp,recipsp) %>% summarise(n=sum(pair_ints))
-ggplot(x,aes(n))+geom_histogram() # not normal
-
-skewness(x$n) # not normal
-kurtosis(x$n)
-
-# interaction data are measured ordinally
-  # right skew
-    # ///use: Spearmans-Rank correlation 
-
-# Survey site data are normally distributed and can
-x<-sp.pairs_2 %>% group_by()
-z<-ggscatter(sp.pairs_2,'all_pair_ints','freq.I',
-             add = 'reg.line',
-             add.params = list(color = "blue", fill = "lightgray"),
-             conf.int = TRUE)
-z+stat_cor(method = 'spearman', label.x = 3, label.y = 30)
-
-z<-x 
-z<-cor.test(x$n_ints,
-         x$max.freq,
-            method='pearson')
-z
-# spearmans rho shows a positive association between
-# n interactions and population density in a community
+# #/////////////////////////////////////////////////////////////////////////////
+# #/////////////////////////////////////////////////////////////////////////////
+# #============================= DATA SUMMARIES =============================
+# #/////////////////////////////////////////////////////////////////////////////
+# #/////////////////////////////////////////////////////////////////////////////
+# 
+# x<-Composition %>% select(Study.Area) %>% n_distinct()
+# y<-Composition %>% group_by(Study.Area) %>% summarise(n=max(Surveyno)) %>% 
+#   ungroup() %>% summarise(sum(n)*1.5)
+# sprintf('%s sites were surveyed for a total of %s hours',x,y)
+# 
+# # 5 sites were surveyed. 
+# # Each site was surveyed for a total of 15 hours.
+# # Equal effort per site and species.
+# # Sites were selected based on NSS Parrot Count data to provide 
+# #   equal effort to each focal species.
+# 
+# #//////////////////////
+# # Composition summaries ----
+# #//////////////////////
+# # https://www.nparks.gov.sg/biodiversity/wildlife-in-singapore/species-list/bird
+# 
+# a<-nrow(Composition)
+# b<-Composition %>% filter(Study.Area!='Changi Airport') %>%select(Species) %>% n_distinct()
+# c<-round((b/407)*100,2)
+# sprintf('%s individuals observed in total',a)
+# sprintf('%s distinct species observed, equal to %s%% of avian species in Singapore',b,c)
+# 
+# # number by status
+# Comp.max %>% ungroup() %>% filter(Study.Area!='Changi Airport') %>%  summarise(n=sum(max_obs))
+# 
+# Composition_2 %>% filter(Study.Area!='Changi Airport') %>%filter(SG_status=='R')%>% 
+#   select(Species) %>% n_distinct()
+# Composition_2 %>%  filter(Study.Area!='Changi Airport') %>%filter(SG_status=='R')%>%
+#   select(Species,max_obs) %>% summarise(n=sum(max_obs))
+# Composition_2 %>%  filter(Study.Area!='Changi Airport') %>%filter(SG_status=='I')%>%
+#   select(Species) %>% n_distinct()
+# Composition_2 %>% filter(Study.Area!='Changi Airport') %>%filter(SG_status=='I')%>% 
+#   select(Species,max_obs) %>% summarise(n=sum(max_obs))
+# Composition_2 %>% filter(SG_status=='N'|SG_status=='M'|SG_status=='V')%>% filter(Study.Area!='Changi Airport') %>%
+#   select(Species) %>% n_distinct()
+# Composition_2 %>% filter(SG_status=='N'|SG_status=='M'|SG_status=='V')%>% filter(Study.Area!='Changi Airport') %>%
+#   select(Species,max_obs) %>% summarise(n=sum(max_obs))
+# 
+# x<-Composition_2 %>% 
+#   filter(Study.Area!='Changi Airport') %>% 
+#   filter(!is.na(max_obs)) %>% 
+#   select(Species,SG_status,max_obs) %>%
+#   group_by(Species,SG_status) %>% 
+#   summarise(n=mean(max_obs)) %>% arrange(desc(n))
+# 
+# Composition_2 %>% filter(NestType=='Cavity')%>% filter(sp_lab=='NNP')%>% filter(Study.Area!='Changi Airport') %>%
+#   select(Species) %>% n_distinct()
+# Composition_2 %>% filter(NestType=='Cavity')%>% filter(Study.Area!='Changi Airport') %>%
+#   select(Species,max_obs) %>% summarise(n=sum(max_obs))
+# 
+# Composition_2 %>% filter(NestType=='Non-cavity')%>% filter(Study.Area!='Changi Airport') %>%
+#   select(Species) %>% n_distinct()
+# Composition_2 %>% filter(NestType=='Non-cavity')%>% filter(Study.Area!='Changi Airport') %>%
+#   select(Species,max_obs) %>% summarise(n=sum(max_obs))
+# 
+# Composition_2 %>% filter(NestType=='Cavity-optional')%>% filter(Study.Area!='Changi Airport') %>%
+#   select(Species) %>% n_distinct()
+# Composition_2 %>% filter(NestType=='Cavity-optional')%>% filter(Study.Area!='Changi Airport') %>%
+#   select(Species,max_obs) %>% summarise(n=sum(max_obs))
+# 
+# #//////////////////////
+# # Interaction summaries----
+# #//////////////////////
+# d<-Interact %>% count(initsp) %>% summarise(sum(n))
+# e<-Interact %>% filter(rsout!='NE') %>% count(initsp) %>% summarise(sum(n))
+# f<-round((e/d)*100,2)
+# sprintf('%s observed interactions, of which %s [%s%%] were aggressive',d,e,f)
+# 
+# g<-Interact %>% summarise(n_distinct(initsp))
+# h<-round((g/b)*100,2)
+# i<-Interact %>% summarise(n_distinct(recipsp))
+# j<-round((i/b)*100,2)
+# sprintf('%s distinct initiator species, %s%% of the observed species pool',g,h)
+# sprintf('%s distinct initiator species, %s%% of the observed species pool',i,j)
+# 
+# ISRS %>% 
+#   filter(role=='IS'|role=='RS') %>% 
+#   summarise(n_distinct(Species))
+# 51/90
+# #////////////////////
+# # Interaction pairs----
+# #///////////////////
+# int_pairs <- Interact_2 %>%
+#   #filter(interaction!='Neutral') %>% 
+#   group_by(Study.Area) %>% 
+#   count(initsp, recipsp) %>%
+#   complete(initsp, nesting(recipsp), fill = list(n = 0)) %>% 
+#   filter(n!='0') %>% 
+#   arrange(desc(n))
+# int_pairs %>% print(n=20) # top 10 interaction pairs
+# x<-nrow(int_pairs)
+# sprintf('%s unique species pairs were observed interacting',x)
+# 
+# int_pairs$initsp<-as.character(int_pairs$initsp)
+# int_pairs$recipsp<-as.character(int_pairs$recipsp)
+# 
+# int_pairs2 <- int_pairs %>%
+#   mutate(Var = map2_chr(initsp, recipsp, ~toString(sort(c(.x, .y))))) %>%
+#   distinct(Var, .keep_all = TRUE) %>%
+#   select(-Var)
+# int_pairs2 <-int_pairs2 %>% arrange(Study.Area,recipsp)
+# 
+# # CORRELATION max obs and network size
+# 
+# asite<-c('cv','cv','stir','skrp','skrp','prtp','prtp','prtp','pal','sl','sl')
+# bsp<-c('tc','rbp','tc','rbp','rrp','mp','rbp','rrp','tc','rbp','rrp')
+# cpop<-c(23,52,23,61,15,18,6,11,25,25,5)
+# dpairs<-c(15,14,16,9,16,16,3,9,11,16,15)
+# e<-data.frame(asite,bsp,cpop,dpairs)
+# 
+# cor.test(formula=~dpairs+cpop,
+#          data=e,
+#          method='kendall',exact=F)
+# 
+# # non native parrots excluded
+#   # Javan myna, LTP, house crow, LTP OPH, YCC, AGS, YVBB, Oriole,
+#   # Flameback, dollarbird ===
+# int_pairs %>% 
+#   group_by(recipsp) %>% summarise(n=sum(n)) %>% 
+#   mutate(freq=n/sum(n)*100) %>% arrange(desc(freq)) %>% 
+#   print(n=30)
+# 
+# sp.pairs %>% 
+#   select(initsp,recipsp,IS.sp_lab,RS.sp_lab,pair_ints) %>% 
+#   ungroup() %>% 
+#   filter(IS.sp_lab=='NNP'&RS.sp_lab=='NNP') %>%
+#   summarise(n=sum(pair_ints))
+#   
+# 
+# #////////////////////////
+# # Cavity Nesters in focus----
+# #////////////////////////
+# x<-ISRS %>% 
+#   ungroup() %>% 
+#   filter(NestType=='Cavity') %>% 
+#   summarise(n=n_distinct(Species)) %>% summarise(sum(n))
+# y<-ISRS %>% 
+#   ungroup() %>% 
+#   filter(NestType=='Cavity') %>% filter(role=='IS') %>% 
+#   summarise(n=n_distinct(Species)) %>% summarise(sum(n))
+# y2<-ISRS %>% ungroup() %>% 
+#   filter(SG_status!='I')  %>%  
+#   summarise(n=sum(n_ints))
+# y3<-round((y2/d)*100,2)
+# z<-round((x/b)*100,2)
+# z2<-round((y/b)*100,2)
+# sprintf('%s cavity nesting species involved in interactions, representing %s%% of the species pool',x,z)
+# sprintf('%s cavity nesters intiated %s [%s%%] of all interactions, despite only accounting for %s%% of the species pool',y,y2,y3,z2)
+# 
+# ISRS %>% filter(NestType=='Cavity') %>% ungroup() %>% 
+#   count(Species,NestType) %>% arrange(desc(n))
+# # List of cavity nesters involved in interactions
+# 
+# y4<-ISRS %>% ungroup() %>% 
+#   filter(role=='IS') %>% filter(NestType=='Cavity') %>%  
+#   filter(Species=='Red-breasted parakeet'|Species=='Rose-ringed parakeet'|
+#            Species=='Tanimbar corella'|Species=='Monk parakeet'|
+#            Species=='Yellow crested cockatoo'|Species=='Sulphur crested cockatoo') %>% 
+#   summarise(n=sum(n_ints))
+# y5<-round((y4/d)*100,2)
+# sprintf('Focal non native parrots initiated %s [%s%%] of all interactions',y4,y5)
+# 
+# 
+# rm(a,b,c,d,e,f,g,h,i,j,x,y,z,y2,y3,y4,y5,z2)
+# 
+# 
+# #============================#
+# # 9.d. Interaction Detail----
+# #============================#
+# ISRS %>% group_by(interaction) %>% 
+#   filter(role=='IS') %>% filter(interaction!='Neutral') %>% 
+#   summarise(n=sum(n_ints)) %>% mutate(freq=n/sum(n)*100)
+# 
+# ISRS %>% group_by(Species) %>%
+#   filter(interaction!='Neutral') %>% 
+#   summarise(n=sum(n_ints)) %>% mutate(freq=n/sum(n)*100) %>% arrange(desc(n))
+# 
+# ISRS %>% group_by(Species,outcome) %>%
+#   filter(interaction!='Neutral') %>% 
+#   summarise(n=sum(n_ints)) %>% mutate(freq=n/sum(n)*100)%>% 
+#   filter(outcome=='W') %>% arrange(desc(n))
+# 
+# ISRS %>% group_by(Species,outcome) %>%
+#   filter(interaction!='Neutral') %>% filter(role=='IS') %>% 
+#   summarise(n=sum(n_ints)) %>% mutate(freq=n/sum(n)*100)%>% 
+#   filter(outcome=='W') %>% arrange(desc(n))
+# 
+# #/////////////////////////
+# # Test for normality----
+# 
+# # Shapiro-wilk for small samples
+# ## less than alpha 0.05 = not normal
+# ## not less than alpha 0.05 = normal
+# shapiro.test(Indices_2$site.interactions) # normal
+# shapiro.test(Indices_2$Richness) # normal
+# shapiro.test(Indices_2$Shannon) # normal
+# shapiro.test(Indices_2$canopypc) # normal
+# shapiro.test(Indices_2$cavs_canopy_sqm) # normal, just about
+# skewness(Indices_2$canopypc)
+# kurtosis(Indices_2$canopypc)
+# skewness(Indices_2$Richness)
+# kurtosis(Indices_2$Richness)
+# # indices and survey site data are normally distributed
+# shapiro.test(Indices_2$site.interactions) # normal, just about
+# 
+# 
+# shapiro.test(ISRS$interaction) # not normal
+# shapiro.test(ISRS$ints_HR) # not normal
+# shapiro.test(sp.pairs$pair_ints) # not-normal
+# x<-Composition %>% sample_n(100)
+# shapiro.test(x$distance)  # not-normal
+# x<-Comp.max %>% filter(Study.Area!='Changi Airport')
+# ggplot(x,aes(max_obs))+geom_histogram() # not normal
+# x<-sp.pairs %>% ungroup() %>% 
+#   group_by(initsp,recipsp) %>% summarise(n=sum(pair_ints))
+# ggplot(x,aes(n))+geom_histogram() # not normal
+# 
+# skewness(x$n) # not normal
+# kurtosis(x$n)
+# 
+# # interaction data are measured ordinally
+#   # right skew
+#     # ///use: Spearmans-Rank correlation 
+# 
+# # Survey site data are normally distributed and can
+# x<-sp.pairs_2 %>% group_by()
+# z<-ggscatter(sp.pairs_2,'all_pair_ints','freq.I',
+#              add = 'reg.line',
+#              add.params = list(color = "blue", fill = "lightgray"),
+#              conf.int = TRUE)
+# z+stat_cor(method = 'spearman', label.x = 3, label.y = 30)
+# 
+# z<-x 
+# z<-cor.test(x$n_ints,
+#          x$max.freq,
+#             method='pearson')
+# z
+# # spearmans rho shows a positive association between
+# # n interactions and population density in a community
 
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
@@ -898,7 +898,7 @@ Kendall %>%
                             "Results Table: Kendalls Tau coefficients"=5),
                    font_size = 15) %>% 
   column_spec(column = 1, width = "4.5cm",color = "black")%>% 
-  column_spec(column = c(2,3,4,5,6), width = "3cm") %>% 
+  column_spec(column = c(2,3,4,5,6), width = "3cm") 
    save_kable(file = "kendall1.html")
 webshot::webshot("kendall1.html", "kendall1.pdf")#pdf better
 
@@ -972,7 +972,8 @@ a<-x %>%
   xlim(10,40)+
   ylim(20,60)+
   stat_cor(method = 'kendall',color='#228833',
-           label.y.npc=1,label.x.npc=0)+
+           label.y.npc=1,label.x.npc=0,
+           cor.coef.name='tau')+
   geom_smooth(method='loess',color='#228833')+
   #stat_poly_eq(aes(color='red',size=10))+
   theme_pubclean()+
@@ -980,6 +981,7 @@ a<-x %>%
   labs(subtitle = 'A)',
        x='Green area proportion',
        y='Richness')
+
 ### built area
 b<-x %>% 
   ggplot(aes(buildarea,Richness)) +
@@ -988,7 +990,8 @@ b<-x %>%
   xlim(2,18)+
   ylim(20,60)+
   stat_cor(method = 'kendall',color='#4477AA',
-           label.y.npc=1,label.x.npc=.7)+
+           label.y.npc=1,label.x.npc=.7,
+           cor.coef.name='tau')+
   geom_smooth(method='loess',color='#4477AA')+
   theme_pubclean()+
   style180+
@@ -1012,7 +1015,8 @@ d<-x %>%
   geom_smooth(se=T,alpha=.2)+
   stat_cor(method = 'kendall',
            label.y.npc=1,label.x.npc=0,
-           digits=3)+
+           digits=3,
+           cor.coef.name='tau')+
   theme_pubclean()+
   style180+
   scale_color_manual(name='Species status:',
@@ -1037,7 +1041,8 @@ c<-x %>%
   geom_smooth(se=T,alpha=.2)+
   stat_cor(method = 'kendall',
            label.y.npc=1,label.x.npc=0,
-           digits = 3)+
+           digits = 3,
+           cor.coef.name='tau')+
   theme_pubclean()+
   style180+
   scale_color_manual(name='Species status:',
@@ -1143,7 +1148,7 @@ x %>%
   ggplot(aes(id,max.freq))+
   geom_col(aes(fill=`Species status`,color=`Species status`))+
   geom_point(aes(id,max.freq,shape=NestType),size=3,color='black',alpha=.75)+
-  facet_wrap(~Study.Area)+
+  facet_wrap(~Study.Area, nrow = 3, ncol = 2)+
   labs(title = 'Rank abundance',
        x='Rank',y='Abundance (proportion)')+
   scale_x_continuous(limits = c(0, 54), 
@@ -1160,7 +1165,7 @@ x %>%
   scale_color_manual(name='Species status:',values=c('Introduced'='#EE99AA','Introduced Parrot'='#EECC66',
                                                     'Resident'='#6699CC','Migrant/Visitor'='#DDDDDD'))+
   scale_shape_manual(name='Nest Type:',values=c(20,21,7))+
-  guides(colour = guide_legend(nrow = 2),shape=guide_legend(nrow=2))
+  guides(fill = guide_legend(nrow = 2),shape=guide_legend(nrow=2))
 
 
 # residency summary
@@ -2000,6 +2005,8 @@ Interact_3 %>%
   scale_y_continuous(breaks=c(0,5,10,15,20,40,60,80))+
   scale_color_manual(name='Nest type:',values=c('Cavity'='#228833','Cavity-optional'='#CCBB44',
                                                      'Non-cavity'='#EE6677'))
+
+
 
 Interact_3 %>% 
   filter(interaction!='Neutral') %>% 

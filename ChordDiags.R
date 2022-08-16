@@ -238,6 +238,7 @@ grid.col=c("AGS"="#7BBCE7",
 "YvB"="#81C4E7",
 "ZD"="grey")    
 circos.clear()
+par(cex = .55)
 circos.par(start.degree = 90)
 chordDiagram(inchord3,
              grid.col=grid.col,
@@ -258,7 +259,7 @@ circos.track(track.index = 1,
               facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5))
 }, bg.border = NA)
 
-title(main = "Interaction network",cex.main=1.5,line=-1)
+title(main = "Interaction network",cex.main=2,line=-1)
 
 # inchrd 3 recip summ
 
@@ -267,15 +268,16 @@ inchord3 %>%
   summarise(sum(n))
 
 # 658 ints
-  # JM 129 INT
+  # JM 129 INT CAV
   # HC 64 INT
-  # LTP 44 RES
-  # OPH 36 RES
+  # LTP 44 RES CAV
+  # OPH 36 RES CAV
   # RD 36 INT
   # AGS 21 RES
 # 330 = 50%
   # INT = 34%
   # RES = 26%
+  #OB CAV = 32% 
 
 
 # make a reference table----
