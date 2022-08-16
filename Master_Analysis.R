@@ -1992,20 +1992,21 @@ Interact_3 %>%
   filter(!is.na(RS.NestType)) %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
     ggplot(aes(initsp,nxt_cav))+
-  geom_boxplot(aes(color=RS.NestType),outlier.colour = NA)+
+  geom_boxplot(aes(color=RS.NestType),size=1,outlier.colour = NA)+
   geom_jitter(aes(initsp,nxt_cav,color=RS.NestType),alpha=.9,shape=21,size=2,
-              position = position_jitterdodge(jitter.height = 3,jitter.width = .15))+
+              position = position_jitterdodge(jitter.height = 1,jitter.width = .2))+
   
-  labs(y='Distance from cavity or roost (metres)',title='Interaction proximity to roost/cavity')+
+  labs(y='Distance from cavity/roost (bands of 5 metres)',title='Interaction proximity to roost/cavity')+
   theme_pubclean()+style180Centered+
-  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
+  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 15))+
   theme(axis.title.x = element_blank(),
         plot.title = element_text(vjust = -5),
-        axis.text.y = element_text(size=14))+ # maybe remove this 
-  scale_y_continuous(breaks=c(0,5,10,15,20,40,60,80))+
+        axis.text.y = element_text(size=14),
+        axis.text.y.left = element_text(size=12))+ # maybe remove this 
+ scale_y_continuous(breaks=c(0,5,10,15,20,25,30,35,40,45,50,
+                             55,60,65,70,75,80))+
   scale_color_manual(name='Nest type:',values=c('Cavity'='#228833','Cavity-optional'='#CCBB44',
                                                      'Non-cavity'='#EE6677'))
-
 
 
 Interact_3 %>% 
@@ -2047,7 +2048,7 @@ y<-Interact_3 %>%
 # 11 Tanimbar corella      Non-cavity         90 
   
 #////////////////////////////////////////////////////////
-# Size differences 
+# Size differences---- 
 #////////////////////////////////////////////////////////
 
 # species pairs analysis----
@@ -2147,6 +2148,9 @@ sp.pairs_2 %>%
     theme(axis.title.x = element_blank(),
           plot.title = element_text(vjust = -5),
           legend.key.size = unit(1,'cm'))+
+  scale_y_continuous(limits = c(-30,50),
+                     breaks = c(-30,-20,-10,
+                                0,10,20,30,40,50))+
   scale_color_manual(name='Outcome',values = c('W'='#4393c3',
                                                'L'='#d6604d'))
 
