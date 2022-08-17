@@ -1104,16 +1104,15 @@ sorensen.plot
 
 ## Land-use types----
 Enviro_2 %>% 
-  ggplot(aes(Study.Area,proportion,fill=land_prop))+
-  geom_col(position='fill')+
+  ggplot(aes(reorder(land_prop,proportion),proportion))+
+  geom_col()+
+  coord_flip()+
   labs(y='Proportion of land cover',x='Study Area',
        title = 'Land type per study site')+
   scale_x_discrete(labels = function(Study.Area2) str_wrap(Study.Area2, width = 10))+
-  scale_fill_discrete(name='Area use',labels=c('Buildings','Artificial surface',
-                                               'Natural surface','Other vegetation',
-                                               'Canopy','Waterbody','Mangrove'))
+  facet_wrap(~Study.Area,ncol=1)
 
-
+             
 ## RA curve----
 x<-Composition_2 %>% 
   select(Study.Area,Species,max_obs,max.freq,SG_status,NestType) %>% 
@@ -1213,7 +1212,7 @@ x<-Indices_2 %>%
   mutate('Built area'=sum(buildpc+artsurfacepc), #24
          'Natural area'=sum(canopypc+Vegpc+natsurfacepc), #25
          'Water area'=sum(waterpc+mangrovepc), #26
-         'Cavity/Individual'=sum(n_cavity/n.cavnester)*2) #26
+         'Cavity/Individual'=sum(n_cavity/(n.cavnester/2))) #26
 x %>% 
   select(Study.Area,Richness,Shannon,
          `Site habitat types`,`Surrounding habitat types`,
@@ -1240,6 +1239,55 @@ x %>%
   kable_styling() 
   save_kable(file = "site_profiles.html")
 webshot::webshot("site_profiles.html", "site_profiles.pdf")#pdf better
+
+x2<-x %>% 
+  select(Study.Area,`Built area`,`Natural area`,`Water area`,) %>% 
+  pivot_longer(cols=c(`Built area`,`Natural area`,`Water area`),
+               names_to = 'landuse',
+               values_to = 'areapc')
+x2$Study.Area<-factor(x2$Study.Area, 
+                      levels = c('Changi Airport','Stirling Road','Changi Village',
+                                 'Pasir Ris Town Park','Sengkang Riverside Park',
+                                 'Palawan Beach','Springleaf'))
+
+levels(x2$Study.Area)
+
+x2 %>% 
+  ggplot(aes(Study.Area,areapc,fill=landuse))+
+  geom_col(width = .8)+
+  coord_flip()+
+  labs(y='Proportion of land cover',x='Study Area',
+       title = 'Land type per study site')+
+  scale_x_discrete(labels = function(Study.Area2) str_wrap(Study.Area2, width = 10))+
+  theme_pubclean()+
+  theme(axis.title.y = element_blank(),
+        axis.title.x = element_blank(),
+        plot.title = element_blank(),
+        legend.key.size = unit(.4,'cm') )+
+  scale_fill_manual(name=' ',
+                    values=c('Natural area'='#44AA99',
+                             'Built area'='#DDCC77',
+                             'Water area'='#332288'))
+
+x3<-x %>% 
+  select(Study.Area,cavs_canopy_sqm,`Cavity/Individual`,`Built area`)
+x3$Study.Area<-factor(x3$Study.Area, 
+                      levels = c('Springleaf',
+                                 'Palawan Beach','Sengkang Riverside Park',
+                                 'Pasir Ris Town Park','Changi Village',
+                                 'Stirling Road','Changi Airport'))
+levels(x3$Study.Area)
+x3 %>% 
+  mutate(across(where(is.numeric), round, 2)) %>% 
+  arrange(`Built area`) %>% 
+  select(-`Built area`) %>% 
+  rename(" "=Study.Area,
+         'Cavity/sqm'=cavs_canopy_sqm,
+         'Cavity/pair'=`Cavity/Individual`) %>% 
+  kable(align = 'lcc') %>% 
+  kable_styling(full_width = F) %>% 
+  save_kable(file = "site_short.html")
+webshot::webshot("site_short.html", "site_short.pdf")#pdf better
 
 # relevant regressions----
 summary(lm(Richness~`Built area`,
