@@ -16,14 +16,6 @@ p_load(formattable,knitr,kableExtra, # nice tables
        circlize, # interaction networks
        Distance, # transect analysis, relative abundance, density
        readxl,writexl)
-#library(Ostats)
-#library(gam)
-library(GGally)
-#library(psych)#
-#library(MASS)
-#detach("package:MASS", unload=TRUE)
-
-
 
 
 #/////////////////////////////////////////////////////////////////////////////#
@@ -789,11 +781,11 @@ style90 <-  theme(plot.title = element_text(size=40,margin = margin(0,0,25,0)),
            axis.text.x = element_text(size=25,angle = 90, vjust = 0.5, hjust=1),
            axis.text.y = element_text(size = 25))
   # standard
-style180 <-  theme(plot.title = element_text(size=20,margin = margin(0,0,25,0)),
-                  axis.title.y = element_text(size=15,margin = margin(0,25,0,0)),
-                  axis.title.x = element_text(size=15,margin = margin(25,0,0,0)),
-                  axis.text.x = element_text(size=15, vjust = 0.5, hjust=1),
-                  axis.text.y = element_text(size = 15))
+style180 <-  theme(plot.title = element_text(size=22,margin = margin(0,0,25,0)),
+                  axis.title.y = element_text(size=18,margin = margin(0,25,0,0)),
+                  axis.title.x = element_text(size=18,margin = margin(25,0,0,0)),
+                  axis.text.x = element_text(size=18, vjust = 0.5, hjust=1),
+                  axis.text.y = element_text(size = 18))
 
 style180big <-  theme(plot.title = element_text(size=20,margin = margin(0,0,25,0)),
                    axis.title.y = element_text(size=15,margin = margin(0,25,0,0)),
@@ -801,15 +793,19 @@ style180big <-  theme(plot.title = element_text(size=20,margin = margin(0,0,25,0
                    axis.text.x = element_text(size=15, vjust = 0.5, hjust=1),
                    axis.text.y = element_text(size = 15))
 
-style180Centered <-  theme(plot.title = element_text(size=20,margin = margin(0,0,25,0)),
-                   axis.title.y = element_text(size=15,margin = margin(0,25,0,0)),
-                   axis.title.x = element_text(size=15,margin = margin(25,0,0,0)),
-                   axis.text.x = element_text(size=15),
-                   axis.text.y = element_text(size = 15))
+style180Centered <-  theme(plot.title = element_text(size=22,margin = margin(0,0,25,0)),
+                   axis.title.y = element_text(size=18,margin = margin(0,25,0,0)),
+                   axis.title.x = element_text(size=18,margin = margin(25,0,0,0)),
+                   axis.text.x = element_text(size=18),
+                   axis.text.y = element_text(size = 18))
 
 styleRA <-  theme(plot.title = element_text(size=20,margin = margin(0,0,25,0)),
-                   axis.title.y = element_text(size=15,margin = margin(0,25,0,0)),
-                   axis.title.x = element_text(size=15,margin = margin(25,0,0,0)))
+                   axis.title.y = element_text(size=20,margin = margin(0,25,0,0)),
+                   axis.title.x = element_text(size=20,margin = margin(25,0,0,0)))
+
+# fonts
+windowsFonts()
+A <- windowsFont("TT Times New Roman")
 
 #pilot
 
@@ -827,6 +823,7 @@ Pilot %>%
 #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 
+
 ## Alpha ----
 # Shannon / Richness
 Indices %>% 
@@ -834,13 +831,15 @@ Indices %>%
   ggplot(aes(x=Shannon,y=Richness)) +
   geom_point(size=5,color='#000000')+
  ylim(25,60)+
-  labs(title = 'Alpha diversity index',
-       x = 'Shannon Index', y='Species Richness')+
+  labs(title = 'Fig. 1: Alpha diversity index',
+       x = 'Shannon Index', y='Bird species richness')+
   scale_x_continuous(limits = c(2.5,3.7),
                      breaks = c(2.6,2.8,3.0,3.2,3.2,3.4,3.6))+
     geom_text_repel(aes(label=Study.Area),
-                  nudge_y = 1.6,segment.color = NA,color='black',size=5)+
-  theme_pubclean()+style180
+                  nudge_y = 1.6,segment.color = NA,color='black',size=5, family='A')+
+  theme_pubclean()+style180+
+  theme(plot.title = element_text(hjust=-0.22),
+        text = element_text(family = 'A'))
  
 
 ## Changi and Stirling/QT have the lowest BD and richness scoring
@@ -965,7 +964,8 @@ ggtable(corr.site)
 
 
 ### vegtated area
-a<-x %>% 
+#a<-
+x %>% 
   ggplot(aes(vegarea,Richness)) +
   geom_line(color=NA)+
   geom_point(position=position_jitter(width = 7, height = 2), alpha=.7, shape=21)+
@@ -973,64 +973,46 @@ a<-x %>%
   ylim(20,60)+
   stat_cor(method = 'kendall',color='#228833',
            label.y.npc=1,label.x.npc=0,
-           cor.coef.name='tau')+
+           cor.coef.name='tau',
+           size=7,family='A')+
   geom_smooth(method='loess',color='#228833')+
   #stat_poly_eq(aes(color='red',size=10))+
   theme_pubclean()+
   style180+  
-  labs(subtitle = 'A)',
-       x='Green area proportion',
-       y='Richness')
+  labs(title = 'Fig. 3: Species richness change over green area gradient',
+       x='Proportion of green area cover',
+       y='Bird species richness')+
+  theme(plot.title = element_text(hjust=-2.7),
+        text = element_text(family='A'))
 
 ### built area
-b<-x %>% 
+#b<-
+x %>% 
   ggplot(aes(buildarea,Richness)) +
   geom_line(color=NA)+
   geom_point(position=position_jitter(width = 1.5, height = 3), alpha=.7, shape=21)+
   xlim(2,18)+
   ylim(20,60)+
   stat_cor(method = 'kendall',color='#4477AA',
-           label.y.npc=1,label.x.npc=.7,
-           cor.coef.name='tau')+
+           label.y.npc=1,label.x.npc=.5,
+           cor.coef.name='tau',
+           size=7,family='A')+
   geom_smooth(method='loess',color='#4477AA')+
   theme_pubclean()+
   style180+
-  labs(subtitle = 'B)',
-       x='Urban area proportion',
-       y='Richness')
+  labs(title = 'Fig. 4: Species richness change over urban area gradient',
+       x='Proportion of built / urban area cover',
+       y='Bird species richness')+
+  theme(plot.title = element_text(hjust=-2.8),
+        text = element_text(family='A'))
 
 
 # o represents individual species in assemblages across sites varying in 
 # urban / vegetated area
 
-# built by introduction status 35,37,39
-d<-x %>% 
-  ungroup() %>% 
-  select(buildarea,n.I,n.R,n.parrots) %>% 
-  pivot_longer(cols=c(n.I,n.R,n.parrots),names_to = 'class', values_to = 'counts') %>% 
-  ggplot(aes(buildarea,counts,color=class)) +
-  geom_line(color=NA)+
-  geom_jitter(width = 2,height=7,alpha=.5,shape=21)+
-  xlim(2,18)+
-  geom_smooth(se=T,alpha=.2)+
-  stat_cor(method = 'kendall',
-           label.y.npc=1,label.x.npc=0,
-           digits=3,
-           cor.coef.name='tau')+
-  theme_pubclean()+
-  style180+
-  scale_color_manual(name='Species status:',
-                     labels=c('Introduced','Resident','Introduced parrot'),
-                     values=c('n.I'='#994455',
-                                                    'n.R'='#004488',
-                                                    'n.parrots'='#997700'))+
-  labs(subtitle = 'D)',
-       x='Urban area proportion',
-       y='Abundance')
-
-
 # and with vegetated area
-c<-x %>% 
+#c<-
+x %>% 
   ungroup() %>% 
   select(vegarea,n.I,n.R,n.parrots) %>% 
   pivot_longer(cols=c(n.I,n.R,n.parrots),names_to = 'class', values_to = 'counts') %>% 
@@ -1042,7 +1024,8 @@ c<-x %>%
   stat_cor(method = 'kendall',
            label.y.npc=1,label.x.npc=0,
            digits = 3,
-           cor.coef.name='tau')+
+           cor.coef.name='tau',
+           size=7,family='A')+
   theme_pubclean()+
   style180+
   scale_color_manual(name='Species status:',
@@ -1050,9 +1033,45 @@ c<-x %>%
                      values=c('n.I'='#994455',
                               'n.R'='#004488',
                               'n.parrots'='#997700'))+
-  labs(subtitle = 'C)',
-       x='Green area proportion',
-       y='Abundance')
+  labs(title = 'Fig. 5: Species abundance change over green area gradient',
+       x='Proportion of green area cover',
+       y='Bird species abundance')+
+  theme(plot.title = element_text(hjust=11),
+        legend.text = element_text(size=15),
+        text = element_text(family='A'))
+
+# built by introduction status 35,37,39
+#d<-
+x %>% 
+  ungroup() %>% 
+  select(buildarea,n.I,n.R,n.parrots) %>% 
+  pivot_longer(cols=c(n.I,n.R,n.parrots),names_to = 'class', values_to = 'counts') %>% 
+  ggplot(aes(buildarea,counts,color=class)) +
+  geom_line(color=NA)+
+  geom_jitter(width = 2,height=7,alpha=.5,shape=21)+
+  xlim(2,18)+
+  geom_smooth(se=T,alpha=.2)+
+  stat_cor(method = 'kendall',
+           label.y.npc=1,label.x.npc=0,
+           digits=3,
+           cor.coef.name='tau',
+           size=7,family='A')+
+  theme_pubclean()+
+  style180+
+  scale_color_manual(name='Species status:',
+                     labels=c('Introduced','Resident','Introduced parrot'),
+                     values=c('n.I'='#994455',
+                                                    'n.R'='#004488',
+                                                    'n.parrots'='#997700'))+
+  labs(title = 'Fig. 6: Species abundance change over urban area gradient',
+       x='Proportion of built / urban area cover',
+       y='Bird species abundance')+
+  theme(plot.title = element_text(hjust=9),
+        legend.text = element_text(size=15),
+        text = element_text(family='A'))
+
+
+
 # kendall plots
 grid.arrange(a,b,c,d,
              top=textGrob("Change in richness and abundance over land-use gradients",
@@ -1146,25 +1165,31 @@ x %>%
   filter(Study.Area!='Changi Airport') %>% 
   ggplot(aes(id,max.freq))+
   geom_col(aes(fill=`Species status`,color=`Species status`))+
-  geom_point(aes(id,max.freq,shape=NestType),size=3,color='black',alpha=.75)+
-  facet_wrap(~Study.Area, nrow = 3, ncol = 2)+
-  labs(title = 'Rank abundance',
-       x='Rank',y='Abundance (proportion)')+
+  geom_point(aes(id,max.freq,shape=NestType),size=4,color='black',alpha=.75)+
+  facet_wrap(~Study.Area, nrow = 2, ncol = 3)+
+  labs(title = 'Fig. 2: Rank abundance',
+       x='Rank',y='Species abundance (proportion)')+
   scale_x_continuous(limits = c(0, 54), 
                      breaks = c(1,5,10,15,20,25,30,35,40,45,50,54))+
+  scale_y_continuous(limits = c(0, 30),
+                      breaks = c(0,5,10,15,20,25,30))+
   theme_pubclean()+styleRA+
   theme(plot.title = element_text(size=28),
-        legend.text = element_text(size=16),
-        legend.title = element_text(size=16),
-        strip.text = element_text(size=16),
-        axis.text.x = element_text(size=14),
-        axis.text.y = element_text(size=14))+
+        legend.text = element_text(size=20),
+        legend.title = element_text(size=20),
+        strip.text = element_text(size=20),
+        axis.text.x = element_text(size=18),
+        axis.text.y = element_text(size=18),
+        axis.title.x = element_text(size=22),
+        axis.title.y=element_text(size=22),
+        text=element_text(family='A'))+
   scale_fill_manual(name='Species status:',values=c('Introduced'='#EE99AA','Introduced Parrot'='#EECC66',
                                                       'Resident'='#6699CC','Migrant/Visitor'='#DDDDDD'))+
   scale_color_manual(name='Species status:',values=c('Introduced'='#EE99AA','Introduced Parrot'='#EECC66',
                                                     'Resident'='#6699CC','Migrant/Visitor'='#DDDDDD'))+
   scale_shape_manual(name='Nest Type:',values=c(20,21,7))+
-  guides(fill = guide_legend(nrow = 2),shape=guide_legend(nrow=2))
+  guides(fill = guide_legend(nrow = 2),shape=guide_legend(nrow=2))+
+  theme(plot.title = element_text(hjust=-0.04))
 
 
 # residency summary
@@ -1313,11 +1338,13 @@ NSS %>%
   geom_point()+
   geom_smooth(se=F,color='black')+
   facet_wrap(~Species,scale='free')+
-  labs(x='Year',y='Observations',title = 'NSS Parrot count')+
+  labs(x='Year',y='Observations',title = 'NSS Parrot count: total annual species counts')+
   theme_pubclean()+style180+
   theme(legend.text = element_text(size=14),
         strip.text = element_text(size=14),
-        legend.position = 'none')
+        legend.position = 'none',
+        text=element_text(family='A'),
+        plot.title = element_text(hjust=-.82))
 
 # PC / Study compare----
 
@@ -1325,7 +1352,7 @@ x<-Composition_2 %>%
   select(Study.Area,Species,max_obs) %>% 
   filter(Species=="Monk parakeet"|Species=="Red-breasted parakeet"|Species=="Tanimbar corella"|
            Species=="Long-tailed parakeet"|Species=="Rose-ringed parakeet")
-x<-x %>% mutate(source='Study 2022')
+x<-x %>% mutate(source='2022')
 
 y<-NSS %>% 
   filter(Year=='2019') %>% 
@@ -1335,7 +1362,7 @@ y<-NSS %>%
   rename(max_obs=Count) %>% 
   filter(Study.Area=='Changi Village'|Study.Area=='Sengkang Riverside Park'|
            Study.Area=='Springleaf'| Study.Area=='Palawan Beach') %>% 
-  mutate(source='NSS 2019')
+  mutate(source='2019')
 rm(z)
 z<-merge(x,y,by=c('Study.Area','Species','max_obs','source'),all=T)
 
@@ -1348,12 +1375,14 @@ z %>%
   filter(Study.Area!='Changi Airport') %>% 
   ggplot(aes(source,max_obs,fill=Species))+
   geom_col()+
-  facet_wrap(~Study.Area)+
+  facet_wrap(~Study.Area,ncol=3)+
   labs(y='number of individuals',x='Survey & Year',
-       title = 'Parrot population comparison 2019-2022')+
+       title = 'Fig. 7: Parrot population comparison 2019-2022')+
   theme_pubclean()+style180Centered+
   theme(strip.text = element_text(size=14),
-        legend.text = element_text(size=12))+
+        legend.text = element_text(size=15),
+        text=element_text(family='A'),
+        plot.title = element_text(hjust=-.72))+
   scale_fill_manual(values=c("Monk parakeet"='#6699CC',
                              "Long-tailed parakeet"='#004488',
                              "Red-breasted parakeet"='#EECC66',
@@ -1426,14 +1455,16 @@ x %>%
   geom_density(aes(fill=Species2,color=Species2),alpha=.25,position='dodge',bins = 8)+
   facet_wrap(~Study.Area.new,scales='free_y')+
   theme_pubclean()+style180+
-  labs(y='density',title = 'Roost site overlap over time')+
-  theme(plot.title = element_text(size=25),
-        legend.text = element_text(size=16),
+  labs(y='density',title = 'Appendix 2: Roost site overlap over time')+
+  theme(plot.title = element_text(size=25,hjust=-.05),
+        legend.text = element_text(size=18),
         legend.title = element_blank(),
-        strip.text = element_text(size=16),
-        axis.text.x = element_text(size=12),
-        axis.text.y = element_text(size=12),
-        axis.title.x = element_blank())+
+        strip.text = element_text(size=20),
+        axis.text.x = element_text(size=18),
+        axis.text.y = element_text(size=18),
+        axis.title.x = element_blank(),
+        axis.title.y=element_text(size=18),
+        text=element_text(family = 'A'))+
   scale_fill_manual(values=c('Red-breasted parakeet'='#CC3311',
                              'Long-tailed parakeet'='#009988',
                              'Other'='#dddddd'))+
@@ -1585,12 +1616,14 @@ Composition_2 %>%
   geom_jitter(aes(max_obs,n_ints,shape=NestType),height = 4,width=1,alpha=.8,color='black',size=3)+
   #coord_trans(x='log10')+
   geom_smooth(method='gam',alpha=.3,color='#0077BB')+
-  stat_regline_equation(label.y = 285, aes(label = ..rr.label..),size=6,color='#0077BB')+
-  stat_regline_equation(label.y = 295, aes(label = ..eq.label..),size=6,color='#0077BB')+
+  stat_regline_equation(label.y = 285, aes(label = ..rr.label..),size=5,color='#0077BB')+
+  stat_regline_equation(label.y = 295, aes(label = ..eq.label..),size=5,color='#0077BB')+
   theme_pubclean()+
-  theme(legend.text = element_text(size=14))+
+  theme(legend.text = element_text(size=14),
+        text = element_text(family='A'),
+        plot.title = element_text(hjust=-.7))+
   labs(x='Individuals observed',y='Total number of interactions',
-       title = 'Interactions relative to total abundance')+
+       title = 'Fig. 8: Interactions relative to total abundance')+
   geom_text_repel(data=Composition_2 %>% 
                     filter(Study.Area!='Changi Airport'|Species!='Javan myna') %>% 
                     group_by(Species) %>% 
@@ -1599,7 +1632,7 @@ Composition_2 %>%
                     filter(n_ints>18) %>% 
                     filter(max_obs>5),aes(label=Species),
                   nudge_y=4,size=4.5,
-                  box.padding = 0.5, max.overlaps = Inf)+
+                  box.padding = 0.5, max.overlaps = Inf,family='A')+
   scale_y_continuous(limits = c(0, 300), oob = scales::squish)+style180+
   scale_shape_manual(values=c(20,21,7))
 
@@ -1632,12 +1665,14 @@ Composition_2 %>%
   geom_jitter(aes(max_obs,n_ints,shape=NestType),height = 4,width=1,alpha=.8,size=3)+
   #coord_trans(x='log10')+
   geom_smooth(method='gam',alpha=.3,color='#0077BB')+
-  stat_regline_equation(label.y = 185, aes(label = ..rr.label..),size=6,color='#0077BB')+
-  stat_regline_equation(label.y = 195, aes(label = ..eq.label..),size=6,color='#0077BB')+
+  stat_regline_equation(label.y = 185, aes(label = ..rr.label..),size=5,color='#0077BB')+
+  stat_regline_equation(label.y = 195, aes(label = ..eq.label..),size=5,color='#0077BB')+
   theme_pubclean()+
-  theme(legend.text = element_text(size=14))+
+  theme(legend.text = element_text(size=14),
+        text=element_text(family='A'),
+        plot.title = element_text(hjust=2.65))+
   labs(x='Individuals observed',y='Total number of interactions',
-       title = 'Interactions : total abundance without focal species')+
+       title = 'Fig. 9: Interactions relative to total abundance non-focal spp.')+
   geom_text_repel(data=Composition_2 %>% 
                     filter(Study.Area!='Changi Airport'|Species!='Javan myna') %>% 
                     filter(Species!="Monk parakeet"&Species!="Tanimbar corella"&
@@ -2043,14 +2078,17 @@ Interact_3 %>%
   geom_boxplot(aes(color=RS.NestType),size=1,outlier.colour = NA)+
   geom_jitter(aes(initsp,nxt_cav,color=RS.NestType),alpha=.9,shape=21,size=2,
               position = position_jitterdodge(jitter.height = 1,jitter.width = .2))+
-  
-  labs(y='Distance from cavity/roost (bands of 5 metres)',title='Interaction proximity to roost/cavity')+
+  labs(y='Distance from cavity/roost (bands of 5 metres)',
+       title='Fig. 11: Interaction proximity to roost/cavity')+
   theme_pubclean()+style180Centered+
   scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 15))+
   theme(axis.title.x = element_blank(),
-        plot.title = element_text(vjust = -5),
-        axis.text.y = element_text(size=14),
-        axis.text.y.left = element_text(size=12))+ # maybe remove this 
+        legend.title = element_text(size=16),
+        legend.text = element_text(size=16),
+        plot.title = element_text(hjust = -.45),
+        axis.text.y = element_text(size=18),
+        axis.text.y.left = element_text(size=14),
+        text = element_text(family='A'))+ # maybe remove this 
  scale_y_continuous(breaks=c(0,5,10,15,20,25,30,35,40,45,50,
                              55,60,65,70,75,80))+
   scale_color_manual(name='Nest type:',values=c('Cavity'='#228833','Cavity-optional'='#CCBB44',
@@ -2190,12 +2228,16 @@ sp.pairs_2 %>%
   geom_jitter(aes(initsp,size_diff,color=isout),alpha=.7,shape=21,size=2,
               position = position_jitterdodge(jitter.height = 4,jitter.width = .25))+
   geom_hline(aes(yintercept=0),linetype='dashed',alpha=1,color='#878787')+
-  labs(y='Recipient size difference (cm)',title='Initiated interactions and outcomes by size difference')+
+  labs(y='Recipient size difference (cm)',
+       title='Fig. 10: Initiated interactions and outcomes by size difference')+
   theme_pubclean()+style180Centered+
   scale_x_discrete(labels = function(initsp2) str_wrap(initsp2, width = 15))+
     theme(axis.title.x = element_blank(),
-          plot.title = element_text(vjust = -5),
-          legend.key.size = unit(1,'cm'))+
+          plot.title = element_text(hjust =2.2),
+          text=element_text(family='A'),
+          legend.key.size = unit(1,'cm'),
+          legend.title = element_text(size=16),
+          legend.text = element_text(size=16))+
   scale_y_continuous(limits = c(-30,50),
                      breaks = c(-30,-20,-10,
                                 0,10,20,30,40,50))+
