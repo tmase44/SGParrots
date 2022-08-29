@@ -813,11 +813,13 @@ Pilot %>%
   ggplot(aes(time,freq))+
   geom_col()+
   labs(x='Time of day',y='Interaction frequency',
-       title = 'Pilot study interaction frequency')+
-  theme_pubclean()+style90
+       title = 'Appendix 3: Pilot study interaction frequency')+
+  theme_pubclean()+style90+
+  theme(text=element_text(family='A'),
+        plot.title = element_text(hjust=2))
 
 
-#/////////////////////////////////////////////////////////////////////////////#
+  #/////////////////////////////////////////////////////////////////////////////#
 #/////////////////////////////////////////////////////////////////////////////#
 #======================== SURVEY SITES ===========================
 #/////////////////////////////////////////////////////////////////////////////#
