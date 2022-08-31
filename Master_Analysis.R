@@ -2096,6 +2096,41 @@ Interact_3 %>%
   scale_color_manual(name='Nest type:',values=c('Cavity'='#228833','Cavity-optional'='#CCBB44',
                                                      'Non-cavity'='#EE6677'))
 
+# FOR THE POSTER MODIFIED VERSION 
+#FBEBCE
+Interact_3 %>% 
+  filter(interaction!='Neutral') %>% 
+  filter(nxt_cav<100) %>% 
+  filter(!is.na(RS.NestType)) %>% 
+  filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
+  ggplot(aes(initsp,nxt_cav))+
+  geom_boxplot(aes(color=RS.NestType),size=0.5,outlier.colour = NA,alpha=0)+
+  geom_jitter(aes(initsp,nxt_cav,color=RS.NestType),alpha=.9,shape=21,size=2,
+              position = position_jitterdodge(jitter.height = 1,jitter.width = .2))+
+  labs(y='Distance from cavity/roost (bands of 5 metres)',
+       title='Fig.2: Proximity to roost/cavity')+
+  theme_pubclean()+style180Centered+
+  scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
+  scale_y_continuous(breaks=c(5,15,25,35,45,
+                              55,65,75))+
+  scale_color_manual(name='Nest type:',values=c('Cavity'='#003400',
+                                                'Cavity-optional'='#017FDD',
+                                                'Non-cavity'='#FD004B'))+
+  theme(axis.title.x = element_blank(),
+        legend.title = element_text(size=22),
+        legend.text = element_text(size=22),
+        axis.text.y.left = element_text(size=22),
+        axis.text.x.bottom = element_text(size=22),
+        axis.title.y = element_blank(),
+        plot.background = element_rect(fill = "#FBEBCE"),
+        panel.background = element_rect(fill='#FBEBCE'),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.background = element_rect(fill='#FBEBCE'),
+        legend.key = element_rect(fill='#FBEBCE'),
+        plot.title = element_blank())
+
+
 
 Interact_3 %>% 
   filter(interaction!='Neutral') %>% 
