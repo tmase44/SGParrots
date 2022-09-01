@@ -239,6 +239,7 @@ grid.col=c("AGS"="#7BBCE7",
 "ZD"="grey")    
 circos.clear()
 par(cex = .55)
+par(bg=NA)
 circos.par(start.degree = 90)
 chordDiagram(inchord3,
              grid.col=grid.col,
@@ -261,6 +262,10 @@ circos.track(track.index = 1,
 
 title(main = "Interaction network",cex.main=2,line=-1)
 
+# to save with a transparent BG
+## remove labels with this and replace with bird vectors
+dev.copy(png,'myplot.png')
+dev.off()
 # inchrd 3 recip summ
 
 inchord3 %>% 
