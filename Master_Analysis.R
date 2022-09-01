@@ -1072,7 +1072,90 @@ x %>%
         legend.text = element_text(size=15),
         text = element_text(family='A'))
 
+# # C & D for poster
 
+
+# GREEN AREA
+x %>% 
+  ungroup() %>% 
+  select(vegarea,n.I,n.R,n.parrots) %>% 
+  pivot_longer(cols=c(n.I,n.R,n.parrots),names_to = 'class', values_to = 'counts') %>% 
+  ggplot(aes(vegarea,counts,color=class)) +
+  geom_jitter(width = 4,height=7,alpha=.7,shape=21,size=2)+
+  xlim(10,40)+
+  geom_smooth(se=F,size=1.5)+
+  stat_cor(method = 'kendall',
+           label.y.npc=1,label.x.npc=0,
+           digits = 3,
+           cor.coef.name='tau',
+           size=12,
+           show.legend = F)+
+  theme_pubclean()+
+  style180+
+  scale_color_manual(name='Species status:',
+                     labels=c('Introduced','Resident','Introduced parrot'),
+                     values=c('n.I'='#3F3F3F',
+                              'n.R'='#009988',
+                              'n.parrots'='#EE3377'))+
+  labs(title = 'Fig. 3: Species abundance over green gradients',
+       x='Proportion of green area cover',
+       y='Bird species abundance')+
+  theme(axis.title.x =element_text(size=20),
+        legend.title = element_text(size=24),
+        legend.key.size = unit(1,'cm'),
+        legend.text = element_text(size=22),
+        axis.text.y.left = element_text(size=22),
+        axis.text.x.bottom = element_text(size=22),
+        axis.title.y = element_text(size=20),
+        plot.background = element_rect(fill = "#FBEBCE"),
+        panel.background = element_rect(fill='#FBEBCE'),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.background = element_rect(fill='#FBEBCE'),
+        legend.key = element_rect(fill='#FBEBCE'),
+        plot.title = element_text(size=28)
+  )
+
+# URBAN AREA
+x %>% 
+  ungroup() %>% 
+  select(buildarea,n.I,n.R,n.parrots) %>% 
+  pivot_longer(cols=c(n.I,n.R,n.parrots),names_to = 'class', values_to = 'counts') %>% 
+  ggplot(aes(buildarea,counts,color=class)) +
+  geom_jitter(width = 2,height=7,alpha=.5,shape=21)+
+  xlim(2,18)+
+  geom_smooth(se=F,size=1.5)+
+  stat_cor(method = 'kendall',
+           label.y.npc=1,label.x.npc=0,
+           digits = 3,
+           cor.coef.name='tau',
+           size=12,
+           show.legend = F)+
+  theme_pubclean()+
+  style180+
+  scale_color_manual(name='Species status:',
+                     labels=c('Introduced','Resident','Introduced parrot'),
+                     values=c('n.I'='#3F3F3F',
+                              'n.R'='#009988',
+                              'n.parrots'='#EE3377'))+
+  labs(title = 'Fig. 2: Species abundance over urban gradients',
+       x='Proportion of built / urban area cover',
+       y='Bird species abundance')+
+  theme(axis.title.x =element_text(size=20),
+        legend.title = element_text(size=24),
+        legend.key.size = unit(1,'cm'),
+        legend.text = element_text(size=22),
+        axis.text.y.left = element_text(size=22),
+        axis.text.x.bottom = element_text(size=22),
+        axis.title.y = element_text(size=20),
+        plot.background = element_rect(fill = "#FBEBCE"),
+        panel.background = element_rect(fill='#FBEBCE'),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.background = element_rect(fill='#FBEBCE'),
+        legend.key = element_rect(fill='#FBEBCE'),
+        plot.title = element_text(size=28)
+        )
 
 # kendall plots
 grid.arrange(a,b,c,d,
