@@ -804,8 +804,9 @@ styleRA <-  theme(plot.title = element_text(size=20,margin = margin(0,0,25,0)),
                    axis.title.x = element_text(size=20,margin = margin(25,0,0,0)))
 
 # fonts
-windowsFonts()
-A <- windowsFont("TT Times New Roman")
+# windowsFonts()
+# A <- windowsFont("TT Times New Roman")
+windowsFonts(Times=windowsFont("TT Times New Roman"))
 
 #pilot
 
@@ -838,10 +839,10 @@ Indices %>%
   scale_x_continuous(limits = c(2.5,3.7),
                      breaks = c(2.6,2.8,3.0,3.2,3.2,3.4,3.6))+
     geom_text_repel(aes(label=Study.Area),
-                  nudge_y = 1.6,segment.color = NA,color='black',size=5, family='A')+
+                  nudge_y = 1.6,segment.color = NA,color='black',size=5, family='Times')+
   theme_pubclean()+style180+
   theme(plot.title = element_text(hjust=-0.22),
-        text = element_text(family = 'A'))
+        text = element_text(family = 'Times'))
  
 
 ## Changi and Stirling/QT have the lowest BD and richness scoring
@@ -970,13 +971,14 @@ ggtable(corr.site)
 x %>% 
   ggplot(aes(vegarea,Richness)) +
   geom_line(color=NA)+
-  geom_point(position=position_jitter(width = 7, height = 2), alpha=.7, shape=21)+
+  geom_point(size=3)+
   xlim(10,40)+
   ylim(20,60)+
   stat_cor(method = 'kendall',color='#228833',
            label.y.npc=1,label.x.npc=0,
            cor.coef.name='tau',
-           size=7,family='A')+
+           size=7,family='Times',
+           show.legend = F)+
   geom_smooth(method='loess',color='#228833')+
   #stat_poly_eq(aes(color='red',size=10))+
   theme_pubclean()+
@@ -985,20 +987,21 @@ x %>%
        x='Proportion of green area cover',
        y='Bird species richness')+
   theme(plot.title = element_text(hjust=-2.7),
-        text = element_text(family='A'))
+        text = element_text(family='Times'))
 
 ### built area
 #b<-
 x %>% 
   ggplot(aes(buildarea,Richness)) +
   geom_line(color=NA)+
-  geom_point(position=position_jitter(width = 1.5, height = 3), alpha=.7, shape=21)+
+  geom_point(size=3)+
   xlim(2,18)+
   ylim(20,60)+
   stat_cor(method = 'kendall',color='#4477AA',
            label.y.npc=1,label.x.npc=.5,
            cor.coef.name='tau',
-           size=7,family='A')+
+           size=7,family='Times',
+           show.legend = F)+
   geom_smooth(method='loess',color='#4477AA')+
   theme_pubclean()+
   style180+
@@ -1006,7 +1009,7 @@ x %>%
        x='Proportion of built / urban area cover',
        y='Bird species richness')+
   theme(plot.title = element_text(hjust=-2.8),
-        text = element_text(family='A'))
+        text = element_text(family='Times'))
 
 
 # o represents individual species in assemblages across sites varying in 
@@ -1020,14 +1023,15 @@ x %>%
   pivot_longer(cols=c(n.I,n.R,n.parrots),names_to = 'class', values_to = 'counts') %>% 
   ggplot(aes(vegarea,counts,color=class)) +
   geom_line(color=NA)+
-  geom_jitter(width = 4,height=7,alpha=.5,shape=21)+
+  geom_point(size=3)+
   xlim(10,40)+
   geom_smooth(se=T,alpha=.2)+
   stat_cor(method = 'kendall',
            label.y.npc=1,label.x.npc=0,
            digits = 3,
            cor.coef.name='tau',
-           size=7,family='A')+
+           size=7,family='Times',
+           show.legend = F)+
   theme_pubclean()+
   style180+
   scale_color_manual(name='Species status:',
@@ -1040,7 +1044,7 @@ x %>%
        y='Bird species abundance')+
   theme(plot.title = element_text(hjust=11),
         legend.text = element_text(size=15),
-        text = element_text(family='A'))
+        text = element_text(family='Times'))
 
 # built by introduction status 35,37,39
 #d<-
@@ -1050,14 +1054,15 @@ x %>%
   pivot_longer(cols=c(n.I,n.R,n.parrots),names_to = 'class', values_to = 'counts') %>% 
   ggplot(aes(buildarea,counts,color=class)) +
   geom_line(color=NA)+
-  geom_jitter(width = 2,height=7,alpha=.5,shape=21)+
+  geom_point(size=3)+
   xlim(2,18)+
   geom_smooth(se=T,alpha=.2)+
   stat_cor(method = 'kendall',
            label.y.npc=1,label.x.npc=0,
            digits=3,
            cor.coef.name='tau',
-           size=7,family='A')+
+           size=7,family='Times',
+           show.legend = F)+
   theme_pubclean()+
   style180+
   scale_color_manual(name='Species status:',
@@ -1070,7 +1075,7 @@ x %>%
        y='Bird species abundance')+
   theme(plot.title = element_text(hjust=9),
         legend.text = element_text(size=15),
-        text = element_text(family='A'))
+        text = element_text(family='Times'))
 
 # # C & D for poster
 
@@ -2156,14 +2161,14 @@ Interact_3<-merge(Interact_2,x,by.x='recipsp',by.y='Species')
 # by spp. box
 Interact_3 %>% 
   filter(interaction!='Neutral') %>% 
-  filter(nxt_cav<100) %>% 
+  filter(nxt_cav<71) %>% 
   filter(!is.na(RS.NestType)) %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
     ggplot(aes(initsp,nxt_cav))+
   geom_boxplot(aes(color=RS.NestType),size=1,outlier.colour = NA)+
-  geom_jitter(aes(initsp,nxt_cav,color=RS.NestType),alpha=.9,shape=21,size=2,
-              position = position_jitterdodge(jitter.height = 1,jitter.width = .2))+
-  labs(y='Distance from cavity/roost (bands of 5 metres)',
+  geom_jitter(aes(initsp,nxt_cav,color=RS.NestType),alpha=.75,shape=21,size=2,
+              position = position_jitterdodge(jitter.height = 0,jitter.width = .15))+ #1,.2
+  labs(y='Distance from cavity/roost',
        title='Fig. 11: Interaction proximity to roost/cavity')+
   theme_pubclean()+style180Centered+
   scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 15))+
@@ -2173,9 +2178,12 @@ Interact_3 %>%
         plot.title = element_text(hjust = -.45),
         axis.text.y = element_text(size=18),
         axis.text.y.left = element_text(size=14),
-        text = element_text(family='A'))+ # maybe remove this 
- scale_y_continuous(breaks=c(0,5,10,15,20,25,30,35,40,45,50,
-                             55,60,65,70,75,80))+
+        text = element_text(family='Times'))+  
+  scale_y_continuous(breaks=c(0,1,2,3,4,5,10,15,20,25,30,35,40,45,50,
+                              55,60,65,70),
+                     labels=c('0','1','2','3','4','5','5-10','10-15','15-20','20-25',
+                              '25-30','30-35','35-40','40-45','45-50','50-55','55-60',
+                              '60-65','65-70'))+
   scale_color_manual(name='Nest type:',values=c('Cavity'='#228833','Cavity-optional'='#CCBB44',
                                                      'Non-cavity'='#EE6677'))
 
