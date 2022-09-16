@@ -151,7 +151,7 @@ inchord2 %>%
 inchord2$RS<-factor(inchord2$RS,
                     levels = c('JM','RbP','HC','TC','LtP','OpH','RD', 'AGS', 
                                'RrP', 'MP','ScC','YvB','BnO','CK','AK','OD','Mammal',
-                               'SD','BtSb','LbC','CF','CHM','CM','YcC','HS',
+                               'SD','BtSb','CHM','CM','LbC','CF','YcC','HS',
                                'PnGp','Jf','LB','LgLb', 'LT','OmR','RWp','BtB',
                                'CHE','GH','GhFe',
                                'ObSb','OwB', 'PH', 'PT','SbK','WtK'))
@@ -239,6 +239,7 @@ grid.col=c("AGS"="#7BBCE7",
 "ZD"="grey")    
 circos.clear()
 par(cex = .55)
+# to save with a transparent BG
 par(bg=NA)
 circos.par(start.degree = 90)
 chordDiagram(inchord3,
@@ -262,7 +263,7 @@ circos.track(track.index = 1,
 
 title(main = "Interaction network",cex.main=2,line=-1)
 
-# to save with a transparent BG
+
 ## remove labels with this and replace with bird vectors
 dev.copy(png,'myplot.png')
 dev.off()
@@ -305,6 +306,18 @@ z<-rbind(x,y) %>%
 dim(z)
 42/3
 
+# factorise and relevel the table
+z$Code<-factor(z$Code,
+               levels = c('YcC','TC','ScC','RrP','MP','RbP','OpH','LtP',
+                          'OD','SbK','LbC','HC','AK','JM','BnO',
+                          'RD','AGS','YvB','CK','Mammal',
+                          'SD','BtSb','CF','HS',
+                          'PnGp','BtB',
+                          'CHE','ObSb','OwB','CHM','CM','Jf','LT','RWp',
+                          'GH','PT','OmR','GhFe','WtK','LB','LgLb','PH'))
+levels(z$Code)
+z<-z %>% arrange(Code)
+
 z1<-z[1:14, ]
 z2<-z[15:28, ]
 z3<-z[29:42, ]
@@ -312,7 +325,8 @@ z4<-cbind(z1,z2,z3)
 
 z4 %>% 
   kable(align = 'll') %>% 
-  kable_styling(full_width = FALSE) %>% 
+  kable_styling(full_width = FALSE,
+                html_font = 'Times') %>% 
   column_spec(column = 2, width = "3cm") %>% 
   column_spec(column = 4, width = "3cm") %>% 
   column_spec(column = 6, width = "3cm") %>% 
@@ -322,4 +336,13 @@ z4 %>%
   save_kable(file = "ref_table.html")
 webshot::webshot("ref_table.html", "ref_table.pdf")
 
+
+
+ISlevels = c('YcC','TC','ScC','RrP','MP','RbP','OpH','LtP',
+                               'OD','SbK','LbC','HC','AK','JM','BnO',
+             'RD','AGS','YvB','CK','Mammal',
+                               'SD','BtSb','CF','HS',
+                               'PnGp','BtB',
+                               'CHE','ObSb','OwB','CHM','CM','Jf','LT','RWp',
+             'GH','PT','OmR','GhFe','WtK','LB','LgLb','PH')
 
