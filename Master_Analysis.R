@@ -829,10 +829,12 @@ Pilot %>%
 
 ## Alpha ----
 # Shannon / Richness
-Indices %>% 
+Indices_2 %>% 
+  group_by(Study.Area) %>% 
+  mutate(green=sum(canopypc+Vegpc)) %>% 
   filter(Study.Area!='Changi Airport') %>% 
-  ggplot(aes(x=Shannon,y=Richness)) +
-  geom_point(size=5,color='#000000')+
+  ggplot(aes(x=Shannon,y=Richness,color=green)) +
+  geom_point(size=5)+
  ylim(25,60)+
   labs(title = 'Fig. 1: Alpha diversity index',
        x = 'Shannon Index', y='Bird species richness')+
@@ -842,8 +844,10 @@ Indices %>%
                   nudge_y = 1.6,segment.color = NA,color='black',size=5, family='Times')+
   theme_pubclean()+style180+
   theme(plot.title = element_text(hjust=-0.22),
-        text = element_text(family = 'Times'))
- 
+        text = element_text(family = 'Times'),
+        legend.position = c(.44,.95),
+        legend.direction = 'horizontal')+
+  scale_color_gradient(name='Forested area',low = "#D81B60", high = "#1E88E5")
 
 ## Changi and Stirling/QT have the lowest BD and richness scoring
 ## highly urbanised areas 
@@ -895,7 +899,8 @@ Kendall %>%
   pivot_wider(names_from = `Var 1`,values_from = `estimate τb`) %>%  
   rename(" "="Var 2") %>% 
   kable(align = 'lccccc') %>% 
-  kable_styling(full_width = F) %>% 
+  kable_styling(full_width = F,
+                html_font = 'Times') %>% 
   add_header_above(header=c(" "=1,
                             "Results Table: Kendalls Tau coefficients"=5),
                    font_size = 15) %>% 
@@ -1966,7 +1971,7 @@ bottomend<-which(x4$n_observed >30 &
                    x4$inits_Agg_freq<.5 &
                    x4$n_inits_Agg!=0)
 
-
+#THIS ONE ////////////
 x4 %>% 
   arrange(desc(n_observed)) %>% 
   mutate(across(where(is.numeric), round, 2)) %>%
@@ -1984,9 +1989,9 @@ x4 %>%
                             "All interactions"=2,
                             "Initiated interactions only"=2,
                             "Win rate"=2)) %>% 
-  kable_styling() %>% 
-  row_spec(topend,bold=F,background = '#FDDBC7') %>% 
-  row_spec(bottomend,bold=F,background = '#D1E5F0') %>% 
+  kable_styling(html_font = 'Times') %>% 
+  # row_spec(topend,bold=F,background = '#FDDBC7') %>% 
+  # row_spec(bottomend,bold=F,background = '#D1E5F0') %>% 
   save_kable(file = "interaction_table.html")
 webshot::webshot("interaction_table.html", "interaction_table.pdf")#pdf better
 
@@ -2022,7 +2027,8 @@ x4 %>%
   rename('Initiations / individuals'='inits_Agg_freq') %>% 
   replace(is.na(.), 0) %>% 
   kable(format = 'html',align = 'lcc') %>% 
-  kable_styling(full_width = F) %>% 
+  kable_styling(full_width = F,
+                html_font = 'Times') %>% 
   column_spec(column = 1, width = "3.7cm")%>% 
   column_spec(column = 2, width = ".5cm") %>% 
   column_spec(column = 3, width = ".5cm") %>% 
@@ -2081,13 +2087,15 @@ z<-z %>%
 #devtools::install_github(repo="haozhu233/kableExtra", ref="a6af5c0")
 #library(kableExtra)
 
+# THIS ONE///////////////////
 z %>% 
   select(-wins,-losses,-parrotints) %>% 
   relocate(1,2,6,3,4,5) %>% 
   mutate(across(where(is.numeric), round, 2)) %>%
   kable(align = 'llcccc',
         col.names = c('Focal sp.','Other sp.','Proportion','Total','% Win','% Loss')) %>% 
-  kable_styling(full_width = F) %>% 
+  kable_styling(full_width = F,
+                html_font = 'Times') %>% 
   column_spec(1, bold = T) %>%
   collapse_rows(columns = 1, valign = "middle") %>% 
   add_header_above(header=c("Top interacting species pairs"=3,
