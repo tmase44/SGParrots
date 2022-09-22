@@ -11,11 +11,13 @@
 library(pacman)
 p_load(formattable,knitr,kableExtra, # nice tables
        tidyverse,vegan,lubridate,gridExtra,grid,ggrepel,reshape2,ggpmisc,
-       BBmisc,stringr,Hmisc,moments,
-       ggpubr,AICcmodavg, #anova
+       # BBmisc,stringr,Hmisc,moments,
+       ggpubr,#AICcmodavg, #anova
        circlize, # interaction networks
        Distance, # transect analysis, relative abundance, density
        readxl,writexl)
+install.packages('dplyr')
+
 
 
 #/////////////////////////////////////////////////////////////////////////////#
