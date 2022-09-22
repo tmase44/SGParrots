@@ -3,12 +3,13 @@ library(pacman)
 p_load(tidyverse,vegan,lubridate,gridExtra,circlize,stringr,readxl,kable,kableExtra)
 #https://color.broadbrander.com/EDCB64 
 
+
+
 # IMPORT DATA----
 Chord <- read_excel("C:/Users/tmaso/OneDrive/Msc Environmental Management/Dissertation/Survey/Actual/Survey_Data_Entry_Master.xlsx", 
                        sheet = "Interactions")
 Chord$interaction<-factor(Chord$interaction,
                              levels = c("Neutral","Displace","Threat","Swoop","Chase","Contact","Fight"))
-
 
 # CHORD DATA PREP----
 # prepare data frame
