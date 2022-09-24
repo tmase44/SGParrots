@@ -11,8 +11,8 @@
 library(pacman)
 p_load(formattable,knitr,kableExtra, # nice tables
        tidyverse,vegan,lubridate,gridExtra,grid,ggrepel,reshape2,ggpmisc,
-       # BBmisc,stringr,Hmisc,moments,
-       ggpubr,#AICcmodavg, #anova
+        BBmisc,stringr,Hmisc,moments,
+       ggpubr,AICcmodavg, #anova
        circlize, # interaction networks
        Distance, # transect analysis, relative abundance, density
        readxl,writexl)
@@ -1991,9 +1991,9 @@ x4 %>%
                             "All interactions"=2,
                             "Initiated interactions only"=2,
                             "Win rate"=2)) %>% 
-  kable_styling(html_font = 'Times') 
-  # row_spec(topend,bold=F,background = '#FDDBC7') %>% 
-  # row_spec(bottomend,bold=F,background = '#D1E5F0') %>% 
+  kable_styling(html_font = 'Times',full_width = F) %>% 
+  row_spec(topend,bold=F,background = '#FDDBC7') %>% 
+  #row_spec(bottomend,bold=F,background = '#D1E5F0') 
   save_kable(file = "interaction_table.html")
 webshot::webshot("interaction_table.html", "interaction_table.pdf")#pdf better
 
@@ -2102,12 +2102,14 @@ z %>%
   collapse_rows(columns = 1, valign = "middle") %>% 
   add_header_above(header=c("Top interacting species pairs"=3,
                             "Pair Interactions"=3)) %>% 
-  kable_styling() %>% 
+  kable_styling() %>%   
   save_kable(file = "pairs_table.html")
 webshot::webshot("pairs_table.html", "pairs_table.pdf")#pdf better
 
-
-
+# install.packages('prettyunits')
+# detach("package:kableExtra", unload=TRUE)
+# devtools::install_github(repo="haozhu233/kableExtra", ref="a6af5c0")
+library(kableExtra)
 # relative freq (%)
 ISRS %>% 
   filter(role=='IS') %>% group_by(Species) %>% 
