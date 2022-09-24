@@ -836,7 +836,7 @@ Indices_2 %>%
   mutate(green=sum(canopypc+Vegpc)) %>% 
   filter(Study.Area!='Changi Airport') %>% 
   ggplot(aes(x=Shannon,y=Richness,color=green)) +
-  geom_point(size=5)+
+  geom_point(size=6)+
  ylim(25,60)+
   labs(title = 'Fig. 1: Alpha diversity index',
        x = 'Shannon Index', y='Bird species richness')+
@@ -845,11 +845,11 @@ Indices_2 %>%
     geom_text_repel(aes(label=Study.Area),
                   nudge_y = 1.6,segment.color = NA,color='black',size=5, family='Times')+
   theme_pubclean()+style180+
-  theme(plot.title = element_text(hjust=-0.22),
+  theme(plot.title = element_text(hjust=-0.28),
         text = element_text(family = 'Times'),
         legend.position = c(.44,.95),
         legend.direction = 'horizontal')+
-  scale_color_gradient(name='Forested area',low = "#D81B60", high = "#1E88E5")
+  scale_color_gradient(name='Forested area',low = "#CC3311", high = "#0077BB")
 
 ## Changi and Stirling/QT have the lowest BD and richness scoring
 ## highly urbanised areas 
@@ -993,7 +993,7 @@ x %>%
   labs(title = 'Fig. 3: Species richness change over green area gradient',
        x='Proportion of green area cover',
        y='Bird species richness')+
-  theme(plot.title = element_text(hjust=-2.7),
+  theme(plot.title = element_text(hjust=-2.9),
         text = element_text(family='Times'))
 
 ### built area
@@ -1015,7 +1015,7 @@ x %>%
   labs(title = 'Fig. 4: Species richness change over urban area gradient',
        x='Proportion of built / urban area cover',
        y='Bird species richness')+
-  theme(plot.title = element_text(hjust=-2.8),
+  theme(plot.title = element_text(hjust=-3),
         text = element_text(family='Times'))
 
 
@@ -1049,7 +1049,7 @@ x %>%
   labs(title = 'Fig. 5: Species abundance change over green area gradient',
        x='Proportion of green area cover',
        y='Bird species abundance')+
-  theme(plot.title = element_text(hjust=11),
+  theme(plot.title = element_text(hjust=8.5),
         legend.text = element_text(size=15),
         text = element_text(family='Times'))
 
@@ -1080,7 +1080,7 @@ x %>%
   labs(title = 'Fig. 6: Species abundance change over urban area gradient',
        x='Proportion of built / urban area cover',
        y='Bird species abundance')+
-  theme(plot.title = element_text(hjust=9),
+  theme(plot.title = element_text(hjust=8),
         legend.text = element_text(size=15),
         text = element_text(family='Times'))
 
@@ -1717,8 +1717,8 @@ Composition_2 %>%
   stat_regline_equation(label.y = 295, aes(label = ..eq.label..),size=5,color='#0077BB')+
   theme_pubclean()+
   theme(legend.text = element_text(size=14),
-        text = element_text(family='A'),
-        plot.title = element_text(hjust=-.7))+
+        text = element_text(family='Times'),
+        plot.title = element_text(hjust=-.75))+
   labs(x='Individuals observed',y='Total number of interactions',
        title = 'Fig. 8: Interactions relative to total abundance')+
   geom_text_repel(data=Composition_2 %>% 
@@ -1729,7 +1729,7 @@ Composition_2 %>%
                     filter(n_ints>18) %>% 
                     filter(max_obs>5),aes(label=Species),
                   nudge_y=4,size=4.5,
-                  box.padding = 0.5, max.overlaps = Inf,family='A')+
+                  box.padding = 0.5, max.overlaps = Inf,family='Times')+
   scale_y_continuous(limits = c(0, 300), oob = scales::squish)+style180+
   scale_shape_manual(values=c(20,21,7))
 
@@ -1766,8 +1766,8 @@ Composition_2 %>%
   stat_regline_equation(label.y = 195, aes(label = ..eq.label..),size=5,color='#0077BB')+
   theme_pubclean()+
   theme(legend.text = element_text(size=14),
-        text=element_text(family='A'),
-        plot.title = element_text(hjust=2.65))+
+        text=element_text(family='Times'),
+        plot.title = element_text(hjust=2.5))+
   labs(x='Individuals observed',y='Total number of interactions',
        title = 'Fig. 9: Interactions relative to total abundance non-focal spp.')+
   geom_text_repel(data=Composition_2 %>% 
@@ -1780,7 +1780,7 @@ Composition_2 %>%
                     filter(n_ints>18) %>% 
                     filter(max_obs>5),aes(label=Species),
                   nudge_y=4,size=4.5,
-                  box.padding = 0.5, max.overlaps = Inf)+
+                  box.padding = 0.5, max.overlaps = Inf,family='Times')+
   scale_y_continuous(limits = c(0, 200), oob = scales::squish)+style180+
   scale_shape_manual(values=c(20,21,7))
 
@@ -1991,7 +1991,7 @@ x4 %>%
                             "All interactions"=2,
                             "Initiated interactions only"=2,
                             "Win rate"=2)) %>% 
-  kable_styling(html_font = 'Times') %>% 
+  kable_styling(html_font = 'Times') 
   # row_spec(topend,bold=F,background = '#FDDBC7') %>% 
   # row_spec(bottomend,bold=F,background = '#D1E5F0') %>% 
   save_kable(file = "interaction_table.html")
@@ -2178,20 +2178,20 @@ Interact_3 %>%
   geom_boxplot(aes(color=RS.NestType),size=1,outlier.colour = NA)+
   geom_jitter(aes(initsp,nxt_cav,color=RS.NestType),alpha=.75,shape=21,size=2,
               position = position_jitterdodge(jitter.height = 0,jitter.width = .15))+ #1,.2
-  labs(y='Distance from cavity/roost',
+  labs(y='Distance from cavity/roost (metres)',
        title='Fig. 11: Interaction proximity to roost/cavity')+
   theme_pubclean()+style180Centered+
   scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 15))+
   theme(axis.title.x = element_blank(),
         legend.title = element_text(size=16),
         legend.text = element_text(size=16),
-        plot.title = element_text(hjust = -.45),
+        plot.title = element_text(hjust = -.7),
         axis.text.y = element_text(size=18),
         axis.text.y.left = element_text(size=14),
         text = element_text(family='Times'))+  
   scale_y_continuous(breaks=c(0,1,2,3,4,5,10,15,20,25,30,35,40,45,50,
                               55,60,65,70),
-                     labels=c('0','1','2','3','4','5','5-10','10-15','15-20','20-25',
+                     labels=c('0   ','','','','','5   ','5-10','10-15','15-20','20-25',
                               '25-30','30-35','35-40','40-45','45-50','50-55','55-60',
                               '60-65','65-70'))+
   scale_color_manual(name='Nest type:',values=c('Cavity'='#228833','Cavity-optional'='#CCBB44',
@@ -2371,8 +2371,8 @@ sp.pairs_2 %>%
   theme_pubclean()+style180Centered+
   scale_x_discrete(labels = function(initsp2) str_wrap(initsp2, width = 15))+
     theme(axis.title.x = element_blank(),
-          plot.title = element_text(hjust =2.2),
-          text=element_text(family='A'),
+          plot.title = element_text(hjust =2),
+          text=element_text(family='Times'),
           legend.key.size = unit(1,'cm'),
           legend.title = element_text(size=16),
           legend.text = element_text(size=16))+
