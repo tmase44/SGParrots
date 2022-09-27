@@ -16,7 +16,7 @@ p_load(formattable,knitr,kableExtra, # nice tables
        circlize, # interaction networks
        Distance, # transect analysis, relative abundance, density
        readxl,writexl)
-install.packages('dplyr')
+
 
 
 
@@ -893,10 +893,11 @@ Composition_2 %>%
 ### In case of very small p-values, the convention is to write it as p<0.001
 
 #table  
+ls(Kendall)
 Kendall %>% 
   mutate(across(where(is.numeric), round, 3)) %>%
-    unite(`estimate τb`,`estimate τb`:p.,remove=FALSE) %>% 
-  mutate(`estimate τb` = str_replace(`estimate τb`, "_", " ")) %>% 
+    #unite(`estimate tb`,`estimate tb`:p.,remove=FALSE) %>% 
+  #mutate(`estimate τb` = str_replace(`estimate τb`, "_", " ")) %>% 
   select(-p.,-z) %>% 
   pivot_wider(names_from = `Var 1`,values_from = `estimate τb`) %>%  
   rename(" "="Var 2") %>% 
@@ -907,7 +908,7 @@ Kendall %>%
                             "Results Table: Kendalls Tau coefficients"=5),
                    font_size = 15) %>% 
   column_spec(column = 1, width = "4.5cm",color = "black")%>% 
-  column_spec(column = c(2,3,4,5,6), width = "3cm") 
+  column_spec(column = c(2,3,4,5,6), width = "3cm") %>% 
    save_kable(file = "kendall1.html")
 webshot::webshot("kendall1.html", "kendall1.pdf")#pdf better
 
@@ -1093,9 +1094,9 @@ x %>%
   select(vegarea,n.I,n.R,n.parrots) %>% 
   pivot_longer(cols=c(n.I,n.R,n.parrots),names_to = 'class', values_to = 'counts') %>% 
   ggplot(aes(vegarea,counts,color=class)) +
-  geom_jitter(width = 4,height=7,alpha=.7,shape=21,size=2)+
+  geom_point(size=3,alpha=.5)+
   xlim(10,40)+
-  geom_smooth(se=F,size=1.5)+
+  geom_smooth(se=F)+
   stat_cor(method = 'kendall',
            label.y.npc=1,label.x.npc=0,
            digits = 3,
@@ -1104,7 +1105,7 @@ x %>%
            show.legend = F)+
   theme_pubclean()+
   style180+
-  scale_color_manual(name='Species status:',
+  scale_color_manual(name='Species:',
                      labels=c('Introduced','Resident','Introduced parrot'),
                      values=c('n.I'='#3F3F3F',
                               'n.R'='#009988',
@@ -1112,20 +1113,20 @@ x %>%
   labs(title = 'Fig. 3: Species abundance over green gradients',
        x='Proportion of green area cover',
        y='Bird species abundance')+
-  theme(axis.title.x =element_text(size=20),
+  theme(axis.title.x =element_text(size=24),
         legend.title = element_text(size=24),
         legend.key.size = unit(1,'cm'),
-        legend.text = element_text(size=22),
-        axis.text.y.left = element_text(size=22),
-        axis.text.x.bottom = element_text(size=22),
-        axis.title.y = element_text(size=20),
+        legend.text = element_text(size=24),
+        axis.text.y.left = element_text(size=26),
+        axis.text.x.bottom = element_text(size=26),
+        axis.title.y = element_text(size=24),
         plot.background = element_rect(fill = "#FBEBCE"),
         panel.background = element_rect(fill='#FBEBCE'),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         legend.background = element_rect(fill='#FBEBCE'),
         legend.key = element_rect(fill='#FBEBCE'),
-        plot.title = element_text(size=28)
+        plot.title = element_blank())
   )
 
 # URBAN AREA
@@ -1992,7 +1993,7 @@ x4 %>%
                             "Initiated interactions only"=2,
                             "Win rate"=2)) %>% 
   kable_styling(html_font = 'Times',full_width = F) %>% 
-  row_spec(topend,bold=F,background = '#FDDBC7') %>% 
+  row_spec(topend,bold=F,background = '#FDDBC7') 
   #row_spec(bottomend,bold=F,background = '#D1E5F0') 
   save_kable(file = "interaction_table.html")
 webshot::webshot("interaction_table.html", "interaction_table.pdf")#pdf better
@@ -2203,28 +2204,31 @@ Interact_3 %>%
 #FBEBCE
 Interact_3 %>% 
   filter(interaction!='Neutral') %>% 
-  filter(nxt_cav<100) %>% 
+  filter(nxt_cav<71) %>% 
   filter(!is.na(RS.NestType)) %>% 
   filter(initsp=="Monk parakeet"|initsp=="Tanimbar corella"|initsp=="Rose-ringed parakeet"|initsp=="Red-breasted parakeet")%>%  
   ggplot(aes(initsp,nxt_cav))+
-  geom_boxplot(aes(color=RS.NestType),size=0.5,outlier.colour = NA,alpha=0)+
-  geom_jitter(aes(initsp,nxt_cav,color=RS.NestType),alpha=.9,shape=21,size=2,
-              position = position_jitterdodge(jitter.height = 1,jitter.width = .2))+
-  labs(y='Distance from cavity/roost (bands of 5 metres)',
-       title='Fig.2: Proximity to roost/cavity')+
+  geom_boxplot(aes(color=RS.NestType),size=1,outlier.colour = NA,alpha=0)+
+  geom_jitter(aes(initsp,nxt_cav,color=RS.NestType),alpha=.5,shape=21,size=4.5,
+              position = position_jitterdodge(jitter.height = 0,jitter.width = .15))+ #1,.2
+  labs(y='Distance from cavity/roost (metres)',
+       title='Fig. 11: Interaction proximity to roost/cavity')+
   theme_pubclean()+style180Centered+
   scale_x_discrete(labels = function(Species2) str_wrap(Species2, width = 10))+
-  scale_y_continuous(breaks=c(5,15,25,35,45,
-                              55,65,75))+
+  scale_y_continuous(breaks=c(0,1,2,3,4,5,10,15,20,25,30,35,40,45,50,
+                              55,60,65,70),
+                     labels=c('0   ','','','','','5   ','5-10','10-15','15-20','20-25',
+                              '25-30','30-35','35-40','40-45','45-50','50-55','55-60',
+                              '60-65','65-70'))+
   scale_color_manual(name='Nest type:',values=c('Cavity'='#003400',
                                                 'Cavity-optional'='#017FDD',
                                                 'Non-cavity'='#FD004B'))+
   theme(axis.title.x = element_blank(),
-        legend.title = element_text(size=22),
-        legend.text = element_text(size=22),
-        axis.text.y.left = element_text(size=22),
-        axis.text.x.bottom = element_text(size=22),
-        axis.title.y = element_blank(),
+        legend.title = element_text(size=26),
+        legend.text = element_text(size=26),
+        axis.text.y.left = element_text(size=26),
+        axis.text.x.bottom = element_text(size=26),
+        axis.title.y = element_text(size=26),
         plot.background = element_rect(fill = "#FBEBCE"),
         panel.background = element_rect(fill='#FBEBCE'),
         panel.grid.major = element_blank(),
