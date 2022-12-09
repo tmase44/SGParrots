@@ -1714,7 +1714,7 @@ Composition_2 %>%
   geom_jitter(aes(max_obs,n_ints,shape=NestType),height = 4,width=1,alpha=.8,color='black',size=3)+
   #coord_trans(x='log10')+
   geom_smooth(method='gam',alpha=.3,color='#0077BB')+
-  stat_regline_equation(label.y = 285, aes(label = ..rr.label..),size=5,color='#0077BB')+
+  stat_cor(label.y = 285, aes(label = ..r.label..),size=5,color='#0077BB')+
   stat_regline_equation(label.y = 295, aes(label = ..eq.label..),size=5,color='#0077BB')+
   theme_pubclean()+
   theme(legend.text = element_text(size=14),
@@ -1763,7 +1763,7 @@ Composition_2 %>%
   geom_jitter(aes(max_obs,n_ints,shape=NestType),height = 4,width=1,alpha=.8,size=3)+
   #coord_trans(x='log10')+
   geom_smooth(method='gam',alpha=.3,color='#0077BB')+
-  stat_regline_equation(label.y = 185, aes(label = ..rr.label..),size=5,color='#0077BB')+
+  stat_cor(label.y = 185, aes(label = ..r.label..),size=5,color='#0077BB')+
   stat_regline_equation(label.y = 195, aes(label = ..eq.label..),size=5,color='#0077BB')+
   theme_pubclean()+
   theme(legend.text = element_text(size=14),
